@@ -22,7 +22,7 @@ a private security HTTP/HTTPS proxy framework,with python
 * How To run
 	1. remote server run : python remoteServer.py [passWord]
 	2. local server run: python localServer.py [remoteServerHost] [passWord]
-	3. then open http://serverip:8081,see help
+	3. then open http://localip:8081,see help
 
 
 - by dx.wang
