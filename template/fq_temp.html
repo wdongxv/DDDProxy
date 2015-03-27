@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>DDDProxy</title>
+<style type="text/css">
+body {
+	font-size: 12px;
+	font-family: serif;
+}
+
+.info_block {
+	display: inline-block;
+	vertical-align: top;
+}
+.help{
+	color: #555;
+	margin-top: 50px;
+}
+.help p,.pacAddr {
+	line-height: 20px;
+	font-size: 13px;
+}
+
+.pacAddr {
+	margin: 0;
+	padding: 0 10px;
+	font-weight: bold;
+	color: #000;
+	display: inline-block;
+}
+</style>
+</head>
+<body>
+	<div style="width: 100%; max-width: 600px; margin: 0 auto;">
+
+		<!-- 		<div class="info_block" style="width: 100%;">
+			<input id='url' value="http://www.facebook.com" style="width:50%;max-width: 500px;"></input><input
+				id="test" type="button" value="Test url for proxy"></input>
+			<p id="output"></p>
+		</div> -->
+		<div>
+			<h1>DDDProxy 安全代理服务</h1>
+			<p>
+				<!-- 本机设定：<span id="pacSetting">loading...</span>， -->
+				代理服务：<span id="proxyServerStatus">testing...</span>，远程服务：<span
+					id="remoteServerStatus">testing...</span>，<a href="/admin">哪些地址需要翻墙？</a>
+			</p>
+		</div>
+		<div class="help">
+			<p>
+				【mac设置方法】<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“<span
+					class="pacAddr">{{pacAddr}}</span>”
+			</p>
+			<p>
+				【iPhone设置方法】<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
+					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“<span
+					class="pacAddr">{{pacAddr}}</span>”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
+			</p>
+			<p>
+				【windows设置方法】<br /> 打开IE，在菜单找到并打开“Internet
+				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“<span
+					class="pacAddr">{{pacAddr}}</span>”
+			</p>
+		</div>
+		<div  class="help" style="font-style: italic;">
+			<p>- 作者：dx.wang</p>
+			<p>
+				- E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a>
+			</p>
+		</div>
+	</div>
+	<script src="/static/jquery.min.js"></script>
+	<script src="/static/URI.js"></script>
+	<script src="{{pacAddrOrigin}}"></script>
+
+	<script type="text/javascript">
+		function statusApi(opt, callback) {
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", "/status?opt=" + opt, true);
+			xhr.onreadystatechange = function(e) {
+				if (xhr.readyState == 4) {
+					var json = {};
+					try {
+						if (xhr.status == 200)
+							json = JSON.parse(xhr.responseText);
+					} catch (e) {
+					}
+					callback(json);
+				}
+			};
+			xhr.send();
+		}
+		function dnsDomainIs(a, b) {
+			a = "." + a;
+			var search = a.search(b);
+			if (search >= 0) {
+				return true;
+			} else {
+
+			}
+		}
+		function shExpMatch(a, b) {
+			var search = a.search(b);
+			if (search >= 0) {
+				return true;
+			} else {
+
+			}
+		}
+		function httpapi(url, callback) {
+			$.ajax({
+				"url" : url,
+				"complete" : function(data, status, xhr) {
+					callback(data.responseText);
+				}
+			});
+		}
+		$(document).ready(function() {
+
+			statusApi("testProxy", function(data) {
+				$("#proxyServerStatus").text(data["status"])
+			});
+			statusApi("remoteProxy", function(data) {
+				$("#remoteServerStatus").text(data["status"])
+			});
+
+			/* 			var data1 = "", data2 = "";
+			 function check() {
+			 if (data1 && data2) {
+			 $("#testProxy").text(data1 === data2 ? "未生效" : "生效");
+			 }
+			 }
+			 httpapi("/ip", function(dataa) {
+			 data1 = dataa;
+			 $("#real_ip").text(dataa);
+			 check();
+			 });
+			 httpapi("/ip?get_real_ip_p.php", function(datab) {
+			 data2 = datab;
+			 check();
+			 }); */
+		});
+	</script>
+</body>
+</html>

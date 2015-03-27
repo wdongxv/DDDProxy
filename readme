@@ -1,0 +1,29 @@
+DDDProxy
+a private security HTTP/HTTPS proxy framework,with python
+
+* Private
+* Auto proxy(see https://en.wikipedia.org/wiki/Proxy_auto-config)
+* Security Proxy
+* Anti-GFW
+* No need install certificate on user browser
+* Fast
+
+
+* proxy service can run on:
+	Linux,Unix,Windows
+
+* proxy service support devices/system:
+	1.windows xp+
+	2.iPhone,iPad
+	3.Android 5.0+
+	4.Mac OS X
+	5.other support PAC auto proxy
+	
+* How To install
+	1. remote server run : python remoteServer.py [passWord]
+	2. local server run: python localServer.py [remoteServerHost] [passWord]
+	3. then open http://serverip:8081,see help
+
+
+- by dx.wang
+- E-Mail：wdongxv@gmail.com
