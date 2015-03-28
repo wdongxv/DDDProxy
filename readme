@@ -18,7 +18,10 @@ a private security HTTP/HTTPS proxy framework,with python
 	3.Android 5.0+
 	4.Mac OS X
 	5.other support PAC auto proxy
+* How to install
+	windows
 	
+
 * How To run
 	1. remote server run : python remoteServer.py [passWord]
 	2. local server run: python localServer.py [remoteServerHost] [passWord]

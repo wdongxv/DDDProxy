@@ -10,7 +10,6 @@ import ssl
 import threading
 import random
 from os.path import dirname
-from OpenSSL import crypto
 
 localServerProxyListenPort = 8080
 localServerAdminListenPort = 8081
@@ -50,6 +49,7 @@ def fetchRemoteCert():
 	createCertLock.release()
 
 def createSSLCert():
+	from OpenSSL import crypto
 	createCertLock.acquire()
 	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
 		k = crypto.PKey()
