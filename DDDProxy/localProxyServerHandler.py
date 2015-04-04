@@ -26,10 +26,13 @@ class proxyServerHandler(ServerHandler):
 		self.remoteSocket = None
 		self.httpMessage = ""
 		self.blockHost = DDDProxyConfig.blockHost
+		self.hostPort = None
 	def info(self):
 		return "%s	%s" % (ServerHandler.info(self), self.httpMessage)
 	def domainAnalysisAddData(self,dataType,length):
-		domainConfig.analysis.incrementData(addr=self.addr, dataType=dataType, hostPort=self.hostPort, message=self.httpMessage, length=length)
+		if self.hostPort:
+			domainConfig.analysis.incrementData(addr=self.addr, dataType=dataType, hostPort=self.hostPort, message=self.httpMessage, length=length)
+	
 	def sourceToServer(self):
 		baseServer.log(1, self.threadid, "}}}}", "<")
 		try:
@@ -40,6 +43,8 @@ class proxyServerHandler(ServerHandler):
 					break
 				baseServer.log(1, "}}}}", tmp)
 				DDDProxySocketMessage.send(self.remoteSocket, tmp)
+				
+				#以下数据是为了时统计用
 				if socetParser is not None:
 					socetParser.putMessage(tmp)
 					if socetParser.messageStatus():
@@ -48,6 +53,8 @@ class proxyServerHandler(ServerHandler):
 						threading.currentThread().name = "%d-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
 						self.hostPort = (host, port)
 						
+						
+						#代理host黑名单
 						ipAddr = re.match("(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})", host)
 						foundIp = False
 						if ipAddr:
