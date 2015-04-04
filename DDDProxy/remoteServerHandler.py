@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from DDDProxy.server import ServerHandler, baseServer, DDDProxySocketMessage
 import ssl
 import Queue
