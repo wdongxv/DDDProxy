@@ -1,4 +1,4 @@
 *.pyc
 tmp/*.pem
-tmp/dProxy.domain.json
 DDDProxy.domainAnalysis.json
+DDDProxy.domain.json
