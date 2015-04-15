@@ -8,6 +8,10 @@ a private security HTTP/HTTPS proxy framework,with python
 * No need install certificate on user browser
 * Fast
 
+2015年4月15号
+	*新增 自动读取加载gfwlist #https://autoproxy-gfwlist.googlecode.com/svn/trunk/gfwlist.txt
+	*http1.0可能会有点问题，已经修复
+
 
 * proxy service can run on:
 	Linux,Unix,Windows

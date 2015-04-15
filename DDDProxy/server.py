@@ -26,8 +26,13 @@ class baseServer(object):
 	def log(level, *args, **kwargs):
 		if level < DDDProxyConfig.debuglevel:
 			return
+		
 		data = "	".join(str(i) for i in args)
-		data = time.strftime("%y-%B-%d %H:%M:%S[") + ["debug", "info", "warring", "error"][level] + "]:	" + data
+		if level==3:
+			data += "	"+str(sys.exc_info())
+			data += "	"+str(traceback.format_exc())
+		
+		data = time.strftime("%y-%B-%d %H:%M:%S:	")+ data
 # 		print data
 		logging.log([logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][level], data)
 	def startNewThread(self, conn, addr, threadid):
@@ -37,7 +42,7 @@ class baseServer(object):
 			self.theadList.append(hand)
 			hand.run()
 		except:
-			self.log(3, sys.exc_info(), traceback.format_exc())
+			self.log(3)
 			try:
 				hand.close()
 			except:
@@ -67,7 +72,7 @@ class baseServer(object):
 			except KeyboardInterrupt:
 				break
 			except:
-				self.log(3, sys.exc_info(), traceback.format_exc())
+				self.log(3)
 				time.sleep(1)
 		self.log(2, "proess end!")
 	def close(self):

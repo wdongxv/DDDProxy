@@ -18,6 +18,7 @@ import threading
 import httplib
 import traceback
 import time
+import autoProxy
 
 settings = {
 	"debug":False,
@@ -97,7 +98,7 @@ if __name__ == '__main__':
 		logging.error(sys.exc_info())
 	
 	domainConfig.domainAnalysis.startAnalysis()
-	
-	logging.warn("pac server start on %s:%d!" % (DDDProxyConfig.localServerListenIp, DDDProxyConfig.localServerAdminListenPort));
+	autoProxy.AutoFetchGFWList()
+	baseServer.log(2,"pac server start on %s:%d!" % (DDDProxyConfig.localServerListenIp, DDDProxyConfig.localServerAdminListenPort));
 	application.listen(DDDProxyConfig.localServerAdminListenPort, DDDProxyConfig.localServerListenIp)
 	tornado.ioloop.IOLoop.instance().start()

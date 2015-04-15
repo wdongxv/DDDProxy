@@ -64,7 +64,7 @@ class proxyServerHandler(ServerHandler):
 									foundIp = True
 									break
 						if foundIp or host in self.blockHost:
-							baseServer.log(3, self.threadid, "block", host)
+							baseServer.log(2, self.threadid, "block", host)
 							break
 						
 						baseServer.log(1, "}}}}", self.addr, self.httpMessage)
@@ -77,7 +77,7 @@ class proxyServerHandler(ServerHandler):
 		except socket.timeout:
 			pass
 		except:
-			baseServer.log(3, self.threadid, "}}}} error!", sys.exc_info(), traceback.format_exc())
+			baseServer.log(3, self.threadid, "}}}} error!")
 
 # 		sendPack.end(self.remoteSocket)
 		baseServer.log(1, self.threadid, "}}}}", ">")

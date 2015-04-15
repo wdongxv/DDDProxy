@@ -61,9 +61,9 @@ class domainConfig():
 			self.domainList[domain]["open"] = True
 			return True
 		return False
-	def addDomain(self,domain):
+	def addDomain(self,domain,formGwflist = False):
 		if not domain in self.domainList:
-			self.domainList[domain] = {"connectTimes":0,"open":True}
+			self.domainList[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist}
 			return True
 		return False
 	def domainConnectTimes(self,domain,times):

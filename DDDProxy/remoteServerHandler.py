@@ -95,7 +95,7 @@ class remoteServerHandler(ServerHandler):
 		except TypeError:
 			pass
 		except:
-			baseServer.log(3, self.threadid, "sourceToServer error!!!", sys.exc_info(), traceback.format_exc())
+			baseServer.log(3, self.threadid, "sourceToServer error!!!")
 		self.lock.put("error")
 		self.close()
 		return False
@@ -120,7 +120,7 @@ class remoteServerHandler(ServerHandler):
 			except socket.timeout:
 				pass
 			except:
-				baseServer.log(3, self.threadid, "serverToSource error!!!", sys.exc_info(), traceback.format_exc())
+				baseServer.log(3, self.threadid, "serverToSource error!!!")
 				error = True
 		baseServer.log(1, self.threadid, "----", ">")
 		return not error
@@ -158,7 +158,7 @@ class remoteServerHandler(ServerHandler):
 				thread.start_new_thread(self.sourceToServer, tuple())
 				self.serverToSource()
 		except:
-			baseServer.log(3, sys.exc_info(), traceback.format_exc())
+			baseServer.log(3)
 		self.close()
 		
 		baseServer.log(1, self.threadid, "!!!!! threadid end")
