@@ -8,9 +8,7 @@ Created on 2015年1月11日
 import os
 import ssl
 import threading
-import random
 from os.path import dirname
-from OpenSSL import crypto
 
 localServerProxyListenPort = 8080
 localServerAdminListenPort = 8081
@@ -52,28 +50,9 @@ def fetchRemoteCert():
 def createSSLCert():
 	createCertLock.acquire()
 	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
-		k = crypto.PKey()
-		k.generate_key(crypto.TYPE_RSA, 1024)
-		cert = crypto.X509()
-		cert.get_subject().C = "CN"
-		cert.get_subject().ST = "%f"%(random.random()*10)
-		cert.get_subject().L = "%f"%(random.random()*10)
-		cert.get_subject().O = "%f"%(random.random()*10)
-		cert.get_subject().OU = "%f"%(random.random()*10)
-		cert.get_subject().CN = "%f"%(random.random()*10)
-		
-		cert.set_serial_number(1000)
-		cert.gmtime_adj_notBefore(0)
-		cert.gmtime_adj_notAfter(315360000)
-		cert.set_issuer(cert.get_subject())
-		cert.set_pubkey(k)
-		cert.sign(k, 'sha1')
-		
-		certPem = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-		keyPem = crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
-		
-		open(SSLCertPath, "wt").write(certPem)
-		open(SSLKeyPath, "wt").write(keyPem)
+		shell = "openssl req -new -newkey rsa:1024 -days 3650 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=dddproxy\" -keyout %s  -out %s"%(
+																							SSLKeyPath,SSLCertPath)
+		os.system(shell)
 
 	createCertLock.release()
 
