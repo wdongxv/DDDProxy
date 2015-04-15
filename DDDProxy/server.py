@@ -38,9 +38,13 @@ class baseServer(object):
 			hand.run()
 		except:
 			self.log(3, sys.exc_info(), traceback.format_exc())
+			try:
+				hand.close()
+			except:
+				pass
 		if not hand is None:
 			self.theadList.remove(hand)
-	
+		
 	def exratInfo(self):
 		return "";
 

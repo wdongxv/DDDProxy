@@ -14,7 +14,7 @@ class socetMessageParser():
 		method, path, protocol = self.httpMessage()
 		if protocol:
 			headers = self.httpHeaders()
-			if headers:
+			if not headers is None:
 				if method == "POST":
 					if "content-length" in headers and (int(headers["content-length"]) <= len(self.httpBodyStr())):
 						return 1
@@ -48,6 +48,8 @@ class socetMessageParser():
 		return self.message.split("\r\n\r\n", 1)[1]
 	def httpHeaders(self):
 		header = self.httpHeadersStr()
+		if not header:
+			return None
 		headers = {}
 		for item in header.lower().split("\r\n")[1:]:
 			k, v = item.split(": ")

@@ -42,9 +42,12 @@ domainAnalysisConfig =  baseDir+"/tmp/DDDProxy.domainAnalysis.json"
 createCertLock = 	threading.RLock()
 def fetchRemoteCert():
 	createCertLock.acquire()
-	if not os.path.exists(SSLLocalCertPath):
-		cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerListenPort))
-		open(SSLLocalCertPath, "wt").write(cert)
+	try:
+		if not os.path.exists(SSLLocalCertPath):
+			cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerListenPort))
+			open(SSLLocalCertPath, "wt").write(cert)
+	except:
+		pass
 	createCertLock.release()
 
 def createSSLCert():

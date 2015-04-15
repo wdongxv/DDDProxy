@@ -48,7 +48,7 @@ class statusPage(BaseHandler):
 		elif opt == "testProxy":
 			status = "ok"
 			try:
-				conn = httplib.HTTPConnection(host='127.0.0.1',port=DDDProxyConfig.localServerProxyListenPort,timeout=50)
+				conn = httplib.HTTPConnection(host='127.0.0.1',port=DDDProxyConfig.localServerProxyListenPort,timeout=10)
 				conn.connect()
 				conn.request("GET", "http://www.baidu.com/",headers={})
 				response = conn.getresponse()

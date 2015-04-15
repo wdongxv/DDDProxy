@@ -26,19 +26,25 @@ class proxyServerHandler(ServerHandler):
 		self.remoteSocket = None
 		self.httpMessage = ""
 		self.blockHost = DDDProxyConfig.blockHost
+		self.hostPort = None
 	def info(self):
 		return "%s	%s" % (ServerHandler.info(self), self.httpMessage)
 	def domainAnalysisAddData(self,dataType,length):
+		if not self.hostPort:
+			return False
 		domainConfig.analysis.incrementData(addr=self.addr, dataType=dataType, hostPort=self.hostPort, message=self.httpMessage, length=length)
+		return True
 	def sourceToServer(self):
 		baseServer.log(1, self.threadid, "}}}}", "<")
 		try:
 			socetParser = socetMessageParser()
+			count = 0
 			while self.source != None:
 				tmp = self.source.recv(DDDProxyConfig.cacheSize)
 				if not tmp:
 					break
 				baseServer.log(1, "}}}}", tmp)
+				count += len(tmp);
 				DDDProxySocketMessage.send(self.remoteSocket, tmp)
 				if socetParser is not None:
 					socetParser.putMessage(tmp)
@@ -65,7 +71,8 @@ class proxyServerHandler(ServerHandler):
 						self.domainAnalysisAddData("connect", 1)
 						socetParser = None
 		
-				self.domainAnalysisAddData("incoming", len(tmp))
+				if self.domainAnalysisAddData("incoming", count):
+					count = 0
 				self.markActive()
 		except socket.timeout:
 			pass
@@ -80,10 +87,13 @@ class proxyServerHandler(ServerHandler):
 	def serverToSource(self):
 		baseServer.log(1, self.threadid, "-<")
 		try:
+			count = 0
 			for data in DDDProxySocketMessage.recv(self.remoteSocket):
 				self.source.send(data)
 				self.markActive()
-				self.domainAnalysisAddData("outgoing", len(data))
+				count += len(data)
+				if self.domainAnalysisAddData("outgoing", count):
+					count = 0
 		except:
 			pass
 		baseServer.log(1, self.threadid, "->")
