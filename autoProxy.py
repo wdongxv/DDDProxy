@@ -19,7 +19,7 @@ def getGFWHost():
 					"https":"127.0.0.1:%d" % (DDDProxyConfig.localServerProxyListenPort)})
 	opener = urllib2.build_opener(proxy)
 	urllib2.install_opener(opener)
-	response = urllib2.urlopen('https://autoproxy-gfwlist.googlecode.com/svn/trunk/gfwlist.txt',timeout=10)
+	response = urllib2.urlopen('https://autoproxy-gfwlist.googlecode.com/svn/trunk/gfwlist.txt',timeout=30)
 	gfwlist = base64.decodestring(response.read())
 	line = ""
 	hostList = []
