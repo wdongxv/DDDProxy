@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from DDDProxy.server import ServerHandler, baseServer, DDDProxySocketMessage
 import ssl
 import Queue
@@ -56,6 +58,7 @@ class remoteServerHandler(ServerHandler):
 	
 	def sourceToServer(self):
 		try:
+			#接收消息头
 			socetParser = socetMessageParser()
 			hasData = False
 			for data in DDDProxySocketMessage.recv(self.localProxy):
@@ -69,8 +72,9 @@ class remoteServerHandler(ServerHandler):
 			
 			if not hasData:
 				return False
-			
-			self.method, path, protocol = socetParser.httpMessage()
+
+			#连接原始服务器
+			self.method, path, protocol = self.httpMessage
 			if self.method:
 				baseServer.log(2, "httpMessage", self.threadid, self.method, path, protocol)
 			if self.method == "CONNECT":
@@ -84,8 +88,10 @@ class remoteServerHandler(ServerHandler):
 				self.openOrignConn(path);
 				baseServer.log(1, self.threadid, ">>>>>", socetParser.messageData())
 				self.orignConn.send(socetParser.messageData())
-				
+			
 			self.lock.put("ok")
+			
+			#转发原始请求到原始服务器
 			for data in DDDProxySocketMessage.recv(self.localProxy):
 				self.orignConn.send(data);
 				self.markActive("localProxy recv")
@@ -116,7 +122,7 @@ class remoteServerHandler(ServerHandler):
 					baseServer.log(1, self.threadid, "localProxy", "send", tmp)
 					DDDProxySocketMessage.send(self.localProxy, tmp)
 					baseServer.log(1, self.threadid, "localProxy", "send", "end")
-					self.markActive()
+					self.markActive("orignConn recv")
 			except socket.timeout:
 				pass
 			except:

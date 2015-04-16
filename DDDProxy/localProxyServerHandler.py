@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from DDDProxy.server import ServerHandler, baseServer, DDDProxySocketMessage
 import DDDProxyConfig
 from DDDProxy.socetMessageParser import socetMessageParser
@@ -46,6 +48,8 @@ class proxyServerHandler(ServerHandler):
 				baseServer.log(1, "}}}}", tmp)
 				count += len(tmp);
 				DDDProxySocketMessage.send(self.remoteSocket, tmp)
+				
+				#以下数据是为了时统计用
 				if socetParser is not None:
 					socetParser.putMessage(tmp)
 					if socetParser.messageStatus():
@@ -54,6 +58,8 @@ class proxyServerHandler(ServerHandler):
 						threading.currentThread().name = "%d-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
 						self.hostPort = (host, port)
 						
+						
+						#代理host黑名单
 						ipAddr = re.match("(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})", host)
 						foundIp = False
 						if ipAddr:

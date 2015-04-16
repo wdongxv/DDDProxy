@@ -1,5 +1,7 @@
 eclipse.preferences.version=1
 encoding//DDDProxy/domainConfig.py=utf-8
+encoding//DDDProxy/localProxyServerHandler.py=utf-8
+encoding//DDDProxy/remoteServerHandler.py=utf-8
 encoding//DDDProxy/webHandler.py=utf-8
 encoding/DDDProxyConfig.py=utf-8
 encoding/localServer.py=utf-8
