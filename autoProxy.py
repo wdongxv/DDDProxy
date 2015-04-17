@@ -14,12 +14,19 @@ import time
 import logging
 from DDDProxy.server import baseServer
 
-def getGFWHost():
+gfwListFetchUrl = [
+		#[url,retryTimes]
+		["https://autoproxy-gfwlist.googlecode.com/svn/trunk/gfwlist.txt",0],
+		["https://raw.githubusercontent.com/calfzhou/autoproxy-gfwlist/master/gfwlist.txt",0],
+		["http://www.woodbunny.com/gfwlist.txt",0],
+		]
+
+def getGFWHost(fetchUrl):
 	proxy = urllib2.ProxyHandler({"http":"127.0.0.1:%d" % (DDDProxyConfig.localServerProxyListenPort),
 					"https":"127.0.0.1:%d" % (DDDProxyConfig.localServerProxyListenPort)})
 	opener = urllib2.build_opener(proxy)
 	urllib2.install_opener(opener)
-	response = urllib2.urlopen('https://autoproxy-gfwlist.googlecode.com/svn/trunk/gfwlist.txt',timeout=10)
+	response = urllib2.urlopen(fetchUrl,timeout=10)
 	gfwlist = base64.decodestring(response.read())
 	line = ""
 	hostList = []
@@ -44,14 +51,19 @@ def getGFWHost():
 def AutoGFWListThread():
 	retryTime = 1
 	while True:
+		fecthUrl = None
+		for i in gfwListFetchUrl:
+			if fecthUrl is None or i[1] < fecthUrl[1] :
+				fecthUrl = i
 		hostList = []
 		try:
-			baseServer.log(2,"fetch gfw list ....")
-			hostList = getGFWHost()
+			baseServer.log(2,"fetch gfw list from: %s"%(fecthUrl[0]))
+			hostList = getGFWHost(fecthUrl[0])
 		except:
 			baseServer.log(3,"fetch gfw list error,retry in next %ds"%(retryTime))
 			time.sleep(retryTime)
-			retryTime *= 2
+			retryTime += 2
+			fecthUrl[1]+=1
 			continue
 		retryTime = 1
 		baseServer.log(2,"fetch gfw list %d hosts"%(len(hostList)))
