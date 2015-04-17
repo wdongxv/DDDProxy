@@ -9,7 +9,6 @@ body {
 	font-family: serif;
 }
 
-
 .line {
 	display: inline-block;
 	position: relative;
@@ -21,6 +20,7 @@ body {
 .line[status="open"] {
 	background: #aaa;
 }
+
 .line .content {
 	height: 14px;
 }
@@ -38,7 +38,7 @@ body {
 	text-align: left;
 }
 
-[status="open"] .optbox, .line .optbox:HOVER {
+[status="open"] .optbox,.line .optbox:HOVER {
 	height: 24px;
 	padding-top: 0px;
 }
@@ -58,7 +58,7 @@ body {
 	color: #f00;
 }
 
-.button, .domain, .times {
+.button,.domain,.times {
 	display: inline-block;
 	margin-left: 5px;
 }
@@ -129,6 +129,12 @@ body {
 <script src="/static/proxy.js"></script>
 </head>
 <body>
+
+	<div
+		style="width: 100%; text-align: center; padding-top: 10px; margin-top: 100px; border-top: solid 1px #aaa;">
+		<div id="domainAnalysis"></div>
+		<div id="dataAnalysis" style="height: 500px;"></div>
+	</div>
 	<div style="display: block; margin-bottom: 20px;">
 		<form action="?" style="width: 500px; margin: 0 auto;">
 			<input name="opt" value="puturl" type="hidden" /> <input
@@ -138,14 +144,8 @@ body {
 	</div>
 	<div id="proxyDomainList"
 		style="width: 100%; text-align: center; padding-top: 10px;"></div>
-
-	<div
-		style="width: 100%; text-align: center; padding-top: 10px; margin-top: 100px; border-top: solid 1px #aaa;">
-		<div id="domainAnalysis"></div>
-		<div id="dataAnalysis" style="height: 500px;"></div>
-	</div>
 	<div>
-	<p>添加网站后chrome请打开下面的地址来刷新chrome://net-internals/#proxy</p>
+		<p>添加网站后chrome请打开下面的地址来刷新chrome://net-internals/#proxy</p>
 	</div>
 </body>
 </html>
