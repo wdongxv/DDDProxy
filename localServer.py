@@ -19,6 +19,7 @@ import httplib
 import traceback
 import time
 import autoProxy
+import thread
 
 settings = {
 	"debug":False,
@@ -28,8 +29,7 @@ def printError():
 	logging.error(traceback.format_exc())
 	pass
 class statusPage(BaseHandler):
-	@tornado.web.asynchronous
-	def get(self):
+	def getInThread(self):
 		opt = self.get_argument("opt",default="")
 		if opt:
 			opt = opt.encode("utf8")
@@ -65,6 +65,9 @@ class statusPage(BaseHandler):
 			data={"threading:":threadList}
 			self.write(data)
 		self.finish()
+	@tornado.web.asynchronous
+	def get(self):
+		thread.start_new_thread(self.getInThread, tuple())
 class testPac(BaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
