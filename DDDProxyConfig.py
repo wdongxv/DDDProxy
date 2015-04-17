@@ -22,7 +22,9 @@ remoteServerListenPort = 8083
 remoteServerListenIp = "0.0.0.0"
 remoteServerAuth = None
 
-blockHost = []
+
+#在此列表的host走代理时会被block，远程和本地服务都会做处理
+blockHost = ["10.0.1","192.168.1","127.0.0.1","localhost"]
 
 debuglevel = 1
 timeout = 600
