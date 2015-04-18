@@ -23,8 +23,8 @@ E-Mail：wdongxv@gmail.com
 这样你就会看到完整的帮助了
 
 <h3>下面是DDDProxy的管理界面截图：</h3>
-<img src="http://i.imgur.com/GJcVlb8.png"/>
-<img src="http://i.imgur.com/SsgX2z4.png"/>
+<img src="http://i.imgur.com/wFUj6H2.png"/>
+<img src="http://i.imgur.com/yO8XRsE.png"/>
 
 <h3>当然，做为新的开源项目，还有很多事要做的：</h3>
 *	多服务器支持
