@@ -26,7 +26,7 @@ def getGFWHost(fetchUrl):
 					"https":"127.0.0.1:%d" % (DDDProxyConfig.localServerProxyListenPort)})
 	opener = urllib2.build_opener(proxy)
 	urllib2.install_opener(opener)
-	response = urllib2.urlopen(fetchUrl,timeout=10)
+	response = urllib2.urlopen(fetchUrl,timeout=30)
 	gfwlist = base64.decodestring(response.read())
 	line = ""
 	hostList = []
