@@ -110,7 +110,7 @@ class proxyServerHandler(ServerHandler):
 		DDDProxyConfig.fetchRemoteCert()
 		
 		self.remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath,
+		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath(),
 										 cert_reqs=ssl.CERT_REQUIRED)		
 		self.remoteSocket.connect((DDDProxyConfig.remoteServerHost, DDDProxyConfig.remoteServerListenPort))
 		randomNum = math.floor(time.time())
