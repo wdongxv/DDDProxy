@@ -33,7 +33,9 @@ cacheSize = 1024 * 2
 
 baseDir = dirname(__file__)
 
-SSLLocalCertPath =  baseDir+"/tmp/cert.local.pem"
+def SSLLocalCertPath():
+	return baseDir+"/tmp/cert."+remoteServerHost+".pem"
+					
 SSLCertPath =  baseDir+"/tmp/cert.remote.pem"
 SSLKeyPath =  baseDir+"/tmp/key.remote.pem"
 
@@ -45,9 +47,9 @@ createCertLock = 	threading.RLock()
 def fetchRemoteCert():
 	createCertLock.acquire()
 	try:
-		if not os.path.exists(SSLLocalCertPath):
+		if not os.path.exists(SSLLocalCertPath()):
 			cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerListenPort))
-			open(SSLLocalCertPath, "wt").write(cert)
+			open(SSLLocalCertPath(), "wt").write(cert)
 	except:
 		pass
 	createCertLock.release()
