@@ -73,7 +73,7 @@ class proxyServerHandler(ServerHandler):
 							baseServer.log(2, self.threadid, "block", host)
 							break
 						
-						baseServer.log(1, "}}}}", self.addr, self.httpMessage)
+						baseServer.log(2, self.addr, self.httpMessage)
 						self.domainAnalysisAddData("connect", 1)
 						socetParser = None
 		
