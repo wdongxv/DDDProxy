@@ -33,7 +33,7 @@ class helpHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
 		pacAddrOrigin = "%s://%s/pac"%(self.request.protocol,self.request.host)
-		self.render("fq_temp.html", info="", pacAddr=pacAddrOrigin,pacAddrOrigin=pacAddrOrigin)
+		self.render("fq_temp.html", info="",remoteAddr=DDDProxyConfig.remoteServerHost, pacAddr=pacAddrOrigin,pacAddrOrigin=pacAddrOrigin)
 class adminHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
