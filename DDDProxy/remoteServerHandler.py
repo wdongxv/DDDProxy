@@ -76,7 +76,7 @@ class remoteServerHandler(ServerHandler):
 			# 连接原始服务器
 			self.method, path, protocol = self.httpMessage
 			if self.method:
-				baseServer.log(2, self.localProxyMark, [self.source_address,self.threadid],(self.method, path, protocol))
+				baseServer.log(2, self.localProxyMark, [self.source_address[0],self.threadid],(self.method, path, protocol))
 			if self.method == "CONNECT":
 				self.httpData = False
 				self.openOrignConn("https://" + path);
