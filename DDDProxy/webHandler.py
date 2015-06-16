@@ -18,6 +18,10 @@ class DDDProxyBaseHandler(BaseHandler):
 	def getRequestHost(self):
 		addrPort = parserUrlAddrPort(self.request.protocol + "://" + self.request.host);
 		return addrPort[0]
+	def finish(self, chunk=None):
+		BaseHandler.finish(self, chunk=chunk)
+		baseServer.log(2,self.request.remote_ip, (self.request.method,self.request.host,self.request.uri,self.request.headers["User-Agent"]),
+					(self._status_code,self._headers))
 	def get_template_path(self):
 		return "./template/";
 
@@ -25,7 +29,6 @@ class pacHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
 		self.set_header("Content-Type", "application/javascript")
-		baseServer.log(2,self.request.remote_ip, self.request)
 		self.render("pac.js", proxy_ddr="%s:%d" % (self.getRequestHost(), DDDProxyConfig.localServerProxyListenPort),
 				domainList=domainConfig.config.getDomainOpenedList())
 

@@ -58,7 +58,7 @@ class remoteServerHandler(ServerHandler):
 	
 	def sourceToServer(self):
 		try:
-			#接收消息头
+			# 接收消息头
 			socetParser = socetMessageParser()
 			hasData = False
 			for data in DDDProxySocketMessage.recv(self.localProxy):
@@ -73,10 +73,10 @@ class remoteServerHandler(ServerHandler):
 			if not hasData:
 				return False
 
-			#连接原始服务器
+			# 连接原始服务器
 			self.method, path, protocol = self.httpMessage
 			if self.method:
-				baseServer.log(2, "httpMessage", self.threadid, self.method, path, protocol)
+				baseServer.log(2, self.localProxyMark, (self.source_address, self.threadid), (self.method, path, protocol))
 			if self.method == "CONNECT":
 				self.httpData = False
 				self.openOrignConn("https://" + path);
@@ -91,7 +91,7 @@ class remoteServerHandler(ServerHandler):
 			
 			self.lock.put("ok")
 			
-			#转发原始请求到原始服务器
+			# 转发原始请求到原始服务器
 			for data in DDDProxySocketMessage.recv(self.localProxy):
 				self.orignConn.send(data);
 				self.markActive("localProxy recv")

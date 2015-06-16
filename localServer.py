@@ -23,6 +23,8 @@ import thread
 
 settings = {
 	"debug":False,
+	'gzip': True,
+	"autoreload":True
 }
 def printError():
 	logging.error(sys.exc_info())
