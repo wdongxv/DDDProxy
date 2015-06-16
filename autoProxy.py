@@ -62,7 +62,7 @@ def AutoGFWListThread():
 		except:
 			baseServer.log(3,"fetch gfw list error,retry in next %ds"%(retryTime))
 			time.sleep(retryTime)
-			retryTime += 2
+			retryTime *= 2
 			fecthUrl[1]+=1
 			continue
 		retryTime = 1
