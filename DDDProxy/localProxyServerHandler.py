@@ -148,7 +148,8 @@ class proxyServerHandler(ServerHandler):
 
 		baseServer.log(1, self.threadid, "..... threadid start")
 		self.connRemoteProxyServer()
-		DDDProxySocketMessage.sendOne(self.remoteSocket, "[%s,%s]" % (self.addr,self.threadid))
+		mark = "[%s,%s]" % (self.addr,self.threadid)
+		DDDProxySocketMessage.sendOne(self.remoteSocket,mark )
 		baseServer.log(1, self.threadid, "threadid mark")
 		thread.start_new_thread(self.sourceToServer, tuple())
 		threading.currentThread().name = "%s-%s-recv"%(self.threadid,self.addr)

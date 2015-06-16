@@ -26,7 +26,7 @@ remoteServerAuth = None
 #在此列表的host走代理时会被block，远程和本地服务都会做处理
 blockHost = ["10.0.1","192.168.1","127.0.0.1","localhost"]
 
-debuglevel = 1
+debuglevel = 2
 timeout = 600
 cacheSize = 1024 * 2
 
