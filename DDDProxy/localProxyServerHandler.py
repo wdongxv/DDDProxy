@@ -24,7 +24,7 @@ class proxyServerHandler(ServerHandler):
 		self.source = conn
 # 		self.source.settimeout(sendPack.timeout);
 		self.method = ""
-		self.threadid = "%s:%s"%(addr,threadid)
+		self.threadid = threadid
 		self.remoteSocket = None
 		self.httpMessage = ""
 		self.blockHost = DDDProxyConfig.blockHost
@@ -148,7 +148,7 @@ class proxyServerHandler(ServerHandler):
 
 		baseServer.log(1, self.threadid, "..... threadid start")
 		self.connRemoteProxyServer()
-		DDDProxySocketMessage.sendOne(self.remoteSocket, "[%s]" % (self.threadid))
+		DDDProxySocketMessage.sendOne(self.remoteSocket, "[%s,%s]" % (self.addr,self.threadid))
 		baseServer.log(1, self.threadid, "threadid mark")
 		thread.start_new_thread(self.sourceToServer, tuple())
 		threading.currentThread().name = "%s-%s-recv"%(self.threadid,self.addr)
