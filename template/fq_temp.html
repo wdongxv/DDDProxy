@@ -19,14 +19,16 @@ body {
 	margin-top: 50px;
 }
 
-.help p,.pacAddr {
+.help div {
 	line-height: 20px;
 	font-size: 13px;
+	margin: 1em 0;
+	display: inline-block;
 }
 
-.pacAddr {
+div.pacAddr {
 	margin: 0;
-	padding: 0 10px;
+	padding: 0 1em;
 	font-weight: bold;
 	color: #000;
 	display: inline-block;
@@ -43,7 +45,9 @@ body {
 		</div> -->
 		<div>
 			<h1>DDDProxy 安全代理服务</h1>
-			<p><a href="/admin">哪些地址需要翻墙？[管理网址]</a></p>
+			<p>
+				<a href="/admin">哪些地址需要翻墙？[管理网址]</a>
+			</p>
 			<p>
 				<!-- 本机设定：<span id="pacSetting">loading...</span>， -->
 				远程地址：{{remoteAddr}}，代理服务：<span id="proxyServerStatus">testing...</span>，远程服务：<span
@@ -51,30 +55,37 @@ body {
 			</p>
 		</div>
 		<div class="help">
-			<p>
-				【mac设置方法】<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“<span
-					class="pacAddr">{{pacAddr}}</span>”
-			</p>
-			<p>
-				【iPhone设置方法】<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
-					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“<span
-					class="pacAddr">{{pacAddr}}</span>”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
-			</p>
-			<p>
-				【windows设置方法】<br /> 打开IE，在菜单找到并打开“Internet
-				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“<span
-					class="pacAddr">{{pacAddr}}</span>”
-			</p>
+			<div>
+				> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
+				<div class="pacAddr">{{pacAddr}}</div>
+				”
+			</div>
+			<div>
+				> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
+					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“
+				<div class="pacAddr">{{pacAddr}}</div>
+				”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
+			</div>
+			<div>
+				> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
+				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“
+				<div class="pacAddr">{{pacAddr}}</div>
+				”
+			</div>
 		</div>
 		<div class="help">
-			<p>【其它帮助】在网址管理页面添加网站后：chrome请地址栏输入 chrome://net-internals/#proxy ，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成</p>
+			<div>
+				> 其它帮助<br>在网址管理页面添加网站后：chrome请地址栏输入
+				<div class="pacAddr">chrome://net-internals/#proxy</div>
+				，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
+			</div>
 		</div>
 		<div class="help" style="font-style: italic;">
-			<p>- 作者：dx.wang</p>
-			<p>
-				- E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a>
-			</p>
-			<p>- 项目首页：<a href="https://github.com/wdongxv/DDDProxy">https://github.com/wdongxv/DDDProxy</a></p>
+			<div>
+				- 作者：dx.wang<br />
+				- E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a><br />
+				- 项目首页：<a href="https://github.com/wdongxv/DDDProxy">https://github.com/wdongxv/DDDProxy</a>
+			</div>
 		</div>
 	</div>
 	<script src="/static/jquery.min.js"></script>
