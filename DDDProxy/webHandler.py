@@ -20,7 +20,8 @@ class DDDProxyBaseHandler(BaseHandler):
 		return addrPort[0]
 	def finish(self, chunk=None):
 		BaseHandler.finish(self, chunk=chunk)
-		baseServer.log(2,self.request.remote_ip, (self.request.method,self.request.host,self.request.uri,self.request.headers["User-Agent"]),
+		baseServer.log(2,self.request.remote_ip, (self.request.method,self.request.host,self.request.uri,
+				self.request.headers["User-Agent"] if "User-Agent" in self.request.headers else ""),
 					(self._status_code,self._headers))
 	def get_template_path(self):
 		return "./template/";
