@@ -29,7 +29,7 @@ class DDDProxyBaseHandler(BaseHandler):
 class pacHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
-		self.set_header("Content-Type", "application/javascript")
+		self.set_header("Content-Type", "application/x-ns-proxy-autoconfig")
 		self.render("pac.js", proxy_ddr="%s:%d" % (self.getRequestHost(), DDDProxyConfig.localServerProxyListenPort),
 				domainList=domainConfig.config.getDomainOpenedList())
 
