@@ -4,6 +4,10 @@
 E-Mail：wdongxv@gmail.com
 
 
+<h3>安装环境</h3>
+<pre>sudo python -c $(curl https://bootstrap.pypa.io/get-pip.py)
+sudo pip install gittornado</pre>
+
 <h3>主要有以下功能或特点</h3>
 *	私有的代理软件
 *	自动把被墙的网站走梯子（原理见：https://en.wikipedia.org/wiki/Proxy_auto-config ）
