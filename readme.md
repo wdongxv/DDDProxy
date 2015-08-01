@@ -5,8 +5,7 @@ E-Mail：wdongxv@gmail.com
 
 
 <h3>安装环境</h3>
-<pre>sudo python -c $(curl https://bootstrap.pypa.io/get-pip.py)
-sudo pip install gittornado</pre>
+<pre>sudo easy_install gittornado</pre>
 
 <h3>主要有以下功能或特点</h3>
 *	私有的代理软件
