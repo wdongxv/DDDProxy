@@ -7,6 +7,7 @@ import traceback
 import thread
 import struct
 import threading
+from DDDProxyConfig import mainThreadPool
 class baseServer(object):
 	def __init__(self, host, port, handler):
 		self.host = host
@@ -68,7 +69,8 @@ class baseServer(object):
 			try:
 				conn, addr = self.server.accept()  
 				threadid += 1
-				thread.start_new_thread(self.startNewThread, (conn, addr, threadid))  
+				mainThreadPool.callInThread(self.startNewThread, conn, addr, threadid)
+# 				thread.start_new_thread(self.startNewThread, (conn, addr, threadid))  
 			except KeyboardInterrupt:
 				break
 			except:
@@ -83,9 +85,12 @@ class baseServer(object):
 		self.server = None
 	def start(self,inThread=False):
 		time.sleep(2)
-		thread.start_new_thread(self.theardCloseManger, tuple())  
+		
+		mainThreadPool.callInThread(self.theardCloseManger)
+# 		thread.start_new_thread(self.theardCloseManger, tuple())  
 		if inThread:
-			thread.start_new_thread(self.serverListenStart, tuple())
+			mainThreadPool.callInThread(self.serverListenStart)
+# 			thread.start_new_thread(self.serverListenStart, tuple())
 		else:
 			self.serverListenStart()
 class DDDProxySocketMessage:

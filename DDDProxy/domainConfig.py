@@ -11,8 +11,8 @@ import traceback
 from DDDProxy import hostParser
 import thread
 from remoteServer import DDDProxyConfig
-from datetime import datetime
 import threading
+from DDDProxyConfig import mainThreadPool
 class domainConfig():
 	defaultDomainList = ["google.com","gstatic.com","googleusercontent.com","googleapis.com","googleusercontent.com",
 						"googlevideo.com","facebook.com","youtube.com","akamaihd.net","ytimg.com","twitter.com",
@@ -205,7 +205,8 @@ class domainAnalysis():
 		return {"list":domainDataList,"countData":countData}
 	@staticmethod
 	def startAnalysis():
-		thread.start_new_thread(analysis.analysisThread, tuple())
+		mainThreadPool.callInThread(analysis.analysisThread)
+# 		thread.start_new_thread(analysis.analysisThread, tuple())
 	def analysisThread(self):
 		threading.currentThread().name = "analysisDataThread"
 		while True:
@@ -245,6 +246,43 @@ class domainAnalysis():
 
 analysis = domainAnalysis()
 
+class settingConfig:
+	remoteServerKey = "remoteServer"
+	remoteServerList = "remoteServerList"
+	def __init__(self):
+		self.setting = None
+		try:
+			fp = file(DDDProxyConfig.settingConfigPath,"r")
+			self.setting = json.load(fp,object_hook = autoDataObject)
+			fp.close()
+		except:
+			pass
+		self.remoteServerHost = None if len(sys.argv) < 2 else sys.argv[1];
+		self.remoteServerAuth = None if len(sys.argv) < 3 else sys.argv[2];
+		self.remoteServerPort = 8083
+		if self.remoteServerHost and self.remoteServerHost.find(':') > 0:
+				self.remoteServerHost,self.remoteServerPort = self.remoteServerHost.split(':')
+		if not self.setting:
+			self.setting = {}
+	def __getitem__(self,k):
+		if k == settingConfig.remoteServerKey:
+			serverList = self.setting[settingConfig.remoteServerList]
+			if serverList and len(serverList):
+				server = serverList[0]
+				return (server["host"],server["port"],server["auth"])
+			if self.remoteServerHost and self.remoteServerPort and self.remoteServerAuth:
+				return (self.remoteServerHost,self.remoteServerPort,self.remoteServerAuth)
+			return (None,None,None)
+		return self.setting[k]
+	def __setitem__(self,k,v):
+		self.setting[k] = v;
+		self.save()
+	def save(self):
+		fp = file(DDDProxyConfig.settingConfigPath,"w")
+		json.dump(self.setting,fp)
+		fp.close()
+
+setting = settingConfig()
 
 if __name__ == "__main__":
 	ll = autoDataObject()

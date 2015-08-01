@@ -15,6 +15,8 @@ import struct
 import hashlib
 import thread
 import threading
+from DDDProxy.domainConfig import setting, settingConfig
+from DDDProxyConfig import mainThreadPool
 
 
 
@@ -38,6 +40,7 @@ class proxyServerHandler(ServerHandler):
 		return True
 	def sourceToServer(self):
 		baseServer.log(1, self.threadid, "}}}}", "<")
+		threading.currentThread().name = "%s-%s-send"%(self.threadid,self.addr)
 		try:
 			socetParser = socetMessageParser()
 			count = 0
@@ -84,13 +87,13 @@ class proxyServerHandler(ServerHandler):
 			pass
 		except:
 			baseServer.log(3, self.threadid, "}}}} error!")
-
 # 		sendPack.end(self.remoteSocket)
 		baseServer.log(1, self.threadid, "}}}}", ">")
 		
 		self.close()
 		
 	def serverToSource(self):
+		threading.currentThread().name = "%s-%s-recv"%(self.threadid,self.addr)
 		baseServer.log(1, self.threadid, "-<")
 		try:
 			count = 0
@@ -106,16 +109,18 @@ class proxyServerHandler(ServerHandler):
 		self.close()
 		
 	def connRemoteProxyServer(self):
-
-		DDDProxyConfig.fetchRemoteCert()
+		
+		host,port,auth = setting[settingConfig.remoteServerKey]
+		
+		DDDProxyConfig.fetchRemoteCert(host, port)
 		
 		self.remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath(),
+		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath(host,port),
 										 cert_reqs=ssl.CERT_REQUIRED)		
-		self.remoteSocket.connect((DDDProxyConfig.remoteServerHost, DDDProxyConfig.remoteServerListenPort))
+		self.remoteSocket.connect((host,port))
 		randomNum = math.floor(time.time())
 		self.remoteSocket.send(struct.pack("i", randomNum))
-		checkA = hashlib.md5("%s%d" % (DDDProxyConfig.remoteServerAuth, randomNum)).hexdigest()
+		checkA = hashlib.md5("%s%d" % (auth, randomNum)).hexdigest()
 		self.remoteSocket.send(checkA)
 		baseServer.log(1, self.threadid, checkA, randomNum)
 
@@ -151,7 +156,9 @@ class proxyServerHandler(ServerHandler):
 		mark = "[%s,%s]" % (self.addr,self.threadid)
 		DDDProxySocketMessage.sendOne(self.remoteSocket,mark )
 		baseServer.log(1, self.threadid, "threadid mark")
-		thread.start_new_thread(self.sourceToServer, tuple())
-		threading.currentThread().name = "%s-%s-recv"%(self.threadid,self.addr)
+		
+		mainThreadPool.callInThread(self.sourceToServer)
+# 		thread.start_new_thread(self.sourceToServer, tuple())
+		
 		self.serverToSource()
 		baseServer.log(1, self.threadid, "!!!!! threadid end")

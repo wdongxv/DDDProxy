@@ -20,6 +20,7 @@ import traceback
 import time
 import autoProxy
 import thread
+from DDDProxyConfig import mainThreadPool
 
 settings = {
 	"debug":False,
@@ -69,7 +70,8 @@ class statusPage(BaseHandler):
 		self.finish()
 	@tornado.web.asynchronous
 	def get(self):
-		thread.start_new_thread(self.getInThread, tuple())
+		mainThreadPool.callInThread(self.getInThread)
+# 		thread.start_new_thread(self.getInThread, tuple())
 class testPac(BaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
@@ -86,16 +88,6 @@ application = tornado.web.Application([
 ], **settings)
 
 if __name__ == '__main__':
-	remoteServerIp = None if len(sys.argv) < 2 else sys.argv[1];
-	DDDProxyConfig.remoteServerAuth = None if len(sys.argv) < 3 else sys.argv[2];
-	if not remoteServerIp or not DDDProxyConfig.remoteServerAuth:
-		exit("please use \"python localServer.py [remoteServerHost] [passWord]\"")
-	
-	if remoteServerIp:
-		if remoteServerIp.find(':') > 0:
-			DDDProxyConfig.remoteServerHost,DDDProxyConfig.remoteServerListenPort = remoteServerIp.split(':')
-		else:
-			DDDProxyConfig.remoteServerHost = remoteServerIp
 	try:
 		localProxyServer = baseServer(DDDProxyConfig.localServerListenIp, DDDProxyConfig.localServerProxyListenPort, proxyServerHandler)
 		localProxyServer.start(True)
