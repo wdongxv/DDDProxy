@@ -24,6 +24,17 @@ class domainConfig():
 		try:
 			fp = file(DDDProxyConfig.pacDomainConfig,"r")
 			self.domainList = json.load(fp)
+			
+			expireTime = time.time()-86400*30
+			for k,v in self.domainList.items():
+				if "formGwflist" not in v:
+					v["formGwflist"] = False
+				if "createTime" not in v:
+					v["createTime"] = time.time()
+				if "lastUpdateTime" not in v:
+					v["lastUpdateTime"] = time.time()
+				if v["formGwflist"] and v["lastUpdateTime"] < expireTime and v["open"]:
+					self.removeDomain(k)
 			fp.close()
 		except:
 			for domain in self.defaultDomainList:
@@ -65,16 +76,14 @@ class domainConfig():
 		if not domain in self.domainList:
 			self.domainList[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist,"createTime":time.time()}
 			return True
-		elif formGwflist:
+		else:
 			currentDomain = self.domainList[domain];
-			if "formGwflist" not in currentDomain:
-				currentDomain["formGwflist"] = False
-			if "createTime" not in currentDomain:
-				currentDomain["createTime"] = time.time()-3600*24*30
-				
-			if currentDomain["connectTimes"]==0 and currentDomain["formGwflist"] and time.time()-currentDomain["createTime"] > 3600*24*30:
-				currentDomain["open"] = False
-				return True
+			if formGwflist:
+				if currentDomain["connectTimes"]==0 and currentDomain["formGwflist"] and time.time()-currentDomain["createTime"] > 3600*24*30:
+					currentDomain["open"] = False
+					return True
+			else:
+				currentDomain["open"] = True
 			
 		return False
 	def domainConnectTimes(self,domain,times):
