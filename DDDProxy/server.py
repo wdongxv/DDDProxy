@@ -60,7 +60,9 @@ class baseServer(object):
 		while True:
 			for hand in self.theadList:
 				hand.requestClose()
-			time.sleep(60);
+			if len(mainThreadPool.waiters) > 10:
+				mainThreadPool.stopAWorker()
+			time.sleep(10);
 	def serverListenStart(self):
 		self.log(2, "Server Proess start!")
 		threading.currentThread().name = "socketServerThread"

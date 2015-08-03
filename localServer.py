@@ -33,10 +33,11 @@ def printError():
 	pass
 class statusPage(BaseHandler):
 	def getInThread(self):
-		opt = self.get_argument("opt",default="")
+		opt = self.get_argument("opt",default="status")
 		if opt:
 			opt = opt.encode("utf8")
-			
+		
+# 		threading.currentThread().name = "statusPage-%s"%(opt)
 		if opt == "remoteProxy":
 			status = "connected"
 			try:
@@ -58,15 +59,27 @@ class statusPage(BaseHandler):
 				response = conn.getresponse()
 				conn.close()
 			except:
+				printError()
 				status = "fail"
 			self.write({"status":status})
 		else:
-			currentThread = threading.enumerate()
-			threadList = []
-			for t in currentThread:
-				threadList.append({"name":t.name})
-			data={"threading:":threadList}
+			working = []
+			working.extend(t.name for t in mainThreadPool.working)
+			idle = []
+			idle.extend(t.name for t in mainThreadPool.waiters)
+			
+			data={
+				"count":{
+						"worker":len(mainThreadPool.working),
+						"idle":len(mainThreadPool.waiters)
+						},
+				"thread":{
+						"worker":working,
+						"idle":idle
+						}
+				}
 			self.write(data)
+# 		threading.currentThread().name = "statusPage-%s-idle"%(opt)
 		self.finish()
 	@tornado.web.asynchronous
 	def get(self):

@@ -266,14 +266,14 @@ class settingConfig:
 			self.setting = {}
 	def __getitem__(self,k):
 		if k == settingConfig.remoteServerKey:
-			serverList = self.setting[settingConfig.remoteServerList]
+			serverList = self[settingConfig.remoteServerList]
 			if serverList and len(serverList):
 				server = serverList[0]
 				return (server["host"],server["port"],server["auth"])
 			if self.remoteServerHost and self.remoteServerPort and self.remoteServerAuth:
 				return (self.remoteServerHost,self.remoteServerPort,self.remoteServerAuth)
 			return (None,None,None)
-		return self.setting[k]
+		return self.setting[k] if k in self.setting else None
 	def __setitem__(self,k,v):
 		self.setting[k] = v;
 		self.save()

@@ -48,7 +48,8 @@ a.pacAddr {
 			<p>
 				<!-- 本机设定：<span id="pacSetting">loading...</span>， -->
 				远程地址：{{remoteAddr}}，代理服务：<span id="proxyServerStatus">testing...</span>，远程服务：<span
-					id="remoteServerStatus">testing...</span>
+					id="remoteServerStatus">testing...</span>,状态：<span
+					id="status">loading...</span>
 			</p>
 		</div>
 		<div class="help">
@@ -138,7 +139,14 @@ a.pacAddr {
 			statusApi("remoteProxy", function(data) {
 				$("#remoteServerStatus").text(data["status"])
 			});
-
+			
+			var status = $("#status");
+			setInterval(function(){
+				statusApi("status",function(data){
+					var count = data.count;
+					status.text("thread("+count.worker+"/"+(count.worker+count.idle)+")")
+				})
+			},3000)
 			/* 			var data1 = "", data2 = "";
 			 function check() {
 			 if (data1 && data2) {

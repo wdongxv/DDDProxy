@@ -40,7 +40,7 @@ class proxyServerHandler(ServerHandler):
 		return True
 	def sourceToServer(self):
 		baseServer.log(1, self.threadid, "}}}}", "<")
-		threading.currentThread().name = "%s-%s-send"%(self.threadid,self.addr)
+		threading.currentThread().name = "worker%s-%s-send"%(self.threadid,self.addr)
 		try:
 			socetParser = socetMessageParser()
 			count = 0
@@ -58,7 +58,7 @@ class proxyServerHandler(ServerHandler):
 					if socetParser.messageStatus():
 						self.httpMessage = socetParser.httpMessage()
 						host, port = hostParser.parserUrlAddrPort(self.httpMessage[1] if self.httpMessage[0] != "CONNECT" else "https://" + self.httpMessage[1])
-						threading.currentThread().name = "%s-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
+						threading.currentThread().name = "worker%s-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
 						self.hostPort = (host, port)
 						
 						
@@ -88,12 +88,12 @@ class proxyServerHandler(ServerHandler):
 		except:
 			baseServer.log(3, self.threadid, "}}}} error!")
 # 		sendPack.end(self.remoteSocket)
+		threading.currentThread().name = "worker%s-IDLE-send"%(self.threadid)
 		baseServer.log(1, self.threadid, "}}}}", ">")
-		
 		self.close()
 		
 	def serverToSource(self):
-		threading.currentThread().name = "%s-%s-recv"%(self.threadid,self.addr)
+		threading.currentThread().name = "worker%s-%s-recv"%(self.threadid,self.addr)
 		baseServer.log(1, self.threadid, "-<")
 		try:
 			count = 0
@@ -105,6 +105,7 @@ class proxyServerHandler(ServerHandler):
 					count = 0
 		except:
 			pass
+		threading.currentThread().name = "worker%s-IDLE-recv"%(self.threadid)
 		baseServer.log(1, self.threadid, "->")
 		self.close()
 		

@@ -9,7 +9,7 @@ import os
 import ssl
 import threading
 from os.path import dirname
-from twisted.python import threadpool
+from twisted.python.threadpool import ThreadPool
 
 localServerProxyListenPort = 8080
 localServerAdminListenPort = 8081
@@ -31,7 +31,7 @@ cacheSize = 1024 * 2
 
 baseDir = dirname(__file__)
 
-mainThreadPool = threadpool.ThreadPool(maxthreads=100)
+mainThreadPool = ThreadPool(maxthreads=10000)
 mainThreadPool.start()
 def SSLLocalCertPath(remoteServerHost,remoteServerPort):
 	return baseDir+"/tmp/cert.%s-%d.pem"%(remoteServerHost,remoteServerPort)
