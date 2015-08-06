@@ -109,9 +109,7 @@ class proxyServerHandler(ServerHandler):
 		baseServer.log(1, self.threadid, "->")
 		self.close()
 		
-	def connRemoteProxyServer(self):
-		
-		host,port,auth = setting[settingConfig.remoteServerKey]
+	def connRemoteProxyServer(self,host,port,auth):
 		
 		DDDProxyConfig.fetchRemoteCert(host, port)
 		
@@ -153,7 +151,8 @@ class proxyServerHandler(ServerHandler):
 			return;
 
 		baseServer.log(1, self.threadid, "..... threadid start")
-		self.connRemoteProxyServer()
+		host,port,auth = setting[settingConfig.remoteServerKey]
+		self.connRemoteProxyServer(host,port,auth)
 		mark = "[%s,%s]" % (self.addr,self.threadid)
 		DDDProxySocketMessage.sendOne(self.remoteSocket,mark )
 		baseServer.log(1, self.threadid, "threadid mark")

@@ -35,13 +35,13 @@ mainThreadPool = ThreadPool(maxthreads=10000)
 mainThreadPool.start()
 def SSLLocalCertPath(remoteServerHost,remoteServerPort):
 	return baseDir+"/tmp/cert.%s-%d.pem"%(remoteServerHost,remoteServerPort)
-					
+
 SSLCertPath =  baseDir+"/tmp/cert.remote.pem"
 SSLKeyPath =  baseDir+"/tmp/key.remote.pem"
 
 pacDomainConfig =  baseDir+"/tmp/DDDProxy.domain.json"
 domainAnalysisConfig =  baseDir+"/tmp/DDDProxy.domainAnalysis.json"
-settingConfigPath =  baseDir+"/tmp/DDDProxy.domainAnalysis.json"
+settingConfigPath =  baseDir+"/tmp/DDDProxy.setting.json"
 
 createCertLock = 	threading.RLock()
 def fetchRemoteCert(remoteServerHost,remoteServerPort):

@@ -101,7 +101,7 @@ class DDDProxySocketMessage:
 		compressed = data#zlib.compress(data)
 		dataLength = len(compressed)
 		dataLengthPack = struct.pack("!i",dataLength)
-		conn.send(dataLengthPack+compressed)
+		return conn.send(dataLengthPack+compressed) - len(dataLengthPack)
 	@staticmethod
 	def recv(conn):
 		while True:
@@ -128,8 +128,9 @@ class DDDProxySocketMessage:
 		conn.send(struct.pack("!i",-1))
 	@staticmethod
 	def sendOne(conn,data):
-		DDDProxySocketMessage.send(conn, data)
+		length = DDDProxySocketMessage.send(conn, data)
 		DDDProxySocketMessage.end(conn)
+		return length
 	@staticmethod
 	def recvOne(conn):
 		value = ""

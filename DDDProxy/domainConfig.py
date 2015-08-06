@@ -264,14 +264,18 @@ class settingConfig:
 				self.remoteServerHost,self.remoteServerPort = self.remoteServerHost.split(':')
 		if not self.setting:
 			self.setting = {}
+		self.serverListLoop = 0
 	def __getitem__(self,k):
 		if k == settingConfig.remoteServerKey:
 			serverList = self[settingConfig.remoteServerList]
 			if serverList and len(serverList):
-				server = serverList[0]
-				return (server["host"],server["port"],server["auth"])
+				if self.serverListLoop>=len(serverList):
+					self.serverListLoop = 0;
+				server = serverList[self.serverListLoop]
+				self.serverListLoop+=1
+				return (server["host"],int(server["port"]) if server["port"] else 8083,server["auth"])
 			if self.remoteServerHost and self.remoteServerPort and self.remoteServerAuth:
-				return (self.remoteServerHost,self.remoteServerPort,self.remoteServerAuth)
+				return (self.remoteServerHost,int(self.remoteServerPort),self.remoteServerAuth)
 			return (None,None,None)
 		return self.setting[k] if k in self.setting else None
 	def __setitem__(self,k,v):

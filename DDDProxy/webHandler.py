@@ -50,7 +50,7 @@ class helpHandler(DDDProxyBaseHandler):
 			data = setting[settingConfig.remoteServerList]
 		elif opt=="setServerList":
 			setting[settingConfig.remoteServerList] = postJson["data"]
-			
+			data = {"status":"ok"}
 		self.write(json.dumps(data))
 		self.finish()
 	

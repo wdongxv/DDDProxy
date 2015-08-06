@@ -1,8 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>DDDProxy</title>
+<script src="/static/main.js"></script>
 <style type="text/css">
 body {
 	font-size: 12px;
@@ -30,6 +31,26 @@ a.pacAddr {
 	font-weight: bold;
 	color: #000;
 }
+
+#serverList {
+	width: 100%;
+}
+
+button {
+	padding: 0 20px;
+}
+
+div.domainLine {
+	margin: 5px 0;
+}
+
+.domainLine input {
+	margin: 0 5px 0 0;
+}
+
+.domainLine [name="port"] {
+	width: 40px;
+}
 </style>
 </head>
 <body>
@@ -45,12 +66,11 @@ a.pacAddr {
 			<p>
 				<a href="/admin">哪些地址需要翻墙？[管理网址]</a>
 			</p>
-			<p>
-				<!-- 本机设定：<span id="pacSetting">loading...</span>， -->
-				远程地址：{{remoteAddr}}，代理服务：<span id="proxyServerStatus">testing...</span>，远程服务：<span
-					id="remoteServerStatus">testing...</span>,状态：<span
-					id="status">loading...</span>
-			</p>
+
+		</div>
+		<div class="help">
+			<div id="serverList"></div>
+			<button id="saveServerButton">保存</button>
 		</div>
 		<div class="help">
 			<div>
@@ -73,9 +93,14 @@ a.pacAddr {
 		</div>
 		<div class="help">
 			<div>
-				> 其它帮助<br>在网址管理页面添加网站后：chrome请地址栏输入
-				<a class="pacAddr" href="chrome://net-internals/#proxy">chrome://net-internals/#proxy</a>
+				> 其它帮助<br>在网址管理页面添加网站后：chrome请地址栏输入 <a class="pacAddr"
+					href="chrome://net-internals/#proxy">chrome://net-internals/#proxy</a>
 				，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
+			</div>
+			<div>
+				<p>
+					进程池：<span id="status">loading...</span>
+				</p>
 			</div>
 		</div>
 		<div class="help" style="font-style: italic;">
@@ -90,79 +115,194 @@ a.pacAddr {
 	<script src="{{pacAddrOrigin}}"></script>
 
 	<script type="text/javascript">
-		function statusApi(opt, callback) {
-			var xhr = new XMLHttpRequest();
-			xhr.open("GET", "/status?opt=" + opt, true);
-			xhr.onreadystatechange = function(e) {
-				if (xhr.readyState == 4) {
-					var json = {};
-					try {
-						if (xhr.status == 200)
-							json = JSON.parse(xhr.responseText);
-					} catch (e) {
+		(function() {
+			function statusApi(opt, callback) {
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "/status?opt=" + opt, true);
+				xhr.onreadystatechange = function(e) {
+					if (xhr.readyState == 4) {
+						var json = {};
+						try {
+							if (xhr.status == 200)
+								json = JSON.parse(xhr.responseText);
+						} catch (e) {
+						}
+						callback(json);
 					}
-					callback(json);
-				}
-			};
-			xhr.send();
-		}
-		function dnsDomainIs(a, b) {
-			a = "." + a;
-			var search = a.search(b);
-			if (search >= 0) {
-				return true;
-			} else {
-
+				};
+				xhr.send();
 			}
-		}
-		function shExpMatch(a, b) {
-			var search = a.search(b);
-			if (search >= 0) {
-				return true;
-			} else {
+			function dnsDomainIs(a, b) {
+				a = "." + a;
+				var search = a.search(b);
+				if (search >= 0) {
+					return true;
+				} else {
 
-			}
-		}
-		function httpapi(url, callback) {
-			$.ajax({
-				"url" : url,
-				"complete" : function(data, status, xhr) {
-					callback(data.responseText);
 				}
-			});
-		}
-		$(document).ready(function() {
+			}
+			function shExpMatch(a, b) {
+				var search = a.search(b);
+				if (search >= 0) {
+					return true;
+				} else {
 
-			statusApi("testProxy", function(data) {
-				$("#proxyServerStatus").text(data["status"])
-			});
-			statusApi("remoteProxy", function(data) {
-				$("#remoteServerStatus").text(data["status"])
-			});
+				}
+			}
+			function makeDomainHtml(host, port, auth, id) {
+				if (!id)
+					id = ""
+				var h = "";
+				h += "<input value='"+host+"' name='host' placeholder='host'/>"
+				h += "<input value='"+port+"' name='port' placeholder='port'/>"
+				h += "<input value='"+auth+"' name='auth' placeholder='auth'/>"
+				h += "<span class='status'></span>"
+				return "<div class='domainLine "+id+"'>" + h + "</div>"
+			}
+
+			var saveServerButton = $("#saveServerButton");
+			saveServerButton.hide();
+			var serverList = $("#serverList")
+			function getInputLineData(lineDom) {
+				var input = $(lineDom).find("input")
+				var line = {}
+				var isOk = false;
+				for (var j = 0; j < input.length; j++) {
+					var v = input[j]
+					line[v.name] = v.value
+					if (v.value)
+						isOk = true;
+				}
+				if (isOk)
+					return line;
+				return null;
+			}
+			function getInputDataList() {
+				var list = []
+				var domainLineList = serverList.find(".domainLine")
+				for (var i = 0; i < domainLineList.length; i++) {
+					var line = getInputLineData(domainLineList[i])
+					if (line)
+						list.push(line)
+				}
+				return list;
+			}
+			saveServerButton.click(function() {
+				if (saveServerButton.hasClass("saving"))
+					return;
+				var list = getInputDataList()
+				saveServerButton.text("保存中...")
+				saveServerButton.addClass("saving")
+				proxyapi("setServerList", {
+					"data" : list
+				}, function(data) {
+					saveServerButton.removeClass("saving")
+					saveServerButton.text("保存");
+					if (data.status == "ok")
+						saveServerButton.hide();
+				});
+			})
 			
-			var status = $("#status");
-			setInterval(function(){
-				statusApi("status",function(data){
-					var count = data.count;
-					status.text("thread("+count.worker+"/"+(count.worker+count.idle)+")")
+			var doCheckTimer = null
+			function connectCheck() {
+				function doCheck() {
+					var domainLineList = serverList.find(".domainLine")
+					for (var i = 0; i < domainLineList.length; i++) {
+						(function(lineDom) {
+							var line = getInputLineData(lineDom)
+							if(!line)
+								return
+							var status = $(lineDom).find(".status")
+							var linejs = JSON.stringify(line);
+							if (linejs!=status.attr("linejs")) {
+								status.text("testting")
+								status.attr("linejs",linejs)
+								statusApi("remoteProxy&host="+line.host+"&port="+line.port+"&auth="+line.auth, function(data) {
+									status.text(data["status"])
+								});
+							}
+						})(domainLineList[i]);
+					}
+				}
+				if(doCheckTimer)
+					clearTimeout(doCheckTimer)
+				doCheckTimer = setTimeout(doCheck, 2000);
+			}
+
+			function domainListChangedHandler() {
+				var domainLineList = serverList.find(".domainLine")
+				var newLine = [], errorLine = [];
+				var allLineOk = true
+				for (var i = 0; i < domainLineList.length; i++) {
+					var line = $(domainLineList[i])
+					var data = line.find("[name='host'],[name='auth']")
+					var host = data[0].value, auth = data[1].value;
+					if (!host && !auth)
+						newLine.push(line)
+					else if (!host || !auth) {
+						errorLine.push(auth)
+					}
+				}
+				for (var i = 0;; i++) {
+					if (i >= newLine.length) {
+						break;
+					} else if (i < newLine.length - 1) {
+						newLine[i].remove();
+					} else {
+						var d = newLine[i];
+						(errorLine.length > 0) ? d.hide() : d.show()
+					}
+				}
+				(errorLine.length > 0) ? saveServerButton.hide()
+						: saveServerButton.show()
+				if (!newLine.length && !errorLine.length) {
+					serverList.append(makeDomainHtml("", "", ""))
+					bindInputKey();
+				}
+				connectCheck();
+			}
+			function bindInputKey() {
+				var inputList = serverList.find("[name='host'],[name='auth']");
+				inputList.keyup(domainListChangedHandler)
+			}
+			function getServerList() {
+				proxyapi("serverList", null, function(data) {
+					if (!data) {
+						data = [];
+					}
+					var html = "";
+					for (var i = 0; i < data.length; i++) {
+						var domain = data[i]
+						html += makeDomainHtml(domain.host, domain.port,
+								domain.auth);
+					}
+					html += makeDomainHtml("", "", "");
+					serverList.html(html)
+					bindInputKey();
+					connectCheck()
 				})
-			},3000)
-			/* 			var data1 = "", data2 = "";
-			 function check() {
-			 if (data1 && data2) {
-			 $("#testProxy").text(data1 === data2 ? "未生效" : "生效");
-			 }
-			 }
-			 httpapi("/ip", function(dataa) {
-			 data1 = dataa;
-			 $("#real_ip").text(dataa);
-			 check();
-			 });
-			 httpapi("/ip?get_real_ip_p.php", function(datab) {
-			 data2 = datab;
-			 check();
-			 }); */
-		});
+			}
+			$(document).ready(
+					function() {
+
+						/* 			statusApi("remoteProxy", function(data) {
+										$("#remoteServerStatus").text(data["status"])
+									}); */
+
+						var status = $("#status");
+						setInterval(function() {
+							statusApi("status", function(data) {
+								var count = data.count;
+								status.text("thread(" + count.worker + "/"
+										+ (count.worker + count.idle) + ")")
+							})
+						}, 1000)
+						/* 			statusApi("testProxy", function(data) {
+										$("#proxyServerStatus").text(data["status"])
+									}); */
+						getServerList();
+					});
+		})();
 	</script>
 </body>
 </html>
