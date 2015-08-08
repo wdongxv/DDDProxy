@@ -148,20 +148,6 @@ $(document).ready(function(){
 		/* obj[0].charts = charts; */
 
 	}
-	
-	function IntToDataCount(dataCount,jinzhi){
-		if(!jinzhi)
-			jinzhi = 1024.0;
-		var unit = 0;
-		while (dataCount>jinzhi){
-			dataCount = dataCount/jinzhi;
-			unit++;
-		}
-		var units = ["B","K","M","G","T"];
-		var list = (""+dataCount).split(".")
-		
-		return (list.length>1?(list[0]+'.'+list[1].substr(0,1)):list[0])+units[unit];
-	}
 
 	function echoName(domain,  status, times,index) {
 		var statusStr = (status == 1 ? 'close' : 'open')

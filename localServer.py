@@ -23,14 +23,15 @@ import thread
 from DDDProxyConfig import mainThreadPool
 
 settings = {
-	"debug":False,
+	"debug":True,
 	'gzip': True,
-	"autoreload":True
+	'autoreload':True
 }
 def printError():
 	logging.error(sys.exc_info())
 	logging.error(traceback.format_exc())
 	pass
+localProxyServer = None
 class statusPage(BaseHandler):
 	def getInThread(self):
 		opt = self.get_argument("opt",default="status")
@@ -61,41 +62,42 @@ class statusPage(BaseHandler):
 			self.write({"status":status})
 		elif opt == "pac_setting_test_local":
 			self.write({"status":"fail"})
-# 		elif opt == "testProxy":
-# 			status = "ok"
-# 			try:
-# 				conn = httplib.HTTPConnection(host='127.0.0.1',port=DDDProxyConfig.localServerProxyListenPort,timeout=10)
-# 				conn.connect()
-# 				conn.request("GET", "http://www.baidu.com/",headers={})
-# 				response = conn.getresponse()
-# 				conn.close()
-# 			except:
-# 				printError()
-# 				status = "fail"
-# 			self.write({"status":status})
 		else:
 			working = []
 			working.extend(t.name for t in mainThreadPool.working)
 			idle = []
 			idle.extend(t.name for t in mainThreadPool.waiters)
 			
+			connectList = {}
+			for handler in localProxyServer.theadList:
+				try:
+					addrList = None
+					if handler.addr in connectList:
+						addrList = connectList[handler.addr]
+					else:
+						connectList[handler.addr] = addrList = []
+					addrList.append([handler.httpMessage[1] if (type(handler.httpMessage) == tuple and len(handler.httpMessage)>2) else handler.httpMessage,
+									handler.remoteServer,
+									handler.dataCountSend,
+									handler.dataCountRecv])
+				except:
+					printError()
 			data={
 				"count":{
 						"worker":len(mainThreadPool.working),
 						"idle":len(mainThreadPool.waiters)
 						},
 				"thread":{
-						"worker":working,
-						"idle":idle
+# 						"worker":working,
+# 						"idle":idle
+						"connect":connectList
 						}
 				}
 			self.write(data)
-# 		threading.currentThread().name = "statusPage-%s-idle"%(opt)
 		self.finish()
 	@tornado.web.asynchronous
 	def get(self):
 		mainThreadPool.callInThread(self.getInThread)
-# 		thread.start_new_thread(self.getInThread, tuple())
 class testPac(BaseHandler):
 	@tornado.web.asynchronous
 	def get(self):

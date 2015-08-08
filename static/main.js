@@ -22,3 +22,16 @@ function proxyapi(opt, data, callback) {
 	}
 	xhr.send(JSON.stringify(post));
 }
+function IntToDataCount(dataCount,jinzhi){
+	if(!jinzhi)
+		jinzhi = 1024.0;
+	var unit = 0;
+	while (dataCount>jinzhi){
+		dataCount = dataCount/jinzhi;
+		unit++;
+	}
+	var units = ["B","K","M","G","T"];
+	var list = (""+dataCount).split(".")
+	
+	return (list.length>1?(list[0]+'.'+list[1].substr(0,1)):list[0])+units[unit];
+}

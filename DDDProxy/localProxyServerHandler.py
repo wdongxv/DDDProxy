@@ -31,6 +31,9 @@ class proxyServerHandler(ServerHandler):
 		self.httpMessage = ""
 		self.blockHost = DDDProxyConfig.blockHost
 		self.hostPort = None
+		self.remoteServer = ""
+		self.dataCountSend = 0
+		self.dataCountRecv = 0
 	def info(self):
 		return "%s	%s" % (ServerHandler.info(self), self.httpMessage)
 	def domainAnalysisAddData(self,dataType,length):
@@ -49,7 +52,9 @@ class proxyServerHandler(ServerHandler):
 				if not tmp:
 					break
 				baseServer.log(1, "}}}}", tmp)
-				count += len(tmp);
+				length = len(tmp)
+				self.dataCountSend += length;
+				count += length;
 				DDDProxySocketMessage.send(self.remoteSocket, tmp)
 				
 				#以下数据是为了时统计用
@@ -100,7 +105,9 @@ class proxyServerHandler(ServerHandler):
 			for data in DDDProxySocketMessage.recv(self.remoteSocket):
 				self.source.send(data)
 				self.markActive()
-				count += len(data)
+				length = len(data)
+				self.dataCountRecv += length
+				count += length
 				if self.domainAnalysisAddData("outgoing", count):
 					count = 0
 		except:
@@ -110,7 +117,7 @@ class proxyServerHandler(ServerHandler):
 		self.close()
 		
 	def connRemoteProxyServer(self,host,port,auth):
-		
+		self.remoteServer = host
 		DDDProxyConfig.fetchRemoteCert(host, port)
 		
 		self.remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

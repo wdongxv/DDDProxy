@@ -18,11 +18,11 @@ body {
 .help {
 	color: #555;
 	margin-top: 50px;
-}
-
-.help div {
 	line-height: 20px;
 	font-size: 13px;
+}
+
+.help .part{
 	margin: 1em 0;
 	display: inline-block;
 }
@@ -51,16 +51,27 @@ div.domainLine {
 .domainLine [name="port"] {
 	width: 40px;
 }
+
+#connectList .client{
+	width: 100%;
+	word-break: break-all;
+}
+#connectList .client div{
+	display: inline-block;
+	margin:0 1em 0.5em 0;
+	padding: 0 1em;
+}
+#connectList .clientAddr{
+	background: #e0e0e0;
+	color: #fff;
+}
+#connectList .connect{
+background: #f8f8f8;
+}
 </style>
 </head>
 <body>
-	<div style="width: 100%; max-width: 600px; margin: 0 auto;">
-
-		<!-- 		<div class="info_block" style="width: 100%;">
-			<input id='url' value="http://www.facebook.com" style="width:50%;max-width: 500px;"></input><input
-				id="test" type="button" value="Test url for proxy"></input>
-			<p id="output"></p>
-		</div> -->
+	<div style="width: 80%; max-width: 1024px; min-width: 240px;margin: 0 auto;">
 		<div>
 			<h1>DDDProxy 安全代理服务</h1>
 			<p>
@@ -73,7 +84,7 @@ div.domainLine {
 			<button id="saveServerButton">保存</button>
 		</div>
 		<div class="help">
-			<div>
+			<div class="part">
 				自动代理地址：<a class="pacAddr" href="{{pacAddr}}">{{pacAddr}}</a>
 			</div>
 			<div>
@@ -99,8 +110,9 @@ div.domainLine {
 			</div>
 			<div>
 				<p>
-					进程池：<span id="status">loading...</span>
+					> 进程池：<span id="status">loading...</span>
 				</p>
+				<p id="connectList"></p>
 			</div>
 		</div>
 		<div class="help" style="font-style: italic;">
@@ -284,25 +296,33 @@ div.domainLine {
 			}
 			$(document).ready(
 					function() {
-
-						/* 			statusApi("remoteProxy", function(data) {
-										$("#remoteServerStatus").text(data["status"])
-									}); */
-
 						var status = $("#status");
 						setInterval(function() {
 							statusApi("status", function(data) {
 								var count = data.count;
 								status.text("thread(" + count.worker + "/"
-										+ (count.worker + count.idle) + ")")
+										+ (count.worker + count.idle) + ")");
+								var connectList = data.thread.connect
+								var html = "";
+								for(var i in connectList){
+									html += "<div class='client'>";
+									html += "<div class='clientAddr'>"+i+"</div>"
+									
+									var remoteConnectList = connectList[i];
+									for (var j = 0; j < remoteConnectList.length; j++) {
+										var connect = remoteConnectList[j]
+										html += "<div class='connect' title='"+connect[1]+"'>"+connect[0]+" ↾"+IntToDataCount(connect[2])+" ⇃"+IntToDataCount(connect[3])+"</div>"
+									}
+									html += "</div>"
+								}
+								$("#connectList").html(html);
 							})
-						}, 1000)
-						/* 			statusApi("testProxy", function(data) {
-										$("#proxyServerStatus").text(data["status"])
-									}); */
+						}, 2000)
 						getServerList();
 					});
 		})();
+		
+		
 	</script>
 </body>
 </html>
