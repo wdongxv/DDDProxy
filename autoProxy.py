@@ -13,6 +13,7 @@ from DDDProxy import domainConfig
 import time
 import logging
 from DDDProxy.server import baseServer
+from DDDProxyConfig import mainThreadPool
 
 gfwListFetchUrl = [
 		#[url,retryTimes]
@@ -62,7 +63,7 @@ def AutoGFWListThread():
 		except:
 			baseServer.log(3,"fetch gfw list error,retry in next %ds"%(retryTime))
 			time.sleep(retryTime)
-			retryTime += 2
+			retryTime *= 2
 			fecthUrl[1]+=1
 			continue
 		retryTime = 1
@@ -72,4 +73,5 @@ def AutoGFWListThread():
 		domainConfig.config.save()
 		time.sleep(3600*24)
 def AutoFetchGFWList():
-	thread.start_new_thread(AutoGFWListThread, tuple())
+	mainThreadPool.callInThread(AutoGFWListThread)
+# 	thread.start_new_thread(AutoGFWListThread, tuple())

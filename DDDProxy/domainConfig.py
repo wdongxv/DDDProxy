@@ -11,8 +11,8 @@ import traceback
 from DDDProxy import hostParser
 import thread
 from remoteServer import DDDProxyConfig
-from datetime import datetime
 import threading
+from DDDProxyConfig import mainThreadPool
 class domainConfig():
 	defaultDomainList = ["google.com","gstatic.com","googleusercontent.com","googleapis.com","googleusercontent.com",
 						"googlevideo.com","facebook.com","youtube.com","akamaihd.net","ytimg.com","twitter.com",
@@ -24,6 +24,17 @@ class domainConfig():
 		try:
 			fp = file(DDDProxyConfig.pacDomainConfig,"r")
 			self.domainList = json.load(fp)
+			
+			expireTime = time.time()-86400*30
+			for k,v in self.domainList.items():
+				if "formGwflist" not in v:
+					v["formGwflist"] = False
+				if "createTime" not in v:
+					v["createTime"] = time.time()
+				if "lastUpdateTime" not in v:
+					v["lastUpdateTime"] = time.time()
+				if v["formGwflist"] and v["lastUpdateTime"] < expireTime and v["open"]:
+					self.removeDomain(k)
 			fp.close()
 		except:
 			for domain in self.defaultDomainList:
@@ -63,8 +74,17 @@ class domainConfig():
 		return False
 	def addDomain(self,domain,formGwflist = False):
 		if not domain in self.domainList:
-			self.domainList[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist}
+			self.domainList[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist,"createTime":time.time()}
 			return True
+		else:
+			currentDomain = self.domainList[domain];
+			if formGwflist:
+				if currentDomain["connectTimes"]==0 and currentDomain["formGwflist"] and time.time()-currentDomain["createTime"] > 3600*24*30:
+					currentDomain["open"] = False
+					return True
+			else:
+				currentDomain["open"] = True
+			
 		return False
 	def domainConnectTimes(self,domain,times):
 		if domain in self.domainList:
@@ -185,7 +205,8 @@ class domainAnalysis():
 		return {"list":domainDataList,"countData":countData}
 	@staticmethod
 	def startAnalysis():
-		thread.start_new_thread(analysis.analysisThread, tuple())
+		mainThreadPool.callInThread(analysis.analysisThread)
+# 		thread.start_new_thread(analysis.analysisThread, tuple())
 	def analysisThread(self):
 		threading.currentThread().name = "analysisDataThread"
 		while True:
@@ -225,6 +246,47 @@ class domainAnalysis():
 
 analysis = domainAnalysis()
 
+class settingConfig:
+	remoteServerKey = "remoteServer"
+	remoteServerList = "remoteServerList"
+	def __init__(self):
+		self.setting = None
+		try:
+			fp = file(DDDProxyConfig.settingConfigPath,"r")
+			self.setting = json.load(fp,object_hook = autoDataObject)
+			fp.close()
+		except:
+			pass
+		self.remoteServerHost = None if len(sys.argv) < 2 else sys.argv[1];
+		self.remoteServerAuth = None if len(sys.argv) < 3 else sys.argv[2];
+		self.remoteServerPort = 8083
+		if self.remoteServerHost and self.remoteServerHost.find(':') > 0:
+				self.remoteServerHost,self.remoteServerPort = self.remoteServerHost.split(':')
+		if not self.setting:
+			self.setting = {}
+		self.serverListLoop = 0
+	def __getitem__(self,k):
+		if k == settingConfig.remoteServerKey:
+			serverList = self[settingConfig.remoteServerList]
+			if serverList and len(serverList):
+				if self.serverListLoop>=len(serverList):
+					self.serverListLoop = 0;
+				server = serverList[self.serverListLoop]
+				self.serverListLoop+=1
+				return (server["host"],int(server["port"]) if server["port"] else 8083,server["auth"])
+			if self.remoteServerHost and self.remoteServerPort and self.remoteServerAuth:
+				return (self.remoteServerHost,int(self.remoteServerPort),self.remoteServerAuth)
+			return (None,None,None)
+		return self.setting[k] if k in self.setting else None
+	def __setitem__(self,k,v):
+		self.setting[k] = v;
+		self.save()
+	def save(self):
+		fp = file(DDDProxyConfig.settingConfigPath,"w")
+		json.dump(self.setting,fp)
+		fp.close()
+
+setting = settingConfig()
 
 if __name__ == "__main__":
 	ll = autoDataObject()

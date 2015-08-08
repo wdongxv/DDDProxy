@@ -15,6 +15,8 @@ import struct
 import hashlib
 import thread
 import threading
+from DDDProxy.domainConfig import setting, settingConfig
+from DDDProxyConfig import mainThreadPool
 
 
 
@@ -29,6 +31,9 @@ class proxyServerHandler(ServerHandler):
 		self.httpMessage = ""
 		self.blockHost = DDDProxyConfig.blockHost
 		self.hostPort = None
+		self.remoteServer = ""
+		self.dataCountSend = 0
+		self.dataCountRecv = 0
 	def info(self):
 		return "%s	%s" % (ServerHandler.info(self), self.httpMessage)
 	def domainAnalysisAddData(self,dataType,length):
@@ -38,6 +43,7 @@ class proxyServerHandler(ServerHandler):
 		return True
 	def sourceToServer(self):
 		baseServer.log(1, self.threadid, "}}}}", "<")
+		threading.currentThread().name = "worker%s-%s-send"%(self.threadid,self.addr)
 		try:
 			socetParser = socetMessageParser()
 			count = 0
@@ -46,7 +52,9 @@ class proxyServerHandler(ServerHandler):
 				if not tmp:
 					break
 				baseServer.log(1, "}}}}", tmp)
-				count += len(tmp);
+				length = len(tmp)
+				self.dataCountSend += length;
+				count += length;
 				DDDProxySocketMessage.send(self.remoteSocket, tmp)
 				
 				#以下数据是为了时统计用
@@ -55,7 +63,7 @@ class proxyServerHandler(ServerHandler):
 					if socetParser.messageStatus():
 						self.httpMessage = socetParser.httpMessage()
 						host, port = hostParser.parserUrlAddrPort(self.httpMessage[1] if self.httpMessage[0] != "CONNECT" else "https://" + self.httpMessage[1])
-						threading.currentThread().name = "%d-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
+						threading.currentThread().name = "worker%s-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
 						self.hostPort = (host, port)
 						
 						
@@ -73,7 +81,7 @@ class proxyServerHandler(ServerHandler):
 							baseServer.log(2, self.threadid, "block", host)
 							break
 						
-						baseServer.log(1, "}}}}", self.addr, self.httpMessage)
+						baseServer.log(2, self.addr, self.httpMessage)
 						self.domainAnalysisAddData("connect", 1)
 						socetParser = None
 		
@@ -84,38 +92,41 @@ class proxyServerHandler(ServerHandler):
 			pass
 		except:
 			baseServer.log(3, self.threadid, "}}}} error!")
-
 # 		sendPack.end(self.remoteSocket)
+		threading.currentThread().name = "worker%s-IDLE-send"%(self.threadid)
 		baseServer.log(1, self.threadid, "}}}}", ">")
-		
 		self.close()
 		
 	def serverToSource(self):
+		threading.currentThread().name = "worker%s-%s-recv"%(self.threadid,self.addr)
 		baseServer.log(1, self.threadid, "-<")
 		try:
 			count = 0
 			for data in DDDProxySocketMessage.recv(self.remoteSocket):
 				self.source.send(data)
 				self.markActive()
-				count += len(data)
+				length = len(data)
+				self.dataCountRecv += length
+				count += length
 				if self.domainAnalysisAddData("outgoing", count):
 					count = 0
 		except:
 			pass
+		threading.currentThread().name = "worker%s-IDLE-recv"%(self.threadid)
 		baseServer.log(1, self.threadid, "->")
 		self.close()
 		
-	def connRemoteProxyServer(self):
-
-		DDDProxyConfig.fetchRemoteCert()
+	def connRemoteProxyServer(self,host,port,auth):
+		self.remoteServer = host
+		DDDProxyConfig.fetchRemoteCert(host, port)
 		
 		self.remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath(),
+		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath(host,port),
 										 cert_reqs=ssl.CERT_REQUIRED)		
-		self.remoteSocket.connect((DDDProxyConfig.remoteServerHost, DDDProxyConfig.remoteServerListenPort))
+		self.remoteSocket.connect((host,port))
 		randomNum = math.floor(time.time())
 		self.remoteSocket.send(struct.pack("i", randomNum))
-		checkA = hashlib.md5("%s%d" % (DDDProxyConfig.remoteServerAuth, randomNum)).hexdigest()
+		checkA = hashlib.md5("%s%d" % (auth, randomNum)).hexdigest()
 		self.remoteSocket.send(checkA)
 		baseServer.log(1, self.threadid, checkA, randomNum)
 
@@ -147,10 +158,14 @@ class proxyServerHandler(ServerHandler):
 			return;
 
 		baseServer.log(1, self.threadid, "..... threadid start")
-		self.connRemoteProxyServer()
-		DDDProxySocketMessage.sendOne(self.remoteSocket, "[%d]" % (self.threadid))
+		host,port,auth = setting[settingConfig.remoteServerKey]
+		self.connRemoteProxyServer(host,port,auth)
+		mark = "[%s,%s]" % (self.addr,self.threadid)
+		DDDProxySocketMessage.sendOne(self.remoteSocket,mark )
 		baseServer.log(1, self.threadid, "threadid mark")
-		thread.start_new_thread(self.sourceToServer, tuple())
-		threading.currentThread().name = "%d-%s-recv"%(self.threadid,self.addr)
+		
+		mainThreadPool.callInThread(self.sourceToServer)
+# 		thread.start_new_thread(self.sourceToServer, tuple())
+		
 		self.serverToSource()
 		baseServer.log(1, self.threadid, "!!!!! threadid end")

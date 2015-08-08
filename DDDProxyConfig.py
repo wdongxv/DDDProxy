@@ -9,13 +9,11 @@ import os
 import ssl
 import threading
 from os.path import dirname
+from twisted.python.threadpool import ThreadPool
 
 localServerProxyListenPort = 8080
 localServerAdminListenPort = 8081
 localServerListenIp = "0.0.0.0"
-
-
-remoteServerHost = None
 
 
 remoteServerListenPort = 8083
@@ -26,30 +24,32 @@ remoteServerAuth = None
 #在此列表的host走代理时会被block，远程和本地服务都会做处理
 blockHost = ["10.0.1","192.168.1","127.0.0.1","localhost"]
 
-debuglevel = 1
+debuglevel = 2
 timeout = 600
 cacheSize = 1024 * 2
 
 
 baseDir = dirname(__file__)
 
-def SSLLocalCertPath():
-	return baseDir+"/tmp/cert."+remoteServerHost+".pem"
-					
+mainThreadPool = ThreadPool(maxthreads=10000)
+mainThreadPool.start()
+def SSLLocalCertPath(remoteServerHost,remoteServerPort):
+	return baseDir+"/tmp/cert.%s-%d.pem"%(remoteServerHost,remoteServerPort)
+
 SSLCertPath =  baseDir+"/tmp/cert.remote.pem"
 SSLKeyPath =  baseDir+"/tmp/key.remote.pem"
 
 pacDomainConfig =  baseDir+"/tmp/DDDProxy.domain.json"
-
 domainAnalysisConfig =  baseDir+"/tmp/DDDProxy.domainAnalysis.json"
+settingConfigPath =  baseDir+"/tmp/DDDProxy.setting.json"
 
 createCertLock = 	threading.RLock()
-def fetchRemoteCert():
+def fetchRemoteCert(remoteServerHost,remoteServerPort):
 	createCertLock.acquire()
 	try:
-		if not os.path.exists(SSLLocalCertPath()):
-			cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerListenPort))
-			open(SSLLocalCertPath(), "wt").write(cert)
+		if not os.path.exists(SSLLocalCertPath(remoteServerHost,remoteServerPort)):
+			cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerPort))
+			open(SSLLocalCertPath(remoteServerHost,remoteServerPort), "wt").write(cert)
 	except:
 		pass
 	createCertLock.release()
