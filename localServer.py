@@ -23,9 +23,9 @@ import thread
 from DDDProxyConfig import mainThreadPool
 
 settings = {
-	"debug":True,
+# 	"debug":True,
 	'gzip': True,
-	'autoreload':True
+# 	'autoreload':True
 }
 def printError():
 	logging.error(sys.exc_info())
