@@ -16,7 +16,7 @@ body {
 }
 
 .help {
-	color: #555;
+	color: #333;
 	margin-top: 50px;
 	line-height: 20px;
 	font-size: 13px;
@@ -57,16 +57,16 @@ div.domainLine {
 	word-break: break-all;
 }
 #connectList .client div{
-	display: inline-block;
-	margin:0 1em 0.5em 0;
+	display: block;
 	padding: 0 1em;
 }
 #connectList .clientAddr{
 	background: #e0e0e0;
 	color: #fff;
+	margin-top: 1em;
 }
 #connectList .connect{
-background: #f8f8f8;
+	background: #f8f8f8;
 }
 </style>
 </head>
@@ -311,7 +311,7 @@ background: #f8f8f8;
 									var remoteConnectList = connectList[i];
 									for (var j = 0; j < remoteConnectList.length; j++) {
 										var connect = remoteConnectList[j]
-										html += "<div class='connect' title='"+connect[1]+"'>"+connect[0]+" ↾"+IntToDataCount(connect[2])+" ⇃"+IntToDataCount(connect[3])+"</div>"
+										html += "<div class='connect' title='"+connect[1]+"'>↾"+IntToDataCount(connect[2])+"&emsp;⇃"+IntToDataCount(connect[3])+"&emsp;"+connect[0]+"</div>"
 									}
 									html += "</div>"
 								}
