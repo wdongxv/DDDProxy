@@ -57,7 +57,7 @@ def fetchRemoteCert(remoteServerHost,remoteServerPort):
 def createSSLCert():
 	createCertLock.acquire()
 	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
-		shell = "openssl req -new -newkey rsa:1024 -days 3650 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=dddproxy\" -keyout %s  -out %s"%(
+		shell = "openssl req -new -newkey rsa:1024 -days 3650 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=ddd\" -keyout %s  -out %s"%(
 																							SSLKeyPath,SSLCertPath)
 		os.system(shell)
 

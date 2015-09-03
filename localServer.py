@@ -14,12 +14,7 @@ from DDDProxy.localProxyServerHandler import proxyServerHandler
 import sys
 from DDDProxy import domainConfig
 from gittornado import BaseHandler
-import threading
-import httplib
 import traceback
-import time
-import autoProxy
-import thread
 from DDDProxyConfig import mainThreadPool
 
 settings = {
