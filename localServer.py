@@ -136,4 +136,7 @@ if __name__ == '__main__':
 # 	autoProxy.AutoFetchGFWList()
 	baseServer.log(2, "pac server start on %s:%d!" % (DDDProxyConfig.localServerListenIp, DDDProxyConfig.localServerAdminListenPort));
 	application.listen(DDDProxyConfig.localServerAdminListenPort, DDDProxyConfig.localServerListenIp)
-	tornado.ioloop.IOLoop.instance().start()
+# 	tornado.ioloop.IOLoop.instance().start()
+	
+	
+	
