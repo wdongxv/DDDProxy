@@ -13,6 +13,7 @@ import sys
 import traceback
 import DDDProxyConfig
 import thread
+from DDDProxyConfig import mainThreadPool
 
 	
 class remoteServerHandler(ServerHandler):  
@@ -158,8 +159,8 @@ class remoteServerHandler(ServerHandler):
 			if self.check():
 				self.localProxyMark = DDDProxySocketMessage.recvOne(self.localProxy);
 				baseServer.log(1, self.threadid, "self.localProxyMark", self.localProxyMark)
-				
-				thread.start_new_thread(self.sourceToServer, tuple())
+				mainThreadPool.callInThread(self.sourceToServer)
+# 				thread.start_new_thread(self.sourceToServer, tuple())
 				self.serverToSource()
 		except:
 			baseServer.log(3)

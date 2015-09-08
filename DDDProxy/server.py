@@ -7,6 +7,7 @@ import traceback
 import thread
 import struct
 import threading
+from DDDProxyConfig import mainThreadPool
 class baseServer(object):
 	def __init__(self, host, port, handler):
 		self.host = host
@@ -59,7 +60,9 @@ class baseServer(object):
 		while True:
 			for hand in self.theadList:
 				hand.requestClose()
-			time.sleep(60);
+			if len(mainThreadPool.waiters) > 10:
+				mainThreadPool.stopAWorker()
+			time.sleep(10);
 	def serverListenStart(self):
 		self.log(2, "Server Proess start!")
 		threading.currentThread().name = "socketServerThread"
@@ -68,7 +71,8 @@ class baseServer(object):
 			try:
 				conn, addr = self.server.accept()  
 				threadid += 1
-				thread.start_new_thread(self.startNewThread, (conn, addr, threadid))  
+				mainThreadPool.callInThread(self.startNewThread, conn, addr, threadid)
+# 				thread.start_new_thread(self.startNewThread, (conn, addr, threadid))  
 			except KeyboardInterrupt:
 				break
 			except:
@@ -83,9 +87,12 @@ class baseServer(object):
 		self.server = None
 	def start(self,inThread=False):
 		time.sleep(2)
-		thread.start_new_thread(self.theardCloseManger, tuple())  
+		
+		mainThreadPool.callInThread(self.theardCloseManger)
+# 		thread.start_new_thread(self.theardCloseManger, tuple())  
 		if inThread:
-			thread.start_new_thread(self.serverListenStart, tuple())
+			mainThreadPool.callInThread(self.serverListenStart)
+# 			thread.start_new_thread(self.serverListenStart, tuple())
 		else:
 			self.serverListenStart()
 class DDDProxySocketMessage:
@@ -94,7 +101,7 @@ class DDDProxySocketMessage:
 		compressed = data#zlib.compress(data)
 		dataLength = len(compressed)
 		dataLengthPack = struct.pack("!i",dataLength)
-		conn.send(dataLengthPack+compressed)
+		return conn.send(dataLengthPack+compressed) - len(dataLengthPack)
 	@staticmethod
 	def recv(conn):
 		while True:
@@ -121,8 +128,9 @@ class DDDProxySocketMessage:
 		conn.send(struct.pack("!i",-1))
 	@staticmethod
 	def sendOne(conn,data):
-		DDDProxySocketMessage.send(conn, data)
+		length = DDDProxySocketMessage.send(conn, data)
 		DDDProxySocketMessage.end(conn)
+		return length
 	@staticmethod
 	def recvOne(conn):
 		value = ""

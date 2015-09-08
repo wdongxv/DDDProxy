@@ -12,6 +12,7 @@ from DDDProxy import domainConfig
 from DDDProxy.hostParser import parserUrlAddrPort, getDomainName
 import json
 from DDDProxy.server import baseServer
+from DDDProxy.domainConfig import setting, settingConfig
 
 class DDDProxyBaseHandler(BaseHandler):
 	
@@ -29,7 +30,7 @@ class DDDProxyBaseHandler(BaseHandler):
 class pacHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
-		self.set_header("Content-Type", "application/javascript")
+		self.set_header("Content-Type", "application/x-ns-proxy-autoconfig")
 		self.render("pac.js", proxy_ddr="%s:%d" % (self.getRequestHost(), DDDProxyConfig.localServerProxyListenPort),
 				domainList=domainConfig.config.getDomainOpenedList())
 
@@ -37,7 +38,22 @@ class helpHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
 		pacAddrOrigin = "%s://%s/pac"%(self.request.protocol,self.request.host)
-		self.render("fq_temp.html", info="",remoteAddr=DDDProxyConfig.remoteServerHost, pacAddr=pacAddrOrigin,pacAddrOrigin=pacAddrOrigin)
+		remoteServerHost,remoteServerPort,auth = setting[settingConfig.remoteServerKey]
+		self.render("fq_temp.html", info="",
+				remoteAddr=remoteServerHost, pacAddr=pacAddrOrigin,pacAddrOrigin=pacAddrOrigin)
+	@tornado.web.asynchronous
+	def post(self):
+		postJson = json.loads(self.request.body)
+		data = {}
+		opt = postJson["opt"]
+		if opt=="serverList":
+			data = setting[settingConfig.remoteServerList]
+		elif opt=="setServerList":
+			setting[settingConfig.remoteServerList] = postJson["data"]
+			data = {"status":"ok"}
+		self.write(json.dumps(data))
+		self.finish()
+	
 class adminHandler(DDDProxyBaseHandler):
 	@tornado.web.asynchronous
 	def get(self):
