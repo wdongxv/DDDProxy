@@ -11,8 +11,8 @@ import time
 import traceback
 import select
 import signal
+import ssl
 
-bufferSize = 1024
 debuglevel = 2
 
 class sockConnect(object):
@@ -69,9 +69,9 @@ class sockConnect(object):
 	def fileno(self):
 		return self._fileno
 	def send(self,data):
-		if data and len(data)>bufferSize:
-			self.dataSendList.append(data[:bufferSize])
-			self.send(data[bufferSize:])
+		if data and len(data)>1024:
+			self.dataSendList.append(data[:1024])
+			self.send(data[1024:])
 		else:
 			self.dataSendList.append(data)
 	def onConnected(self):
@@ -182,10 +182,26 @@ class baseServer():
 			
 	def onData(self,sock):
 		data = None
+		
 		try:
-			data = sock.recv(bufferSize)
+			data = sock.recv(1024)
+		except ssl.SSLError as e:
+			if isinstance(e, ssl.SSLWantReadError):
+				return
+			else:
+				baseServer.log(3)
 		except:
 			baseServer.log(3)
+		
+		
+		if isinstance(sock, ssl.SSLSocket):
+			while 1:
+				data_left = sock.pending()
+				if data_left:
+					data += sock.recv(data_left)
+				else:
+					break
+		
 		if data:
 			if sock in self.socketList:
 				handler = self.socketList[sock]
