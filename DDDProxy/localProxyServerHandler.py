@@ -98,10 +98,11 @@ class localProxyServerConnectHandler(sockConnect):
 		
 # 		connection = self.messageParse.getHeader("connection")
 		
+		baseServer.log(1,self,code,ContentType,httpMessage)
+		
 		httpMessage += "\r\n"
 		httpMessage += data
 		
-		baseServer.log(1,self,code,ContentType,httpMessage)
 		self.send(httpMessage)
 	
 	def getFileContent(self,name):
