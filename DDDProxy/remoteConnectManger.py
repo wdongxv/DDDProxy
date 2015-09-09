@@ -22,7 +22,6 @@ class remoteServerConnectLocalHander(remoteServerConnect):
 		self.authCallbackList = []
 		self.authPass = False
 		
-
 	def onOpt(self, connectId, opt):
 		if opt == remoteServerConnect.optAuthOK:
 			if connectId == -1:
@@ -30,6 +29,7 @@ class remoteServerConnectLocalHander(remoteServerConnect):
 					self.server.addCallback(cb,connect=self)
 				self.authCallbackList = []
 				self.authPass = True
+				self.connectName = "remote:"+self.address[0]
 		elif opt == remoteServerConnect.optAuthError:
 			self.close()
 # 		elif opt == remoteServerConnect.optCloseConnect:
@@ -91,7 +91,7 @@ class remoteConnectManger():
 		@return: remoteServerConnectLocalHander
 		"""
 		connect = self.getConnectWithLoop()
-		if self.count() < 10:
+		if self.count() < 5:
 			host,port,auth = settingConfig.setting(settingConfig.remoteServerKey)
 			if host and auth and self.fetchRemoteCert(host, port):
 				try:
@@ -99,8 +99,9 @@ class remoteConnectManger():
 						sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM), 
 						ca_certs	=	self.SSLLocalCertPath(host,port),
 						cert_reqs	=	ssl.CERT_REQUIRED)		
-					connect = remoteServerConnectLocalHander(self.server)
 					remoteSocket.connect((host,port))
+					
+					connect = remoteServerConnectLocalHander(self.server)
 					connect.connect(remoteSocket,(host,port))
 					connect.auth(auth)
 					connect.addAuthCallback(self.onConnectAuth)

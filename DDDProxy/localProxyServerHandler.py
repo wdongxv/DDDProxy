@@ -30,6 +30,8 @@ class localProxyServerConnectHandler(sockConnect):
 			self.remoteConnect.removeAllCallback(self.fileno())
 		sockConnect.onClose(self)
 	def onRecv(self, data):
+		sockConnect.onRecv(self, data)
+		
 		self.recvCache += data
 		if self.mode == "proxy":
 			if self.remoteConnect and self.recvCache:
@@ -39,6 +41,7 @@ class localProxyServerConnectHandler(sockConnect):
 		if self.messageParse.appendData(data):
 			method = self.messageParse.method()
 			path = self.messageParse.path()
+			self.connectName = method+" "+path
 			if not path.startswith("http://") and method in ["GET","POST"]:
 				path = path.split("?")
 				self.onHTTP(self.messageParse.headers,
@@ -67,7 +70,7 @@ class localProxyServerConnectHandler(sockConnect):
 		connect.setRecvCallback(self.fileno(), self.send)
 		self.remoteConnect = connect
 		self.onRecv("");
-		
+		self.connectName += str(connect)
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
 		if self.mode == "http":
@@ -141,7 +144,15 @@ class localProxyServerConnectHandler(sockConnect):
 			content = content.replace("{{proxy_ddr}}",self.messageParse.getHeader("host"))
 			self.reseponse(content)
 		elif path == "/api_status":
-			self.reseponse({})
+			connects = {}
+			for handler in self.server.socketList.values():
+				connect = handler.address[0]
+				if not connect in connects:
+					connects[connect] = []
+				info = {"name":str(handler),"id":handler.fileno()}
+				info.update(handler.info)
+				connects[connect].append(info)
+			self.reseponse({"connect":connects})
 		else:
 			if path == "/":
 				path = "/index.html"

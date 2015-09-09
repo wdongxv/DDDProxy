@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 import select
+import signal
 
 bufferSize = 1024
 debuglevel = 2
@@ -21,14 +22,17 @@ class sockConnect(object):
 	def __init__(self,server):
 		self.server = server
 		self.info = {
-					"startTime":time.time()
+					"startTime":time.time(),
+					"send":0,
+					"recv":0
 					}
 		self.sock = None
 		self.address = (None,None)
 		self.dataSendList = []
 		self._fileno = None
+		self.connectName = ""
 	def __str__(self, *args, **kwargs):
-		return ""+str(self.address)
+		return self.connectName if self.connectName else  str(self.address)
 	def connect(self,sock,address):
 		"""
 		@param address: 仅记录
@@ -59,14 +63,18 @@ class sockConnect(object):
 		return self._fileno
 	def send(self,data):
 		if data and len(data)>bufferSize:
+			self.info["send"] += bufferSize
 			self.dataSendList.append(data[:bufferSize])
 			self.send(data[bufferSize:])
 		else:
+			if data:
+				self.info["send"] += len(data)
 			self.dataSendList.append(data)
 	def onConnected(self):
 		pass
 	def onRecv(self,data):
-		pass
+		self.info["recv"] += len(data)
+		
 	def onSend(self,data):
 		self.sock.send(data)
 	def onClose(self):
@@ -129,6 +137,7 @@ class baseServer():
 		else:
 			logging.log([logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][level], data)
 	def start(self):
+		
 		while True:
 			rlist = self.serverList + self.socketList.keys()
 			wlist = []
@@ -142,15 +151,7 @@ class baseServer():
 				else:
 					self.onData(sock)
 			for sock in writable:
-				if sock in self.socketList:
-					connect = self.socketList[sock]
-					data = connect.dataSendList.pop(0)
-					if data:
-# 						baseServer.log(2,"onSend",sock.fileno(),connect,data)
-						connect.onSend(data)
-					else:
-						sock.close()
-						self.onExcept(sock)
+				self.onSend(sock)
 			for sock in exceptional:
 				self.onExcept(sock)
 				
@@ -164,13 +165,29 @@ class baseServer():
 		connect,address = sock.accept()
 		connect.setblocking(0)
 		self.handleNewConnect(connect,address)
-		
+	def onSend(self,sock):
+		if sock in self.socketList:
+			connect = self.socketList[sock]
+			data = connect.dataSendList.pop(0)
+			if data:
+				try:
+					connect.onSend(data)
+					return
+				except:
+					baseServer.log(3)
+			sock.close()
+			self.onExcept(sock)
+			
 	def onData(self,sock):
-		data = sock.recv(bufferSize)
+		data = None
+		try:
+			data = sock.recv(bufferSize)
+		except:
+			baseServer.log(3)
 		if data:
-			handler = self.socketList[sock]
-# 			baseServer.log(2,"onData",sock.fileno(),handler)
-			handler.onRecv(data)
+			if sock in self.socketList:
+				handler = self.socketList[sock]
+				handler.onRecv(data)
 		else:
 			self.onExcept(sock)
 	def onExcept(self,sock):

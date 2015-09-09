@@ -70,6 +70,7 @@ class realServerConnect(sockConnect):
 		"""
 		从真实服务器到本机
 		"""
+		sockConnect.onRecv(self, data)
 		self.handler.sendData(self.connectId,data)
 	def onlocalRecv(self,data):
 		self.dataCache += data
@@ -141,6 +142,7 @@ class remoteServerConnect(sockConnect,messageHandler):
 			self.send(d)
 			
 	def onRecv(self,data):
+		sockConnect.onRecv(self, data)
 		self.appendData(data)
 		
 	def authMake(self,auth,timenum):
