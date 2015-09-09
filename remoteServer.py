@@ -22,7 +22,7 @@ if __name__ == "__main__":
 		print parser.get_usage()
 		exit()
 		
-	baseServer.debuglevel = startUpArgs.loglevel
+	baseServer.debuglevel = int(startUpArgs.loglevel)
 		
 	remoteServerHandler.createSSLCert()
 	

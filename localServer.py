@@ -20,7 +20,7 @@ if __name__ == "__main__":
 	
 	startUpArgs = parser.parse_args()[0]
 	
-	baseServer.debuglevel = startUpArgs.loglevel
+	baseServer.debuglevel = int(startUpArgs.loglevel)
 	
 	server = baseServer.baseServer(handler=localProxyServerConnectHandler)
 	remoteConnectManger.install(server)
