@@ -7,14 +7,12 @@ Created on 2015年9月6日
 import threading
 import os
 import ssl
-from DDDProxy2.settingConfig import settingConfig
+from settingConfig import settingConfig
 import socket
-from DDDProxy2.remoteServerHandler import remoteServerConnect
-from DDDProxy2.baseServer import baseServer
+from remoteServerHandler import remoteServerConnect
+from baseServer import baseServer
 import math
 import time
-import struct
-import hashlib
 
 createCertLock = threading.RLock()
 

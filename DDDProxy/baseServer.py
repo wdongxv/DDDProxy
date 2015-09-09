@@ -43,10 +43,11 @@ class sockConnect(object):
 			s.connect(addr)
 			s.setblocking(0)
 			self.connect(s, address)
+			return True
 		except:
 			baseServer.log(3,address)
 			self.server.addCallback(self.onClose)
-	
+		return False
 	def _setConnect(self,sock,address):
 		"""
 		@type sock: _socketobject
