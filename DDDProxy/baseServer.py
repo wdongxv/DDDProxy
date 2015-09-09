@@ -11,7 +11,7 @@ import time
 import traceback
 import select
 
-
+bufferSize = 1024
 debuglevel = 2
 
 class sockConnect(object):
@@ -58,7 +58,11 @@ class sockConnect(object):
 	def fileno(self):
 		return self._fileno
 	def send(self,data):
-		self.dataSendList.append(data)
+		if len(data)>bufferSize:
+			self.dataSendList.append(data[:bufferSize])
+			self.send(data[bufferSize:])
+		else:
+			self.dataSendList.append(data)
 	def onConnected(self):
 		pass
 	def onRecv(self,data):
@@ -164,7 +168,7 @@ class baseServer():
 		self.handleNewConnect(connect,address)
 		
 	def onData(self,sock):
-		data = sock.recv(1024)
+		data = sock.recv(bufferSize)
 		if data:
 			handler = self.socketList[sock]
 # 			baseServer.log(2,"onData",sock.fileno(),handler)
