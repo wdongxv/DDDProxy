@@ -45,13 +45,14 @@ class sockConnect(object):
 		"""
 		self.address = address
 		self.sock = sock
+		sock.setblocking(False)
 		self.server.addSockConnect(self)
 	def connectWithAddress(self,address):
 		try:
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			addr = (socket.gethostbyname(address[0]),address[1])
 			s.connect(addr)
-			s.setblocking(0)
+			s.setblocking(False)
 			self.connect(s, address)
 			return True
 		except:
@@ -108,7 +109,7 @@ class baseServer():
 
 		self.serverList.append(server)
 	def addSockListen(self,sock):
-		sock.setblocking(0)
+		sock.setblocking(False)
 		self.serverList.append(sock)
 		
 	def addSockConnect(self,connect):
