@@ -33,7 +33,10 @@ class settingConfig(configFile):
 		return configFile.__getitem__(self, k)
 	
 	@staticmethod
-	def setting():
+	def setting(key,value=None):
+		global mainSetting
 		if not mainSetting:
 			mainSetting = settingConfig()
-		return mainSetting
+		if value:
+			mainSetting[key] = value
+		return mainSetting[key]

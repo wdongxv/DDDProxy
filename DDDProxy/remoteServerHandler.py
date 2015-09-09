@@ -1,172 +1,193 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from DDDProxy.server import ServerHandler, baseServer, DDDProxySocketMessage
-import ssl
-import Queue
-import struct
 import hashlib
+import math
+import struct
 import time
-from DDDProxy import hostParser
+
+from baseServer import baseServer
+from baseServer import sockConnect
+from socetMessageParser import httpMessageParser
+import os
+import ssl
 import socket
-from DDDProxy.socetMessageParser import socetMessageParser
-import sys
-import traceback
-import DDDProxyConfig
-import thread
-from DDDProxyConfig import mainThreadPool
+from hostParser import parserUrlAddrPort
 
-	
-class remoteServerHandler(ServerHandler):  
-	def __init__(self, conn, addr, threadid):
-		super(remoteServerHandler, self).__init__(conn, addr, threadid)
-		
-		DDDProxyConfig.createSSLCert()
-		
-		self.localProxy = ssl.wrap_socket(conn, certfile=DDDProxyConfig.SSLCertPath,
-										keyfile=DDDProxyConfig.SSLKeyPath, server_side=True)
-		self.threadid = threadid
-		self.source_address = addr
-		self.orignConn = None
-		self.KeepAlive = False
-		self.method = "GET"
-		self.httpMessage = ""
-		
-		self.lock = Queue.Queue()
+remoteAuth = "1"
 
-		self.localProxyMark = ""
-
-		self.httpData = True
-		
-	def info(self):
-		return "%s->%s	%s" % (self.localProxyMark, ServerHandler.info(self), self.httpMessage)
-	def check(self):
-		timeNumber = struct.unpack("i", self.localProxy.recv(4))[0]
-		
-		checkA = self.localProxy.recv(32)
-		checkB = hashlib.md5("%s%d" % (DDDProxyConfig.remoteServerAuth, timeNumber)).hexdigest()
-		timeRange = 3600
-		baseServer.log(1, self.threadid, "check:", checkA, checkB, timeNumber, timeRange, time.time())
-		if timeNumber < time.time() - timeRange or timeNumber > time.time() + timeRange or checkA != checkB:
-			return False
-		return True
-	def openOrignConn(self, path):
-		if self.orignConn is not None:
-			return
-		addr, port = hostParser.parserUrlAddrPort(path)
-		ip = socket.gethostbyname(addr)
-		self.orignConn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.orignConn.connect((ip, port))
-	
-	def sourceToServer(self):
-		try:
-			# 接收消息头
-			socetParser = socetMessageParser()
-			hasData = False
-			for data in DDDProxySocketMessage.recv(self.localProxy):
-				baseServer.log(1, self.threadid, ">>>>>", data, len(data))
-				socetParser.putMessage(data)
-				if socetParser.messageStatus():
-					self.httpMessage = socetParser.httpMessage()
-					hasData = True
-					break;
-				self.markActive("recv header")
-			
-			if not hasData:
-				return False
-
-			# 连接原始服务器
-			self.method, path, protocol = self.httpMessage
-			if self.method:
-				baseServer.log(2, self.localProxyMark, [self.source_address[0],self.threadid],(self.method, path, protocol))
-			if self.method == "CONNECT":
-				self.httpData = False
-				self.openOrignConn("https://" + path);
-				baseServer.log(1, self.threadid, "CONNECT ", path)
-				DDDProxySocketMessage.send(self.localProxy, "HTTP/1.1 200 OK\r\n\r\n")
+class messageHandler:
+	_headSize = struct.calcsize("iH")
+	def __init__(self):
+		self.buffer = ""
+	def onMessage(self,connectId,data):
+		raise NotImplementedError()
+	def onOpt(self,connectId,opt):
+		raise NotImplementedError()
+	def appendData(self, data):
+		self.buffer += data
+		while True:
+			bufferLen = len(self.buffer)
+			_headSize = messageHandler._headSize
+			if bufferLen >= _headSize:
+				connectId,dataSize = struct.unpack("ih",self.buffer[:_headSize])
+				if dataSize>0:
+					endIndex = dataSize+_headSize
+					if bufferLen > endIndex:
+						dataMessage = self.buffer[_headSize:endIndex]
+						self.buffer = self.buffer[endIndex+1:]
+						self.onMessage(connectId, dataMessage)
+					else:
+						break
+				else:
+					self.buffer = self.buffer[_headSize+1:]
+					self.onOpt(connectId, dataSize)
 			else:
-				self.httpData = True
-				baseServer.log(1, self.threadid, ">>>>>", "openOrignConn")
-				self.openOrignConn(path);
-				baseServer.log(1, self.threadid, ">>>>>", socetParser.messageData())
-				self.orignConn.send(socetParser.messageData())
-			
-			self.lock.put("ok")
-			
-			# 转发原始请求到原始服务器
-			for data in DDDProxySocketMessage.recv(self.localProxy):
-				self.orignConn.send(data);
-				self.markActive("localProxy recv")
-
-			self.close()
-			return True
-		except:
-			baseServer.log(3, self.threadid, "sourceToServer error!!!")
-		self.lock.put("error")
-		self.close()
-		return False
-	def serverToSource(self):
-		error = False
-		baseServer.log(1, self.threadid, "----", "<")
-		if self.lock.get() == "ok":
-			try:
-				count = 0;
-				while True:
-					if self.orignConn is None:
-						break
-					baseServer.log(1, self.threadid, "orignConn", "recv")
-					tmp = self.orignConn.recv(DDDProxyConfig.cacheSize)
-					if not tmp:
-						break
-					count += len(tmp)
-					baseServer.log(1, self.threadid, "localProxy", "send", tmp)
-					DDDProxySocketMessage.send(self.localProxy, tmp)
-					baseServer.log(1, self.threadid, "localProxy", "send", "end")
-					self.markActive("orignConn recv")
-			except socket.timeout:
-				pass
-			except:
-				baseServer.log(3, self.threadid, "serverToSource error!!!")
-				error = True
-		baseServer.log(1, self.threadid, "----", ">")
-		return not error
+				break	
 	
-	def close(self):
-
-		try:
-			if self.orignConn:
-				self.orignConn.shutdown(0)
-			self.orignConn = None
-		except:
-			pass
+	def optChunk(self,connectId,opt):
+		return struct.pack("i", connectId)+struct.pack("h", opt) +"\n"
+	
+	def dataChunk(self,connectId,data):
+		l = len(data)
+		if l > 32767:  #分块
+			yield self.sendData(connectId, data[:32767])
+			yield self.sendData(connectId, data[32767:])
+		else:
+			yield struct.pack("i", connectId)+struct.pack("h", l) +data+"\n"
 		
-		try:
-			if self.localProxy:
-				DDDProxySocketMessage.end(self.localProxy)
-		except:
-			pass
+class realServerConnect(sockConnect):
+	def __init__(self, handler,connectId):
+		sockConnect.__init__(self, handler.server)
+		self.handler = handler
+		self.connectId = connectId
 		
-		try:
-			if self.localProxy:
-				self.localProxy.shutdown(0)
-			self.localProxy = None
-		except:
-			pass
+		self.messageParse = httpMessageParser()
+		self.dataCache = ""
 		
-		self.lock.put("close")
-
-	def run(self):
-		try:
-			if self.check():
-				self.localProxyMark = DDDProxySocketMessage.recvOne(self.localProxy);
-				baseServer.log(1, self.threadid, "self.localProxyMark", self.localProxyMark)
-				mainThreadPool.callInThread(self.sourceToServer)
-# 				thread.start_new_thread(self.sourceToServer, tuple())
-				self.serverToSource()
-		except:
-			baseServer.log(3)
-		self.close()
+		self.closeCallbackList = []
 		
-		baseServer.log(1, self.threadid, "!!!!! threadid end")
+	def onRecv(self,data):
+		"""
+		从真实服务器到本机
+		"""
+		self.handler.sendData(self.connectId,data)
+	def onlocalRecv(self,data):
+		self.dataCache += data
+		if self.sock:
+			if self.dataCache:
+				self.send(self.dataCache)
+				self.dataCache = ""
+			return
+		if self.messageParse.appendData(data):
+			method = self.messageParse.method()
+			path = self.messageParse.path()
+			address = None
+			if method == "connect":
+				address = parserUrlAddrPort("https://"+path)
+				self.dataCache = self.messageParse.getBody()
+			else:
+				address = parserUrlAddrPort(path)
+			self.connectWithAddress(address)
+			self.onlocalRecv("")
+	def onClose(self):
+		while len(self.closeCallbackList):
+			self.server.addCallback(self.closeCallbackList.pop(0),self)
+		sockConnect.onClose(self)
 		
-	def error(self):
-		pass
+class remoteServerConnect(sockConnect,messageHandler):
+	optCloseConnect = -1
+	optAuthOK = -2
+	optAuthError = -3
+	
+	def __init__(self, server, *args, **kwargs):
+		sockConnect.__init__(self, server, *args, **kwargs)
+		messageHandler.__init__(self)
+		self.recvCallback = {}
+		self.connectCloseCallback = {}
+	def setConnectCloseCallBack(self,connectid,cb):
+		self.connectCloseCallback[connectid] = cb
+	def setRecvCallback(self,connectId,callback):
+		self.recvCallback[connectId] = callback
+	def removeAllCallback(self,connectId):
+		if connectId in self.recvCallback:
+			del self.recvCallback[connectId]
+		if connectId in self.connectCloseCallback:
+			del self.connectCloseCallback[connectId]
+	
+	
+	def onClose(self):
+		for connectId,cb in self.connectCloseCallback.items():
+			cb(self)
+		self.connectCloseCallback = {}
+		self.recvCallback = {}
+	def onMessage(self,connectId,data):
+		cb = self.recvCallback[connectId] if connectId in self.recvCallback else None
+		if cb:
+			cb(data)
+		else:
+			self.sendOpt(connectId, remoteServerConnect.optCloseConnect)
+	def onOpt(self,connectId,opt):
+		if opt==remoteServerConnect.optCloseConnect:
+			if connectId in self.connectCloseCallback:
+				self.connectCloseCallback[connectId](self)
+				del self.connectCloseCallback[connectId]
+	def sendOpt(self,connectId,opt):
+		self.send(self.optChunk(connectId, opt))
+	def sendData(self,connectId,data):
+		for d in self.dataChunk(connectId, data):
+			self.send(d)
+			
+	def onRecv(self,data):
+		self.appendData(data)
+		
+	def authMake(self,auth,timenum):
+		return struct.pack("i", timenum)+hashlib.md5("%s%d" % (auth, timenum)).hexdigest()
+	
+class remoteConnectServerHandler(remoteServerConnect):  
+	def __init__(self, *args, **kwargs):
+		remoteServerConnect.__init__(self, *args, **kwargs)
+		self.realConnectList = {}
+		self.authPass = False
+	def onRealConnectClose(self,connect):
+		"""
+		@param connect:realServerConnect 
+		"""
+		self.sendOpt(connect.connectId, remoteServerConnect.optCloseConnect)
+		if connect.connectId in self.realConnectList:
+			del self.realConnectList[connect.connectId]
+	def onOpt(self, connectId, opt):
+		if connectId in self.realConnectList:
+			connect = self.realConnectList[connectId]
+			if opt == remoteServerConnect.optCloseConnect:
+				connect.close()
+			
+	def getRealConnect(self,connectId):
+		if connectId in self.realConnectList:
+			return self.realConnectList[connectId]
+		connect = realServerConnect(self,connectId)
+		connect.closeCallbackList.append(self.onRealConnectClose)
+		self.realConnectList[connectId] = connect
+		return connect 
+	def onMessage(self,connectId,data):
+		if connectId==-1:
+			size = struct.calcsize("i")
+			timenum = struct.unpack("i",data[:size])[0]
+			if time.time()-300 < timenum and time.time()+300 > timenum and self.authMake(remoteAuth, timenum)==data:
+				self.authPass = True
+				self.sendOpt(-1, remoteServerConnect.optAuthOK)
+			else:
+				self.close()
+		elif self.authPass:
+			self.getRealConnect(connectId).onlocalRecv(data)
+	def onClose(self):
+		for connect in self.realConnectList.values():
+			connect.close()
+		remoteServerConnect.onClose(self)
+SSLCertPath = "/tmp/dddproxy.remote.cert"
+SSLKeyPath = "/tmp/dddproxy.remote.key"
+def createSSLCert():
+	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
+		shell = "openssl req -new -newkey rsa:1024 -days 3650 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=ddd\" -keyout %s  -out %s"%(
+																							SSLKeyPath,SSLCertPath)
+		os.system(shell)
+	

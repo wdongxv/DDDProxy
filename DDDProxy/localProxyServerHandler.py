@@ -1,171 +1,150 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from DDDProxy.server import ServerHandler, baseServer, DDDProxySocketMessage
-import DDDProxyConfig
-from DDDProxy.socetMessageParser import socetMessageParser
-from DDDProxy import hostParser, domainConfig
-import re
-import socket
-import sys
-import traceback
-import ssl
-import time
-import math
-import struct
-import hashlib
-import thread
-import threading
-from DDDProxy.domainConfig import setting, settingConfig
-from DDDProxyConfig import mainThreadPool
 
 
+from baseServer import sockConnect
+from socetMessageParser import httpMessageParser
+import httplib
+from baseServer import baseServer
+from os.path import dirname
+import json
+from settingConfig import settingConfig
+import domainConfig
+from datetime import datetime
+from remoteConnectManger import remoteConnectManger
+from remoteServerHandler import remoteServerConnect
 
-class proxyServerHandler(ServerHandler):  
-	def __init__(self, conn, addr, threadid):
-		super(proxyServerHandler, self).__init__(conn, addr, threadid)
-		self.source = conn
-# 		self.source.settimeout(sendPack.timeout);
-		self.method = ""
-		self.threadid = threadid
-		self.remoteSocket = None
-		self.httpMessage = ""
-		self.blockHost = DDDProxyConfig.blockHost
-		self.hostPort = None
-		self.remoteServer = ""
-		self.dataCountSend = 0
-		self.dataCountRecv = 0
-	def info(self):
-		return "%s	%s" % (ServerHandler.info(self), self.httpMessage)
-	def domainAnalysisAddData(self,dataType,length):
-		if not self.hostPort:
-			return False
-		domainConfig.analysis.incrementData(addr=self.addr, dataType=dataType, hostPort=self.hostPort, message=self.httpMessage, length=length)
-		return True
-	def sourceToServer(self):
-		baseServer.log(1, self.threadid, "}}}}", "<")
-		threading.currentThread().name = "worker%s-%s-send"%(self.threadid,self.addr)
-		try:
-			socetParser = socetMessageParser()
-			count = 0
-			while self.source != None:
-				tmp = self.source.recv(DDDProxyConfig.cacheSize)
-				if not tmp:
-					break
-				baseServer.log(1, "}}}}", tmp)
-				length = len(tmp)
-				self.dataCountSend += length;
-				count += length;
-				DDDProxySocketMessage.send(self.remoteSocket, tmp)
-				
-				#以下数据是为了时统计用
-				if socetParser is not None:
-					socetParser.putMessage(tmp)
-					if socetParser.messageStatus():
-						self.httpMessage = socetParser.httpMessage()
-						host, port = hostParser.parserUrlAddrPort(self.httpMessage[1] if self.httpMessage[0] != "CONNECT" else "https://" + self.httpMessage[1])
-						threading.currentThread().name = "worker%s-%s-%s:%d-send"%(self.threadid,self.addr,host,port)
-						self.hostPort = (host, port)
-						
-						
-						#代理host黑名单
-						ipAddr = re.match("(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})", host)
-						foundIp = False
-						if ipAddr:
-							ipAddr = ipAddr.groups()
-							mathIp = "%s.%s.%s" % (ipAddr[0], ipAddr[1], ipAddr[2]);
-							for i in self.blockHost:
-								if i.startswith(mathIp):
-									foundIp = True
-									break
-						if foundIp or host in self.blockHost:
-							baseServer.log(2, self.threadid, "block", host)
-							break
-						
-						baseServer.log(2, self.addr, self.httpMessage)
-						self.domainAnalysisAddData("connect", 1)
-						socetParser = None
-		
-				if self.domainAnalysisAddData("incoming", count):
-					count = 0
-				self.markActive()
-		except socket.timeout:
-			pass
-		except:
-			baseServer.log(3, self.threadid, "}}}} error!")
-# 		sendPack.end(self.remoteSocket)
-		threading.currentThread().name = "worker%s-IDLE-send"%(self.threadid)
-		baseServer.log(1, self.threadid, "}}}}", ">")
+class localProxyServerConnectHandler(sockConnect):
+	"""
+	@type remoteConnect: remoteServerConnect
+	"""
+	def __init__(self, *args, **kwargs):
+		sockConnect.__init__(self, *args, **kwargs)
+		self.messageParse = httpMessageParser()
+		self.mode = ""
+		self.remoteConnect = None
+		self.recvCache = ""
+	def onClose(self):
+		if(self.remoteConnect):
+			self.remoteConnect.sendOpt(self.fileno(),remoteServerConnect.optCloseConnect)
+			self.remoteConnect.removeAllCallback(self.fileno())
+		sockConnect.onClose(self)
+	def onRecv(self, data):
+		self.recvCache += data
+		if self.mode == "proxy":
+			if self.remoteConnect and self.recvCache:
+				self.remoteConnect.sendData(self.fileno(),self.recvCache)
+				self.recvCache = ""
+			return
+		if self.messageParse.appendData(data):
+			method = self.messageParse.method()
+			path = self.messageParse.path()
+			if not path.startswith("http://") and method in ["GET","POST"]:
+				path = path.split("?")
+				self.onHTTP(self.messageParse.headers,
+						method,
+						path[0],
+						path[1] if len(path)>1 else "",
+						self.messageParse.getBody() if method == "POST" else "")
+				self.mode = "http"
+			else:
+				self.mode = "proxy"
+				connect = remoteConnectManger.getConnect()
+				if connect:
+					connect.addAuthCallback(self.onRemoteConnectAuth)
+					connect.setConnectCloseCallBack(self.fileno(),self.onRemoteConnectClose)
+				else:
+					self.close()
+# 	def onRemoteConnectRecv(self,connect,data):
+# 		self.send(data)
+	def onRemoteConnectClose(self,connect):
 		self.close()
+	def onRemoteConnectAuth(self,connect):
+		"""
+		@type connect: remoteServerConnectLocalHander
+		"""
+		connect.setRecvCallback(self.fileno(), self.send)
+		self.remoteConnect = connect
+		self.onRecv("");
 		
-	def serverToSource(self):
-		threading.currentThread().name = "worker%s-%s-recv"%(self.threadid,self.addr)
-		baseServer.log(1, self.threadid, "-<")
+	def onSend(self, data):
+		sockConnect.onSend(self, data)
+		if self.mode == "http":
+			if self.messageParse.connection() == "close":
+				self.close()
+			self.messageParse.clear()
+		
+	def reseponse(self,data,ContentType="text/html",code=200):
+		def httpdate():
+			dt = datetime.now();
+			weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][dt.weekday()]
+			month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+					"Oct", "Nov", "Dec"][dt.month - 1]
+			return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
+		        dt.year, dt.hour, dt.minute, dt.second)
+		if type(data) is unicode:
+			data = data.encode("utf-8")
+		elif not type(data) is str:
+			data = json.dumps(data)
+			ContentType = "application/json"
+		httpMessage = ""
+		httpMessage += "HTTP/1.1 "+str(code)+" "+(httplib.responses[code])+"\r\n"
+		httpMessage += "Server: DDDProxy/2.0\r\n"
+		httpMessage += "Date: "+httpdate()+"\r\n"
+		httpMessage += "Content-Length: "+str(len(data))+"\r\n"
+		httpMessage += "Content-Type: "+ContentType+"\r\n"
+		httpMessage += "Connection: "+self.messageParse.connection()+"\r\n"
+		
+# 		connection = self.messageParse.getHeader("connection")
+		
+		httpMessage += "\r\n"
+		httpMessage += data
+		self.send(httpMessage)
+	
+	def getFileContent(self,name):
+		content = None
 		try:
-			count = 0
-			for data in DDDProxySocketMessage.recv(self.remoteSocket):
-				self.source.send(data)
-				self.markActive()
-				length = len(data)
-				self.dataCountRecv += length
-				count += length
-				if self.domainAnalysisAddData("outgoing", count):
-					count = 0
+			f = dirname(__file__)+"/template"+name
+			f = open(f)
+			content = f.read()
+			f.close()
 		except:
 			pass
-		threading.currentThread().name = "worker%s-IDLE-recv"%(self.threadid)
-		baseServer.log(1, self.threadid, "->")
-		self.close()
+		return content
+	
+	def onHTTP(self,header,method,path,query,post):
 		
-	def connRemoteProxyServer(self,host,port,auth):
-		self.remoteServer = host
-		DDDProxyConfig.fetchRemoteCert(host, port)
+		if method == "POST":
+			data = json.loads(post)
+			opt = data["opt"]
+			respons = {}
+			if(opt=="serverList"):
+				respons["pac"] = "http://"+self.messageParse.getHeader("host")+"/pac"
+				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
+			elif opt=="setServerList":
+				settingConfig.setting(settingConfig.remoteServerList,data["data"])
+				respons["status"] = "ok"
+			elif opt=="testRemoteProxy":
+				respons["status"] = "unknow"
+			self.reseponse(respons)
+		elif path == "/pac":
+			content = self.getFileContent("/pac.js")
+			domainList = domainConfig.config.getDomainOpenedList()
+			domainListJs = ""
+			for domain in domainList:
+				domainListJs += "A(\""+domain+"\")||"
+			content = content.replace("{{domainList}}",domainListJs)
+			content = content.replace("{{proxy_ddr}}",self.messageParse.getHeader("host"))
+			self.reseponse(content)
+		elif path == "/api_status":
+			self.reseponse({})
+		else:
+			if path == "/":
+				path = "/index.html"
+			content = self.getFileContent(path)
+			if content:
+				self.reseponse(content)
+			else:
+				self.reseponse("\""+path+"\" not found",code=404)
 		
-		self.remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.remoteSocket = ssl.wrap_socket(self.remoteSocket, ca_certs=DDDProxyConfig.SSLLocalCertPath(host,port),
-										 cert_reqs=ssl.CERT_REQUIRED)		
-		self.remoteSocket.connect((host,port))
-		randomNum = math.floor(time.time())
-		self.remoteSocket.send(struct.pack("i", randomNum))
-		checkA = hashlib.md5("%s%d" % (auth, randomNum)).hexdigest()
-		self.remoteSocket.send(checkA)
-		baseServer.log(1, self.threadid, checkA, randomNum)
 
-	def close(self):
-		try:
-			if self.source:
-				self.source.shutdown(0)
-		except:
-			pass
-		self.source = None
-		try:
-			if self.remoteSocket:
-				DDDProxySocketMessage.end(self.remoteSocket)
-		except:
-			pass
-		try:
-			if self.remoteSocket:
-				self.remoteSocket.shutdown(0)
-		except:
-			pass
-		self.remoteSocket = None
-	def AgreeConnIp(self, ipAddr=''):
-		if ipAddr.startswith("127.0.0.")  or ipAddr.startswith("10.0.") or ipAddr.startswith("192.168."):
-			return True;
-		return False;
-	def run(self):
-		if not self.AgreeConnIp(self.addr):
-			baseServer.log(2, self.threadid, "not agree ip %s connect!" % (self.addr))
-			return;
-
-		baseServer.log(1, self.threadid, "..... threadid start")
-		host,port,auth = setting[settingConfig.remoteServerKey]
-		self.connRemoteProxyServer(host,port,auth)
-		mark = "[%s,%s]" % (self.addr,self.threadid)
-		DDDProxySocketMessage.sendOne(self.remoteSocket,mark )
-		baseServer.log(1, self.threadid, "threadid mark")
-		
-		mainThreadPool.callInThread(self.sourceToServer)
-# 		thread.start_new_thread(self.sourceToServer, tuple())
-		
-		self.serverToSource()
-		baseServer.log(1, self.threadid, "!!!!! threadid end")

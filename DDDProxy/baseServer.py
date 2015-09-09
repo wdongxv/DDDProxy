@@ -18,7 +18,6 @@ class sockConnect(object):
 	"""
 	@type sock: _socketobject
 	"""
-	
 	def __init__(self,server):
 		self.server = server
 		self.info = {
@@ -27,27 +26,45 @@ class sockConnect(object):
 		self.sock = None
 		self.address = (None,None)
 		self.dataSendList = []
+		self._fileno = None
+	def __str__(self, *args, **kwargs):
+		return ""+str(self.address)
+	def connect(self,sock,address):
+		"""
+		@param address: 仅记录
+		"""
+		self.address = address
+		self.sock = sock
+		self.server.addSockConnect(self)
+	def connectWithAddress(self,address):
+		try:
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			addr = (socket.gethostbyname(address[0]),address[1])
+			s.connect(addr)
+			s.setblocking(0)
+			self.connect(s, address)
+		except:
+			baseServer.log(3,address)
+			self.server.addCallback(self.onClose)
+	
 	def _setConnect(self,sock,address):
 		"""
 		@type sock: _socketobject
 		"""
 		self.sock = sock
 		self.address = address
-		print address,"connected"
 		self.onConnected()
-	
+	def fileno(self):
+		return self._fileno
 	def send(self,data):
 		self.dataSendList.append(data)
 	def onConnected(self):
 		pass
 	def onRecv(self,data):
-		print self.address,"onRecv",data
 		pass
 	def onSend(self,data):
-		print self.address,"onSend"
 		self.sock.send(data)
 	def onClose(self):
-		print self.address,"onClose"
 		pass
 	def close(self):
 		self.send(None)
@@ -57,6 +74,12 @@ class baseServer():
 
 		self.socketList = {}
 		self.serverList = []
+
+		self.callbackList = []
+		self._filenoLoop = 0
+		
+	def addCallback(self,cb, *args, **kwargs):
+		self.callbackList.append((cb,0,args,kwargs))
 		
 	def addListen(self,port,host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
@@ -66,18 +89,24 @@ class baseServer():
 		server.bind((host, port))
 		server.listen(1024)
 		server.setblocking(0)
-		
 
 		self.serverList.append(server)
+	def addSockListen(self,sock):
+		sock.setblocking(0)
+		self.serverList.append(sock)
 		
-	def handleNewConnect(self,connect,address):
-		"""
-		
-		"""
-		
+	def addSockConnect(self,connect):
+		if not connect.sock in self.socketList:
+			self.socketList[connect.sock] = connect
+			baseServer.log(2,connect,">	connect")
+			
+	def handleNewConnect(self,sock,address):
+		self._filenoLoop += 1
 		handler = self.handler(server=self)
-		self.socketList[connect] = handler
-		handler._setConnect(connect, address)
+		handler._fileno = self._filenoLoop
+		self.socketList[sock] = handler
+		handler._setConnect(sock, address)
+		baseServer.log(2,handler,"*	connect")
 
 	@staticmethod
 	def log(level, *args, **kwargs):
@@ -99,25 +128,32 @@ class baseServer():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
 			readable,writable,exceptional = select.select(rlist, wlist, rlist,1)
-			if not (readable or writable or exceptional) :
-				continue
-			
-			for sock in readable:
-				if sock in self.serverList:
-					self.onConnect(sock)
-				else:
-					self.onData(sock)
-			for sock in writable:
-				connect = self.socketList[sock]
-				data = connect.dataSendList.pop()
-				if data:
-					connect.onSend(data)
-				else:
-					sock.close()
+			if readable:
+				for sock in readable:
+					if sock in self.serverList:
+						self.onConnect(sock)
+					else:
+						self.onData(sock)
+			if writable:
+				for sock in writable:
+					connect = self.socketList[sock]
+					data = connect.dataSendList.pop(0)
+					if data:
+# 						baseServer.log(2,"onSend",sock.fileno(),connect,data)
+						connect.onSend(data)
+					else:
+						sock.close()
+						self.onExcept(sock)
+			if exceptional:
+				for sock in exceptional:
 					self.onExcept(sock)
 				
-			for sock in exceptional:
-				self.onExcept(sock)
+			cblist = self.callbackList
+			self.callbackList = []
+			while len(cblist):
+				cbobj = cblist.pop(0)
+				cbobj[0](*cbobj[2],**cbobj[3])
+				
 	def onConnect(self,sock):
 		connect,address = sock.accept()
 		connect.setblocking(0)
@@ -126,74 +162,19 @@ class baseServer():
 	def onData(self,sock):
 		data = sock.recv(1024)
 		if data:
-			self.socketList[sock].onRecv(data)
+			handler = self.socketList[sock]
+# 			baseServer.log(2,"onData",sock.fileno(),handler)
+			handler.onRecv(data)
 		else:
 			self.onExcept(sock)
 	def onExcept(self,sock):
 		if sock in self.socketList:
-			self.socketList[sock].onClose()
+			handler = self.socketList[sock]
+			baseServer.log(2,handler,"<	close")
 			del self.socketList[sock]
+			handler.onClose()
 			
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)
 	server.addListen(port=8888)
 	server.start()
-
-# 	def startNewThread(self, conn, addr, threadid):
-# 		hand = None
-# 		try:
-# 			hand = self.handler(conn, addr, threadid)
-# 			self.theadList.append(hand)
-# 			hand.run()
-# 		except:
-# 			self.log(3)
-# 			try:
-# 				hand.close()
-# 			except:
-# 				pass
-# 		if not hand is None:
-# 			self.theadList.remove(hand)
-# 		
-# 	def exratInfo(self):
-# 		return "";
-# 
-# 
-# 	def theardCloseManger(self):
-# 		threading.currentThread().name = "threadIDLECloseManager"
-# 		while True:
-# 			for hand in self.theadList:
-# 				hand.requestClose()
-# 			if len(mainThreadPool.waiters) > 10:
-# 				mainThreadPool.stopAWorker()
-# 			time.sleep(10);
-# 	def serverListenStart(self):
-# 		self.log(2, "Server Proess start!")
-# 		threading.currentThread().name = "socketServerThread"
-# 		threadid = 0
-# 		while True:
-# 			try:
-# 				conn, addr = self.server.accept()  
-# 				threadid += 1
-# 				mainThreadPool.callInThread(self.startNewThread, conn, addr, threadid)
-# # 				thread.start_new_thread(self.startNewThread, (conn, addr, threadid))  
-# 			except KeyboardInterrupt:
-# 				break
-# 			except:
-# 				self.log(3)
-# 				time.sleep(1)
-# 		self.log(2, "proess end!")
-# 	def close(self):
-# 		try:
-# 			self.server.close()
-# 		except:
-# 			pass
-# 		self.server = None
-# 	def start(self,inThread=False):
-# 		time.sleep(2)
-# 		mainThreadPool.callInThread(self.theardCloseManger)
-# # 		thread.start_new_thread(self.theardCloseManger, tuple())  
-# 		if inThread:
-# 			mainThreadPool.callInThread(self.serverListenStart)
-# # 			thread.start_new_thread(self.serverListenStart, tuple())
-# 		else:
-# 			self.serverListenStart()

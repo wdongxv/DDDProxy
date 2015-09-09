@@ -85,21 +85,21 @@ div.domainLine {
 		</div>
 		<div class="help">
 			<div class="part">
-				自动代理地址：<a class="pacAddr" href="{{pacAddr}}">{{pacAddr}}</a>
+				自动代理地址：<span class="pacAddr"></span>
 			</div>
 			<div>
 				> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
-				自动代理地址 ”
+				<span class="pacAddr"></span> ”
 			</div>
 			<div>
 				> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
-					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ 自动代理地址 ”。 <br />
+					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span class="pacAddr"></span> ”。 <br />
 				<i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
 			</div>
 			<div>
 				> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
 				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“
-				自动代理地址 ”
+				<span class="pacAddr"></span> ”
 			</div>
 		</div>
 		<div class="help">
@@ -124,13 +124,13 @@ div.domainLine {
 	</div>
 	<script src="/static/jquery.min.js"></script>
 	<script src="/static/URI.js"></script>
-	<script src="{{pacAddrOrigin}}"></script>
+<!-- 	<script src="{{pacAddrOrigin}}"></script> -->
 
 	<script type="text/javascript">
 		(function() {
 			function statusApi(opt, callback) {
 				var xhr = new XMLHttpRequest();
-				xhr.open("GET", "/status?opt=" + opt, true);
+				xhr.open("GET", "/api_" + opt, true);
 				xhr.onreadystatechange = function(e) {
 					if (xhr.readyState == 4) {
 						var json = {};
@@ -229,7 +229,7 @@ div.domainLine {
 							if (linejs!=status.attr("linejs")) {
 								status.text("testting")
 								status.attr("linejs",linejs)
-								statusApi("remoteProxy&host="+line.host+"&port="+line.port+"&auth="+line.auth, function(data) {
+								proxyapi("testRemoteProxy",{"host":line.host,"port":line.port,"auth":line.auth}, function(data) {
 									status.text(data["status"])
 								});
 							}
@@ -274,19 +274,21 @@ div.domainLine {
 				connectCheck();
 			}
 			function bindInputKey() {
-				var inputList = serverList.find("[name='host'],[name='auth']");
+				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
 				inputList.keyup(domainListChangedHandler)
 			}
 			function getServerList() {
 				proxyapi("serverList", null, function(data) {
-					if (!data) {
-						data = [];
-					}
+
+					$(".pacAddr").text(data["pac"])
+					var domainList = data["list"];
 					var html = "";
-					for (var i = 0; i < data.length; i++) {
-						var domain = data[i]
-						html += makeDomainHtml(domain.host, domain.port,
-								domain.auth);
+					if(domainList){
+						for (var i = 0; i < domainList.length; i++) {
+							var domain = domainList[i]
+							html += makeDomainHtml(domain.host, domain.port,
+									domain.auth);
+						}
 					}
 					html += makeDomainHtml("", "", "");
 					serverList.html(html)
@@ -317,7 +319,7 @@ div.domainLine {
 								}
 								$("#connectList").html(html);
 							})
-						}, 2000)
+						}, 20000)
 						getServerList();
 					});
 		})();
