@@ -58,7 +58,7 @@ class sockConnect(object):
 	def fileno(self):
 		return self._fileno
 	def send(self,data):
-		if len(data)>bufferSize:
+		if data and len(data)>bufferSize:
 			self.dataSendList.append(data[:bufferSize])
 			self.send(data[bufferSize:])
 		else:
