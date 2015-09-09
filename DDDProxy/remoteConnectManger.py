@@ -101,7 +101,6 @@ class remoteConnectManger():
 						ca_certs	=	self.SSLLocalCertPath(host,port),
 						cert_reqs	=	ssl.CERT_REQUIRED)		
 					remoteSocket.connect((host,port))
-					remoteSocket.setblocking(0)
 					connect = remoteServerConnectLocalHander(self.server)
 					connect.connect(remoteSocket,(host,port))
 					connect.auth(auth)

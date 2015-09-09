@@ -70,7 +70,7 @@ class localProxyServerConnectHandler(sockConnect):
 		connect.setRecvCallback(self.fileno(), self.send)
 		self.remoteConnect = connect
 		self.onRecv("");
-		self.connectName += str(connect)
+		self.connectName += "	"+str(connect)
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
 		if self.mode == "http":
@@ -101,7 +101,7 @@ class localProxyServerConnectHandler(sockConnect):
 		
 # 		connection = self.messageParse.getHeader("connection")
 		
-		baseServer.log(1,self,code,ContentType,httpMessage)
+# 		baseServer.log(1,self,code,ContentType,httpMessage)
 		
 		httpMessage += "\r\n"
 		httpMessage += data
@@ -120,7 +120,7 @@ class localProxyServerConnectHandler(sockConnect):
 		return content
 	
 	def onHTTP(self,header,method,path,query,post):
-		baseServer.log(1,self,header,method,path,query,post)
+# 		baseServer.log(1,self,header,method,path,query,post)
 		if method == "POST":
 			data = json.loads(post)
 			opt = data["opt"]
@@ -149,7 +149,7 @@ class localProxyServerConnectHandler(sockConnect):
 				connect = handler.address[0]
 				if not connect in connects:
 					connects[connect] = []
-				info = {"name":str(handler),"id":handler.fileno()}
+				info = {"name":str(handler)}
 				info.update(handler.info)
 				connects[connect].append(info)
 			self.reseponse({"connect":connects})

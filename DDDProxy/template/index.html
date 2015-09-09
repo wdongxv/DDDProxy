@@ -313,7 +313,6 @@ div.domainLine {
 										var connect = remoteConnectList[j]
 										html += "<div class='connect'"+
 												">"+
-												"["+connect.id+"] "+
 												"↾"+IntToDataCount(connect.send)+
 												"&emsp;⇃"+IntToDataCount(connect.recv)+
 												"&emsp;"+connect.name+"</div>"
@@ -322,7 +321,7 @@ div.domainLine {
 								}
 								$("#connectList").html(html);
 							})
-						}, 2000)
+						}, 5000)
 						getServerList();
 					});
 		})();

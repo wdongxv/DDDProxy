@@ -19,6 +19,9 @@ class sockConnect(object):
 	"""
 	@type sock: _socketobject
 	"""
+	
+	_filenoLoop = 0
+	
 	def __init__(self,server):
 		self.server = server
 		self.info = {
@@ -29,12 +32,13 @@ class sockConnect(object):
 		self.sock = None
 		self.address = (None,None)
 		self.dataSendList = []
-		self._fileno = None
+		sockConnect._filenoLoop+=1
+		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
 		
 		socket.setdefaulttimeout(10)
 	def __str__(self, *args, **kwargs):
-		return self.connectName if self.connectName else  str(self.address)
+		return "["+str(self.fileno())+"]"+(self.connectName if self.connectName else  str(self.address))
 	def connect(self,sock,address):
 		"""
 		@param address: 仅记录
@@ -65,12 +69,9 @@ class sockConnect(object):
 		return self._fileno
 	def send(self,data):
 		if data and len(data)>bufferSize:
-			self.info["send"] += bufferSize
 			self.dataSendList.append(data[:bufferSize])
 			self.send(data[bufferSize:])
 		else:
-			if data:
-				self.info["send"] += len(data)
 			self.dataSendList.append(data)
 	def onConnected(self):
 		pass
@@ -78,7 +79,8 @@ class sockConnect(object):
 		self.info["recv"] += len(data)
 		
 	def onSend(self,data):
-		self.sock.send(data)
+		self.info["send"] += len(data)
+		l = self.sock.send(data)
 	def onClose(self):
 		pass
 	def close(self):
@@ -91,7 +93,6 @@ class baseServer():
 		self.serverList = []
 
 		self.callbackList = []
-		self._filenoLoop = 0
 		
 	def addCallback(self,cb, *args, **kwargs):
 		self.callbackList.append((cb,0,args,kwargs))
@@ -107,18 +108,15 @@ class baseServer():
 
 		self.serverList.append(server)
 	def addSockListen(self,sock):
-		sock.setblocking(0)
 		self.serverList.append(sock)
 		
 	def addSockConnect(self,connect):
 		if not connect.sock in self.socketList:
 			self.socketList[connect.sock] = connect
 			baseServer.log(2,connect,">	connect")
-			
+	
 	def handleNewConnect(self,sock,address):
-		self._filenoLoop += 1
 		handler = self.handler(server=self)
-		handler._fileno = self._filenoLoop
 		self.socketList[sock] = handler
 		handler._setConnect(sock, address)
 		baseServer.log(2,handler,"*	connect")
