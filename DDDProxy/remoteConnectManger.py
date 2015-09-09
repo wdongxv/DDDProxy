@@ -95,12 +95,13 @@ class remoteConnectManger():
 			host,port,auth = settingConfig.setting(settingConfig.remoteServerKey)
 			if host and auth and self.fetchRemoteCert(host, port):
 				try:
+					remoteSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					remoteSocket = ssl.wrap_socket(
-						sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM), 
+						sock	=		remoteSocket,
 						ca_certs	=	self.SSLLocalCertPath(host,port),
 						cert_reqs	=	ssl.CERT_REQUIRED)		
 					remoteSocket.connect((host,port))
-					
+					remoteSocket.setblocking(0)
 					connect = remoteServerConnectLocalHander(self.server)
 					connect.connect(remoteSocket,(host,port))
 					connect.auth(auth)

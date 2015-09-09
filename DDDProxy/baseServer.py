@@ -31,6 +31,8 @@ class sockConnect(object):
 		self.dataSendList = []
 		self._fileno = None
 		self.connectName = ""
+		
+		socket.setdefaulttimeout(10)
 	def __str__(self, *args, **kwargs):
 		return self.connectName if self.connectName else  str(self.address)
 	def connect(self,sock,address):
