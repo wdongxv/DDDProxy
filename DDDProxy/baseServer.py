@@ -108,6 +108,7 @@ class baseServer():
 
 		self.serverList.append(server)
 	def addSockListen(self,sock):
+		sock.setblocking(0)
 		self.serverList.append(sock)
 		
 	def addSockConnect(self,connect):
