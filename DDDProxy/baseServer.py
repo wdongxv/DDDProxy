@@ -136,14 +136,13 @@ class baseServer():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
 			readable,writable,exceptional = select.select(rlist, wlist, rlist,1)
-			if readable:
-				for sock in readable:
-					if sock in self.serverList:
-						self.onConnect(sock)
-					else:
-						self.onData(sock)
-			if writable:
-				for sock in writable:
+			for sock in readable:
+				if sock in self.serverList:
+					self.onConnect(sock)
+				else:
+					self.onData(sock)
+			for sock in writable:
+				if sock in self.socketList:
 					connect = self.socketList[sock]
 					data = connect.dataSendList.pop(0)
 					if data:
@@ -152,9 +151,8 @@ class baseServer():
 					else:
 						sock.close()
 						self.onExcept(sock)
-			if exceptional:
-				for sock in exceptional:
-					self.onExcept(sock)
+			for sock in exceptional:
+				self.onExcept(sock)
 				
 			cblist = self.callbackList
 			self.callbackList = []
