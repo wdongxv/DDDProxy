@@ -9,9 +9,21 @@ from DDDProxy.baseServer import baseServer
 from DDDProxy import remoteServerHandler
 import socket
 import ssl
+from optparse import OptionParser
 if __name__ == "__main__":
-	server = baseServer(handler=remoteServerHandler.remoteConnectServerHandler)
+	
+	parser = OptionParser(usage="%prog -a [password]")
+	parser.add_option("-a", "--auth",help="server password *")
+	startUpArgs = parser.parse_args()[0]
+	remoteServerHandler.remoteAuth =  startUpArgs.auth
+	if not remoteServerHandler.remoteAuth:
+		print parser.get_usage()
+		exit()
+		
+		
 	remoteServerHandler.createSSLCert()
+	
+	server = baseServer(handler=remoteServerHandler.remoteConnectServerHandler)
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
 	s.bind(("", 8889))
