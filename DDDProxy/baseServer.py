@@ -125,7 +125,7 @@ class baseServer():
 		
 		data = time.strftime("%y-%B-%d %H:%M:%S:	")+ data
 		if level<2:
-			print data+"\n"
+			print data+""
 		else:
 			logging.log([logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][level], data)
 	def start(self):
