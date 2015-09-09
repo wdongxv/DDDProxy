@@ -49,7 +49,7 @@ class localProxyServerConnectHandler(sockConnect):
 				self.mode = "http"
 			else:
 				self.mode = "proxy"
-				baseServer.log(0,self,"proxy mode")
+				baseServer.log(1,self,"proxy mode")
 				connect = remoteConnectManger.getConnect()
 				if connect:
 					connect.addAuthCallback(self.onRemoteConnectAuth)
@@ -101,7 +101,7 @@ class localProxyServerConnectHandler(sockConnect):
 		httpMessage += "\r\n"
 		httpMessage += data
 		
-		baseServer.log(0,self,code,ContentType,httpMessage)
+		baseServer.log(1,self,code,ContentType,httpMessage)
 		self.send(httpMessage)
 	
 	def getFileContent(self,name):
@@ -116,7 +116,7 @@ class localProxyServerConnectHandler(sockConnect):
 		return content
 	
 	def onHTTP(self,header,method,path,query,post):
-		baseServer.log(0,self,header,method,path,query,post)
+		baseServer.log(1,self,header,method,path,query,post)
 		if method == "POST":
 			data = json.loads(post)
 			opt = data["opt"]
