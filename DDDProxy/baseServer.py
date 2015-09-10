@@ -10,10 +10,12 @@ import sys
 import time
 import traceback
 import select
-import signal
 import ssl
+from DDDProxy.ThreadPool import ThreadPool
 
 debuglevel = 2
+
+
 
 class sockConnect(object):
 	"""
@@ -39,26 +41,31 @@ class sockConnect(object):
 		socket.setdefaulttimeout(5)
 	def __str__(self, *args, **kwargs):
 		return "["+str(self.fileno())+"]"+(self.connectName if self.connectName else  str(self.address))
-	def connect(self,sock,address):
+
+	def _doConnectSock(self,address,sock,cb=None):
+		ok = True
+		try:
+			addr = (socket.gethostbyname(address[0]),address[1])
+			sock.connect(addr)
+		except:
+			baseServer.log(3,address)
+			ok = False
+		if ok:
+			self.server.addCallback(self._setConnect,sock,address)
+		else:
+			self.server.addCallback(self.onClose)
+		if cb:
+			self.server.addCallback(cb,self if ok else None)
+	connectPool = ThreadPool(2)
+	def connect(self,address,sock=None,cb=None):
 		"""
 		@param address: 仅记录
 		"""
-		self.address = address
-		self.sock = sock
-		sock.setblocking(False)
-		self.server.addSockConnect(self)
-	def connectWithAddress(self,address):
-		try:
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			addr = (socket.gethostbyname(address[0]),address[1])
-			s.connect(addr)
-			s.setblocking(False)
-			self.connect(s, address)
-			return True
-		except:
-			baseServer.log(3,address)
-			self.server.addCallback(self.onClose)
-		return False
+		address = address
+		if not sock:
+			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sockConnect.connectPool.apply_async(self._doConnectSock,address,sock,cb)
+# 		thread.start_new_thread(self._doConnectSock,())
 	def _setConnect(self,sock,address):
 		"""
 		@type sock: _socketobject
@@ -66,6 +73,7 @@ class sockConnect(object):
 		self.sock = sock
 		self.address = address
 		self.onConnected()
+	
 	def fileno(self):
 		return self._fileno
 	def send(self,data):
@@ -75,13 +83,14 @@ class sockConnect(object):
 		else:
 			self.dataSendList.append(data)
 	def onConnected(self):
-		pass
+		self.server.addSockConnect(self)
+		
 	def onRecv(self,data):
 		self.info["recv"] += len(data)
 		
 	def onSend(self,data):
 		self.info["send"] += len(data)
-		l = self.sock.send(data)
+		self.sock.send(data)
 	def onClose(self):
 		pass
 	def close(self):
@@ -105,8 +114,7 @@ class baseServer():
 		server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
 		server.bind((host, port))
 		server.listen(1024)
-		server.setblocking(0)
-
+		server.setblocking(False)
 		self.serverList.append(server)
 	def addSockListen(self,sock):
 		sock.setblocking(False)
@@ -114,14 +122,10 @@ class baseServer():
 		
 	def addSockConnect(self,connect):
 		if not connect.sock in self.socketList:
+			connect.sock.setblocking(False)
 			self.socketList[connect.sock] = connect
 			baseServer.log(2,connect,">	connect")
 	
-	def handleNewConnect(self,sock,address):
-		handler = self.handler(server=self)
-		self.socketList[sock] = handler
-		handler._setConnect(sock, address)
-		baseServer.log(2,handler,"*	connect")
 
 	@staticmethod
 	def log(level, *args, **kwargs):
@@ -177,9 +181,11 @@ class baseServer():
 						baseServer.log(3,"usetime",usetime,check[2])
 				lastCheck = check
 	def onConnect(self,sock):
-		connect,address = sock.accept()
-		connect.setblocking(0)
-		self.handleNewConnect(connect,address)
+		sock,address = sock.accept()
+		connect = self.handler(server=self)
+		connect._setConnect(sock, address)
+		baseServer.log(2,connect,"*	connect")
+		
 	def onSend(self,sock):
 		if sock in self.socketList:
 			connect = self.socketList[sock]

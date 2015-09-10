@@ -82,16 +82,15 @@ class realServerConnect(sockConnect):
 		if self.messageParse.appendData(data):
 			method = self.messageParse.method()
 			path = self.messageParse.path()
-			address = None
 			if method == "CONNECT":
-				address = parserUrlAddrPort("https://"+path)
+				path = "https://"+path
 				self.dataCache = ""
-			else:
-				address = parserUrlAddrPort(path)
-			if self.connectWithAddress(address):
-				if method == "CONNECT":
-					self.handler.sendData(self.connectId,"HTTP/1.1 200 OK\r\n\r\n")
-				
+			self.connect(parserUrlAddrPort(path))
+	def onConnected(self):
+		sockConnect.onConnected(self)
+		if self.messageParse.method() == "CONNECT":
+			self.handler.sendData(self.connectId,"HTTP/1.1 200 OK\r\n\r\n")
+		if self.dataCache:
 			self.onlocalRecv("")
 	def onClose(self):
 		while len(self.closeCallbackList):
