@@ -81,7 +81,7 @@ class localProxyServerConnectHandler(sockConnect):
 		connect.setRecvCallback(self.fileno(), self.send)
 		self.remoteConnect = connect
 		self.onRecv("");
-		self.connectName = "["+connect.fileno()+"] > "+self.connectName
+		self.connectName = "["+str(connect.fileno())+"] > "+self.connectName
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
 		if self.connectHost:
