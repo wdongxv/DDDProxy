@@ -31,8 +31,6 @@ class domainConfig(configFile):
 		return pacList
 	def getDomainListWithAnalysis(self):
 		data = [{"domain":key,"open":value["open"],"connectTimes":value["connectTimes"]} for (key,value) in self.setting.items()]
-		def sortDomainList(x,y):
-			return x["connectTimes"]>y["connectTimes"];
 		data.sort(cmp=lambda x,y : cmp(y["connectTimes"],x["connectTimes"]))
 		return data;
 	def removeDomain(self,domain):
