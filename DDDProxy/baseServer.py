@@ -37,7 +37,7 @@ class sockConnect(object):
 		sockConnect._filenoLoop+=1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
-
+		
 	def __str__(self, *args, **kwargs):
 		return "["+str(self.fileno())+"]"+(self.connectName if self.connectName else  str(self.address))
 
@@ -102,6 +102,9 @@ class baseServer():
 		self.serverList = []
 
 		self.callbackList = []
+
+		socket.setdefaulttimeout(30)
+
 		
 	def addCallback(self,cb, *args, **kwargs):
 		self.callbackList.append((cb,0,args,kwargs))
