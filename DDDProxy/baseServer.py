@@ -36,7 +36,7 @@ class sockConnect(object):
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
 		
-		socket.setdefaulttimeout(10)
+		socket.setdefaulttimeout(5)
 	def __str__(self, *args, **kwargs):
 		return "["+str(self.fileno())+"]"+(self.connectName if self.connectName else  str(self.address))
 	def connect(self,sock,address):
@@ -147,22 +147,35 @@ class baseServer():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
 			readable,writable,exceptional = select.select(rlist, wlist, rlist,1)
+			
+			timeCheck = []
+			timeCheck.append(("start",time.time()))
 			for sock in readable:
 				if sock in self.serverList:
 					self.onConnect(sock)
 				else:
 					self.onData(sock)
+			timeCheck.append(("read",time.time(),readable))
 			for sock in writable:
 				self.onSend(sock)
+			timeCheck.append(("write",time.time(),writable))
 			for sock in exceptional:
 				self.onExcept(sock)
+			timeCheck.append(("except",time.time(),exceptional))
 				
 			cblist = self.callbackList
 			self.callbackList = []
-			while len(cblist):
-				cbobj = cblist.pop(0)
+			for cbobj in cblist:
 				cbobj[0](*cbobj[2],**cbobj[3])
-				
+			timeCheck.append(("callback",time.time(),cblist))
+			
+			lastCheck = None
+			for check in timeCheck:
+				if lastCheck:
+					usetime = check[1] - lastCheck[1]
+					if usetime >1:
+						baseServer.log(3,"usetime",usetime,check[2])
+				lastCheck = check
 	def onConnect(self,sock):
 		connect,address = sock.accept()
 		connect.setblocking(0)

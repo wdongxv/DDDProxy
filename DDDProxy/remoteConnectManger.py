@@ -90,7 +90,6 @@ class remoteConnectManger():
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
-		connect = self.getConnectWithLoop()
 		if self.count() < 5:
 			host,port,auth = settingConfig.setting(settingConfig.remoteServerKey)
 			if host and auth and self.fetchRemoteCert(host, port):
@@ -101,16 +100,15 @@ class remoteConnectManger():
 						ca_certs	=	self.SSLLocalCertPath(host,port),
 						cert_reqs	=	ssl.CERT_REQUIRED)		
 					remoteSocket.connect((host,port))
-					connect = remoteServerConnectLocalHander(self.server)
-					connect.connect(remoteSocket,(host,port))
-					connect.auth(auth)
-					connect.addAuthCallback(self.onConnectAuth)
-					connect.setConnectCloseCallBack(-1,self.onConnectClose)
-					self.remoteConnectList.append(connect)
+					c = remoteServerConnectLocalHander(self.server)
+					c.connect(remoteSocket,(host,port))
+					c.auth(auth)
+					c.addAuthCallback(self.onConnectAuth)
+					c.setConnectCloseCallBack(-1,self.onConnectClose)
+					self.remoteConnectList.append(c)
 				except:
-					baseServer.log(3)
-					return None
-		return connect;
+					baseServer.log(3,host, port)
+		return self.getConnectWithLoop();
 	manager = None
 	@staticmethod
 	def install(server):
