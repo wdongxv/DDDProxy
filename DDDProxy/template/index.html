@@ -299,29 +299,34 @@ div.domainLine {
 			$(document).ready(
 					function() {
 						var status = $("#status");
-						setInterval(function() {
-							statusApi("status", function(data) {
-								var count = data.connect;
-								//status.text("thread()");
-								var connectList = data.connect
-								var html = "";
-								for(var i in connectList){
-									html += "<div class='client'>";
-									html += "<div class='clientAddr'>"+i+"</div>"
-									var remoteConnectList = connectList[i];
-									for (var j = 0; j < remoteConnectList.length; j++) {
-										var connect = remoteConnectList[j]
-										html += "<div class='connect'"+
-												">"+
-												"↾"+IntToDataCount(connect.send)+
-												"&emsp;⇃"+IntToDataCount(connect.recv)+
-												"&emsp;"+connect.name+"</div>"
-									}
-									html += "</div>"
+						var getStatus = function(){statusApi("status", function(data) {
+							var count = data.connect;
+							var connectList = data.connect
+							var html = "";
+							var connectCount = 0
+							for(var i in connectList){
+								var remoteConnectList = connectList[i];
+								var clientConectHtml = ""
+								for (var j = 0; j < remoteConnectList.length; j++) {
+									var connect = remoteConnectList[j]
+									clientConectHtml += "<div class='connect'"+
+											">"+
+											"↾"+IntToDataCount(connect.send)+
+											"&emsp;⇃"+IntToDataCount(connect.recv)+
+											"&emsp;"+connect.name+"</div>"
 								}
-								$("#connectList").html(html);
-							})
-						}, 5000)
+								connectCount += remoteConnectList.length
+								
+								html += "<div class='client'>";
+								html += "<div class='clientAddr'>"+i+" count("+remoteConnectList.length+")</div>"
+								html += clientConectHtml
+								html += "</div>"
+							}
+							status.text("count("+connectCount+")");
+							$("#connectList").html(html);
+						})}
+						setInterval(getStatus, 2000)
+						getStatus();
 						getServerList();
 					});
 		})();
