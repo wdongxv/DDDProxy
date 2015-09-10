@@ -177,7 +177,7 @@ class localProxyServerConnectHandler(sockConnect):
 				connects[connect].append(info)
 			
 			for l in connects.values():
-				l.sort(cmp=lambda x,y : cmp(x,y))
+				l.sort(cmp=lambda x,y : cmp(y["send"]+y["recv"],x["send"]+x["recv"]))
 			self.reseponse({"connect":connects})
 		else:
 			if path == "/":
