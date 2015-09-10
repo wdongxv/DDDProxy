@@ -205,12 +205,9 @@ class baseServer():
 		try:
 			data = sock.recv(1024)
 		except ssl.SSLError as e:
-			try:
-				if isinstance(e, ssl.SSLWantReadError):
-					return
-			except:
-				pass
-			baseServer.log(3,e)
+			if e.errcode == 2:
+				return
+			baseServer.log(3)
 		except:
 			baseServer.log(3)
 		
