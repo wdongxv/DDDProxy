@@ -61,12 +61,11 @@ div.domainLine {
 	padding: 0 1em;
 }
 #connectList .clientAddr{
-	background: #e0e0e0;
+	background: #aaa;
 	color: #fff;
 	margin-top: 1em;
 }
 #connectList .connect{
-	background: #f8f8f8;
 }
 </style>
 </head>
@@ -309,17 +308,17 @@ div.domainLine {
 								var clientConectHtml = ""
 								for (var j = 0; j < remoteConnectList.length; j++) {
 									var connect = remoteConnectList[j]
-									clientConectHtml += "<div class='connect'"+
-											">"+
-											"↾"+IntToDataCount(connect.send)+
-											"&emsp;⇃"+IntToDataCount(connect.recv)+
-											"&emsp;"+connect.name+"</div>"
+									clientConectHtml += "<tr>"+
+											"<td>↾"+IntToDataCount(connect.send)+"</td>"+
+											"<td>&emsp;⇃"+IntToDataCount(connect.recv)+"</td>"+
+											"<td>&emsp;"+connect.name+"</td>"+
+											"</tr>"
 								}
 								connectCount += remoteConnectList.length
 								
 								html += "<div class='client'>";
 								html += "<div class='clientAddr'>"+i+" count("+remoteConnectList.length+")</div>"
-								html += clientConectHtml
+								html += "<table>"+clientConectHtml+"</table>"
 								html += "</div>"
 							}
 							status.text("count("+connectCount+")");
