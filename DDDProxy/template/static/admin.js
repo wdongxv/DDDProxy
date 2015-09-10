@@ -27,24 +27,7 @@ $(document).ready(function(){
 			threshold : null
 		};
 	}
-	function isLeapyear(year) {
-		return (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0); // 四年一闰，百年不闰，四百年再闰
-	}
 
-	function dateDaysCountOfMonth(year, month) {
-		switch (month) {
-		case 4:
-		case 6:
-		case 9:
-		case 11:
-			return 30;
-		case 2:
-			return isLeapyear(year) ? 29 : 28;
-		default:
-			break;
-		}
-		return 31;
-	}
 	var show = function(start,incoming,outgoing){
 		var obj = $("#dataAnalysis");
 		var chart = obj.highcharts();
@@ -86,18 +69,7 @@ $(document).ready(function(){
 		}
 
 		startTime = start;
-// for ( var i = 0; i < data.length; i++) {
-// var startDate = new Date(startTime);
-// if (startDate.getDay() == 6) {
-// plotBands.push({
-// from : startTime,
-// to : startTime + 86400000,
-// color : "RGBA(100,30,0,0.07)"
-// });
-// }
-// startTime += 86400000;
-// }
-
+		
 		obj.highcharts({
 			title : {
 				text : "",
@@ -145,9 +117,9 @@ $(document).ready(function(){
 			},
 			series : [ incomingSeriesData,outgoingSeriesData ]
 		});
-		/* obj[0].charts = charts; */
-
 	}
+	
+	/***************************/
 
 	function echoName(domain,  status, times,index) {
 		var statusStr = (status == 1 ? 'close' : 'open')
@@ -161,53 +133,80 @@ $(document).ready(function(){
 				'</div>';
 		return f;
 	}
-	proxyapi("domainList",null,function(data){
-		var html = "";
-		for(var i = 0; i < data.length;i++){
-			var domain = data[i];
-			html += echoName(domain.domain,domain.open,domain.connectTimes,i);
-		}
-		$("#proxyDomainList").html(html);
+	var refreshDomainList = function(){
+		proxyapi("domainList",null,function(data){
+			var html = "";
+			var domainList = data.domainList
+			for(var i = 0; i < domainList.length;i++){
+				var domain = domainList[i];
+				html += echoName(domain.domain,domain.open,domain.connectTimes,i);
+			}
+			$("#proxyDomainList").html(html);
+		})
+	}
+	refreshDomainList();
+	
+	$("#newUrlSubmit").click(function(){
+		var url = $("#newUrl")[0];
+		proxyapi("addDomain",{"url":url.value},function(data){
+			var newUrlInfo = $("#newUrlInfo")
+			if(data.status == "ok"){
+				url.value = "";
+				newUrlInfo.text("");
+				refreshDomainList();
+			}else{
+				newUrlInfo.text(url.value+" 错误的URL,末添加")
+			}
+		});
 	})
+	
+	/***************************/
+	
+	
 	var analysisDomain = null;
-	var analysis = function(){
+	var todayAnalysis = function(){
 		var startTime = (new Date())/1000-3600*72;
 		startTime -= startTime%3600;
-		proxyapi("analysisDataList",{"startTime":startTime,"domain":(analysisDomain?analysisDomain:"")},function(data){
-			show(startTime*1000,data.outgoing,data.incoming);
+		var today = new Date()
+		today.setHours(0);
+		today.setMinutes(0)
+		today.setSeconds(0)
+		proxyapi("analysisData",{"startTime":startTime,"todayStartTime":parseInt(today/1000),"domain":(analysisDomain?analysisDomain:"")},function(data){
+			var analysisData = data.analysisData;
+			show(startTime*1000,analysisData.outgoing,analysisData.incoming);
+			
+			var html = "";
+			html += '<div class="dataCount"><span>24小时数据流量:</span>'+IntToDataCount(analysisData.countData)+'</div>';
+			var list = analysisData.domainDataList;
+			
+			for(var i = 0; i < list.length;i++){
+				var domain = list[i];
+				html += '<div class="reusetDomainList">'+
+					'<span class="reusetTimes">'+IntToDataCount(domain.dataCount)+'</span>'+
+					'<a>'+domain.domain+'</a>'+
+					'</div>';
+			}
+			html += '<div class="reusetDomainList" id="showall">显示全部</div>';
+			
+			$("#domainAnalysis").html(html);
+			function showallbutton(){
+				if(analysisDomain)
+					$("#showall").show();
+				else
+					$("#showall").hide();
+			}
+			$("#domainAnalysis .reusetDomainList").click(function(){
+				analysisDomain = $(this).find("a").text();
+				showallbutton();
+				var obj = $("#dataAnalysis");
+				var chart = obj.highcharts();
+				chart.showLoading();
+				todayAnalysis();
+			});
+			showallbutton();
+			
 		});
 	};
-	proxyapi("domainDataList",null,function(data){
-		var html = "";
-		html += '<div class="dataCount"><span>今日数据流量:</span>'+IntToDataCount(data.countData)+'</div>';
-		var list = data.list;
-		
-		for(var i = 0; i < list.length;i++){
-			var domain = list[i];
-			html += '<div class="reusetDomainList">'+
-				'<span class="reusetTimes">'+IntToDataCount(domain.dataCount)+'</span>'+
-				'<a>'+domain.domain+'</a>'+
-				'</div>';
-		}
-		html += '<div class="reusetDomainList" id="showall">显示全部</div>';
-		
-		$("#domainAnalysis").html(html);
-		function showallbutton(){
-			if(analysisDomain)
-				$("#showall").show();
-			else
-				$("#showall").hide();
-		}
-		$("#domainAnalysis .reusetDomainList").click(function(){
-			analysisDomain = $(this).find("a").text();
-			showallbutton();
-			var obj = $("#dataAnalysis");
-			var chart = obj.highcharts();
-			chart.showLoading();
-			analysis();
-		});
-		showallbutton();
-	})
-	setInterval(analysis,20000);
-	analysis();
+	setInterval(todayAnalysis,5000);
+	todayAnalysis();
 })

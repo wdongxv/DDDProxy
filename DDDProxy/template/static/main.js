@@ -2,7 +2,7 @@ function proxyapi(opt, data, callback) {
 	var xhr = new XMLHttpRequest();
 	if (!data)
 		data = {};
-	xhr.open("POST", "", true);
+	xhr.open("POST", "/", true);
 	xhr.onreadystatechange = function(e) {
 		if (xhr.readyState == 4) {
 			var json = null;

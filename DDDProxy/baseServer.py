@@ -108,6 +108,8 @@ class baseServer():
 		
 	def addCallback(self,cb, *args, **kwargs):
 		self.callbackList.append((cb,0,args,kwargs))
+	def addDelay(self,delay,cb, *args, **kwargs):
+		self.callbackList.append((cb,delay+time.time(),args,kwargs))
 		
 	def addListen(self,port,host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
@@ -154,34 +156,38 @@ class baseServer():
 					wlist.append(connect.sock)
 			readable,writable,exceptional = select.select(rlist, wlist, rlist,1)
 			
-			timeCheck = []
-			timeCheck.append(("start",time.time()))
+# 			timeCheck = []
+# 			timeCheck.append(("start",time.time()))
 			for sock in readable:
 				if sock in self.serverList:
 					self.onConnect(sock)
 				else:
 					self.onData(sock)
-			timeCheck.append(("read",time.time(),readable))
+# 			timeCheck.append(("read",time.time(),readable))
 			for sock in writable:
 				self.onSend(sock)
-			timeCheck.append(("write",time.time(),writable))
+# 			timeCheck.append(("write",time.time(),writable))
 			for sock in exceptional:
 				self.onExcept(sock)
-			timeCheck.append(("except",time.time(),exceptional))
+# 			timeCheck.append(("except",time.time(),exceptional))
 				
 			cblist = self.callbackList
 			self.callbackList = []
+			currentTime = time.time()
 			for cbobj in cblist:
-				cbobj[0](*cbobj[2],**cbobj[3])
-			timeCheck.append(("callback",time.time(),cblist))
+				if cbobj[1] <= currentTime:
+					cbobj[0](*cbobj[2],**cbobj[3])
+				else:
+					self.callbackList.append(cbobj)
+# 			timeCheck.append(("callback",time.time(),cblist))
 			
-			lastCheck = None
-			for check in timeCheck:
-				if lastCheck:
-					usetime = check[1] - lastCheck[1]
-					if usetime >1:
-						baseServer.log(3,"usetime",usetime,check[2])
-				lastCheck = check
+# 			lastCheck = None
+# 			for check in timeCheck:
+# 				if lastCheck:
+# 					usetime = check[1] - lastCheck[1]
+# 					if usetime >1:
+# 						baseServer.log(3,"usetime",usetime,check[2])
+# 				lastCheck = check
 	def onConnect(self,sock):
 		sock,address = sock.accept()
 		connect = self.handler(server=self)

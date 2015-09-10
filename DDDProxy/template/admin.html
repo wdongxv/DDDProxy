@@ -127,7 +127,7 @@ body {
 <script src="/static/main.js"></script>
 <script src="/static/jquery.min.js"></script>
 <script src="/static/highcharts.js"></script>
-<script src="/static/proxy.js"></script>
+<script src="/static/admin.js"></script>
 </head>
 <body>
 
@@ -136,12 +136,10 @@ body {
 		<div id="domainAnalysis"></div>
 		<div id="dataAnalysis" style="height: 500px;"></div>
 	</div>
-	<div style="display: block; margin-top: 100px; ">
-		<form action="?" style="width: 500px; margin: 0 auto;">
-			<input name="opt" value="puturl" type="hidden" /> <input
-				style="width: 300px;" name="url" /> <input
-				value="add url to auto proxy list" type="submit" />
-		</form>
+	<div style="display: block; margin-top: 100px;text-align: center; ">
+		<input id="newUrl"style="width: 300px;" name="url" />
+		<input id="newUrlSubmit" value="add url to auto proxy list" type="submit" />
+		<p id="newUrlInfo"></p>
 	</div>
 	<div id="proxyDomainList"
 		style="width: 100%; text-align: center; padding-top: 10px;margin-top: 20px; "></div>

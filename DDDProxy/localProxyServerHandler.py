@@ -13,6 +13,8 @@ import domainConfig
 from datetime import datetime
 from remoteConnectManger import remoteConnectManger
 from remoteServerHandler import remoteServerConnect
+from DDDProxy.domainAnalysis import analysis, domainAnalysisType
+from DDDProxy.hostParser import parserUrlAddrPort
 
 class localProxyServerConnectHandler(sockConnect):
 	"""
@@ -24,6 +26,8 @@ class localProxyServerConnectHandler(sockConnect):
 		self.mode = ""
 		self.remoteConnect = None
 		self.recvCache = ""
+		
+		self.connectHost = ""
 	def onClose(self):
 		if(self.remoteConnect):
 			self.remoteConnect.sendOpt(self.fileno(),remoteServerConnect.optCloseConnect)
@@ -35,6 +39,8 @@ class localProxyServerConnectHandler(sockConnect):
 		self.recvCache += data
 		if self.mode == "proxy":
 			if self.remoteConnect and self.recvCache:
+				if self.connectHost:
+					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.recvCache))
 				self.remoteConnect.sendData(self.fileno(),self.recvCache)
 				self.recvCache = ""
 			return
@@ -51,6 +57,7 @@ class localProxyServerConnectHandler(sockConnect):
 						self.messageParse.getBody() if method == "POST" else "")
 				self.mode = "http"
 			else:
+				
 				self.mode = "proxy"
 				baseServer.log(1,self,"proxy mode",method,path)
 				connect = remoteConnectManger.getConnect()
@@ -59,6 +66,10 @@ class localProxyServerConnectHandler(sockConnect):
 					connect.setConnectCloseCallBack(self.fileno(),self.onRemoteConnectClose)
 				else:
 					self.close()
+				
+				self.connectHost = parserUrlAddrPort("https://"+path if method == "CONNECT" else path)[0]
+				analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
+				
 # 	def onRemoteConnectRecv(self,connect,data):
 # 		self.send(data)
 	def onRemoteConnectClose(self,connect):
@@ -73,6 +84,8 @@ class localProxyServerConnectHandler(sockConnect):
 		self.connectName += "	"+str(connect)
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
+		if self.connectHost:
+			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
 		if self.mode == "http":
 			if self.messageParse.connection() == "close":
 				self.close()
@@ -122,17 +135,27 @@ class localProxyServerConnectHandler(sockConnect):
 	def onHTTP(self,header,method,path,query,post):
 # 		baseServer.log(1,self,header,method,path,query,post)
 		if method == "POST":
-			data = json.loads(post)
-			opt = data["opt"]
+			postJson = json.loads(post)
+			opt = postJson["opt"]
 			respons = {}
 			if(opt=="serverList"):
 				respons["pac"] = "http://"+self.messageParse.getHeader("host")+"/pac"
 				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
 			elif opt=="setServerList":
-				settingConfig.setting(settingConfig.remoteServerList,data["data"])
+				settingConfig.setting(settingConfig.remoteServerList,postJson["data"])
 				respons["status"] = "ok"
 			elif opt=="testRemoteProxy":
 				respons["status"] = "unknow"
+			elif opt=="domainList":
+				respons["domainList"] = domainConfig.config.getDomainListWithAnalysis()
+			elif opt=="analysisData":
+				respons["analysisData"] = analysis.getAnalysisData(
+																selectDomain=postJson["domain"],
+																startTime=postJson["startTime"],
+																todayStartTime = postJson["todayStartTime"]
+																)
+			elif opt == "addDomain":
+				respons["status"] = "ok" if domainConfig.config.addDomain(parserUrlAddrPort(postJson["url"])[0]) else "error"
 			self.reseponse(respons)
 		elif path == "/pac":
 			content = self.getFileContent("/pac.js")

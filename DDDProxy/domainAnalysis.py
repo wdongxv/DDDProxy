@@ -7,12 +7,12 @@ Created on 2015年9月9日
 import urlparse
 import re
 import time
-from DDDProxy2.configFile import autoDataObject
 import json
 import thread
 import domainConfig
 import threading
-from DDDProxy2.baseServer import baseServer
+from configFile import autoDataObject
+from baseServer import baseServer
 
 
 def getDomainName(host):
@@ -70,6 +70,12 @@ class analysisSiteList(object):
 			self.siteList.remove(minSite)
 		return minSite;
 domainAnalysisConfig = "/tmp/domainAnalysisConfig.json"
+class domainAnalysisType:
+	connect = "connect"
+	incoming = "incoming"
+	outgoing = "outgoing"
+	
+
 class domainAnalysis():
 	def __init__(self):
 		self.domainAnalysisCache = analysisSiteList()
@@ -82,11 +88,14 @@ class domainAnalysis():
 			fp.close()
 		except:
 			pass
-	def incrementData(self,addr, dataType, hostPort, message,length):
+	def incrementData(self,addr, dataType, host, length):
+		"""
+		@param dataType: domainAnalysisType
+		"""
 		timeMark = time.time();
 		timeMark -= timeMark % 3600;
-		self.domainAnalysisCache.put(addr,hostPort[0],int(timeMark),dataType, length)
-	def getAnalysisData(self,selectDomain,startTime):
+		self.domainAnalysisCache.put(addr,host,int(timeMark),dataType, length)
+	def getAnalysisData(self,selectDomain,startTime,todayStartTime):
 		startTime -= startTime%3600;
 		index = 0
 		outgoing = []
@@ -98,46 +107,42 @@ class domainAnalysis():
 			for formIp,domainData in timeData.items():
 				for domain,data in domainData.items():
 					if not selectDomain or domain == selectDomain:
-						outgoing[index] += data["outgoing"]
-						incoming[index] += data["incoming"]
+						outgoing[index] += data[domainAnalysisType.outgoing]
+						incoming[index] += data[domainAnalysisType.incoming]
 			index+=1
-			startTime+= 3600;
+			startTime += 3600;
 			if startTime > time.time():
 				break
-		return {"outgoing":outgoing,"incoming":incoming}
-	def getTodayDomainAnalysis(self):
-		todayTime = time.time()
-		todayTime -= todayTime%86400
-		todayTime += time.timezone
+			
 		domainCountData = {}
 		for timeMark,timeData in self.domainAnalysis.items():
-			if timeMark<todayTime:
+			if timeMark<todayStartTime:
 				continue
 			for formIp,domainData in timeData.items():
 				for domain,data in domainData.items():
 					if domain not in domainCountData:
 						domainCountData[domain] = 0
-					domainCountData[domain] += data["incoming"]+data["outgoing"]
+					domainCountData[domain] += data[domainAnalysisType.incoming]+data[domainAnalysisType.outgoing]
 		domainDataList = []
 		countData = 0;
 		for domain,data in domainCountData.items():
 			countData += data
 			domainDataList.append({"domain":domain,"dataCount":data})
 		domainDataList.sort(cmp=lambda x,y : cmp(y["dataCount"],x["dataCount"]))
-		return {"list":domainDataList,"countData":countData}
+		return {"outgoing":outgoing,"incoming":incoming,"domainDataList":domainDataList,"countData":countData}
+
 	@staticmethod
-	def startAnalysis():
+	def startAnalysis(server):
+		"""
+		@param server: baseServer
+		"""
+		server.addDelay(5, analysis.analysisThread,server)
 # 		mainThreadPool.callInThread(analysis.analysisThread)
-		thread.start_new_thread(analysis.analysisThread, tuple())
-	def analysisThread(self):
-		threading.currentThread().name = "analysisDataThread"
-		while True:
-			try:
-				time.sleep(1)
-				domainData = self.domainAnalysisCache.pop(0)
-				if not domainData:
-					continue
-				
+# 		thread.start_new_thread(analysis.analysisThread, tuple())
+	def analysisThread(self,server):
+		try:
+			domainData = self.domainAnalysisCache.pop()
+			if domainData:
 				if domainData.connect:
 					domainConfig.config.domainConnectTimes(domainData.domain,domainData.connect)
 				
@@ -151,7 +156,6 @@ class domainAnalysis():
 				data["incoming"] += domainData.incoming
 				data["outgoing"] += domainData.outgoing
 				
-				
 				dataExpireTime = time.time()-86400*7 #删除7天之前的数据
 				for (k,d) in self.domainAnalysis.items():
 					if(k < dataExpireTime):
@@ -160,10 +164,9 @@ class domainAnalysis():
 				
 				domainAnalysisJson = json.dumps(self.domainAnalysis)
 				open(domainAnalysisConfig, "wt").write(domainAnalysisJson)
-				"""use mysql on my office"""
-	
-			except:
-				baseServer.log(3,"analysis error!")
-				pass
 
+		except:
+			baseServer.log(3,"analysis error!")
+		server.addDelay(5, analysis.analysisThread,server)
+		
 analysis = domainAnalysis()

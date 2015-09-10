@@ -9,6 +9,7 @@ from DDDProxy.localProxyServerHandler import localProxyServerConnectHandler
 from DDDProxy.remoteConnectManger import remoteConnectManger
 from optparse import OptionParser
 from DDDProxy import baseServer
+from DDDProxy.domainAnalysis import domainAnalysis
 
 
 if __name__ == "__main__":
@@ -20,10 +21,14 @@ if __name__ == "__main__":
 	
 	startUpArgs = parser.parse_args()[0]
 	
+	
 	baseServer.debuglevel = int(startUpArgs.loglevel)
 	
 	server = baseServer.baseServer(handler=localProxyServerConnectHandler)
+
+	domainAnalysis.startAnalysis(server)
 	remoteConnectManger.install(server)
+	
 	server.addListen(port=int(startUpArgs.port))
 	server.start()
 	
