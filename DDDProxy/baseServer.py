@@ -37,8 +37,7 @@ class sockConnect(object):
 		sockConnect._filenoLoop+=1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
-		
-		socket.setdefaulttimeout(5)
+
 	def __str__(self, *args, **kwargs):
 		return "["+str(self.fileno())+"]"+(self.connectName if self.connectName else  str(self.address))
 
