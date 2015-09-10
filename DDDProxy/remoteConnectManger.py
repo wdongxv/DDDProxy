@@ -72,7 +72,12 @@ class remoteConnectManger():
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
-		if self.count() < 5:
+		maxCount = 4
+		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
+		if remoteServerList:
+			maxCount = 4*len(remoteServerList)
+		
+		if self.count() < maxCount:
 			host,port,auth = settingConfig.setting(settingConfig.remoteServerKey)
 			if host and auth:
 				try:

@@ -18,7 +18,7 @@ import os
 debuglevel = 2
 
 createCertLock = threading.RLock()
-socket.setdefaulttimeout(30)
+socket.setdefaulttimeout(5)
 class sockConnect(object):
 	"""
 	@type sock: _socketobject
