@@ -210,7 +210,7 @@ class baseServer():
 					return
 			except:
 				pass
-			baseServer.log(3)
+			baseServer.log(3,e)
 		except:
 			baseServer.log(3)
 		
