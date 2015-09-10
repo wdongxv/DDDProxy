@@ -32,6 +32,6 @@ class ThreadPool:
 		self.threadList = []
 	def apply_async(self, func, *args, **kargs):
 		self.tasks.put((func, args, kargs))
-		if len(self.threadList) < self.maxThread:
+		if len(self.threadList) < self.maxThread and  len(self.threadList) < self.tasks.qsize():
 			self.threadList.append(Worker(self.tasks))
 		
