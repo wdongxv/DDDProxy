@@ -59,7 +59,7 @@ class localProxyServerConnectHandler(sockConnect):
 			else:
 				
 				self.mode = "proxy"
-				baseServer.log(1,self,"proxy mode",method,path)
+# 				baseServer.log(1,self,"proxy mode",method,path)
 				connect = remoteConnectManger.getConnect()
 				if connect:
 					connect.addAuthCallback(self.onRemoteConnectAuth)

@@ -119,8 +119,8 @@ class remoteServerConnect(sockConnect,messageHandler):
 	
 	
 	def onClose(self):
-		for connectId,cb in self.connectCloseCallback.items():
-			cb(self)
+		for cb in self.connectCloseCallback.values():
+			self.server.addCallback(cb,self)
 		self.connectCloseCallback = {}
 		self.recvCallback = {}
 	def onMessage(self,connectId,data):

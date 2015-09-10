@@ -4,17 +4,13 @@ Created on 2015年9月6日
 
 @author: dxw
 '''
-import threading
-import os
-import ssl
 from settingConfig import settingConfig
-import socket
 from remoteServerHandler import remoteServerConnect
 from baseServer import baseServer
 import math
 import time
 
-createCertLock = threading.RLock()
+
 
 class remoteServerConnectLocalHander(remoteServerConnect):
 	def __init__(self, server, *args, **kwargs):
@@ -53,20 +49,6 @@ class remoteConnectManger():
 		self.server = server;
 		self.remoteConnectList = []
 		self.remoteConnectListLoop = 0
-	def SSLLocalCertPath(self,remoteServerHost,remoteServerPort):
-		return "/tmp/dddproxy_cert.%s-%d.pem"%(remoteServerHost,remoteServerPort)
-	def fetchRemoteCert(self,remoteServerHost,remoteServerPort):
-		ok = False
-		createCertLock.acquire()
-		try:
-			if not os.path.exists(self.SSLLocalCertPath(remoteServerHost,remoteServerPort)):
-				cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerPort))
-				open(self.SSLLocalCertPath(remoteServerHost,remoteServerPort), "wt").write(cert)
-			ok = True
-		except:
-			pass
-		createCertLock.release()
-		return ok
 	def _remoteServerConnected(self,connect,authOk):
 		while len(self.getConnectCallback)>0:
 			self.getConnectCallback.pop(0)(self._getAuthedConnect())
@@ -92,14 +74,10 @@ class remoteConnectManger():
 		"""
 		if self.count() < 5:
 			host,port,auth = settingConfig.setting(settingConfig.remoteServerKey)
-			if host and auth and self.fetchRemoteCert(host, port):
+			if host and auth:
 				try:
-					remoteSocket = ssl.wrap_socket(
-						sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-						ca_certs	=	self.SSLLocalCertPath(host,port),
-						cert_reqs	=	ssl.CERT_REQUIRED)		
 					c = remoteServerConnectLocalHander(self.server)
-					c.connect((host,port),remoteSocket)
+					c.connect((host,port),True)
 					c.auth(auth)
 					
 					c.addAuthCallback(self.onConnectAuth)

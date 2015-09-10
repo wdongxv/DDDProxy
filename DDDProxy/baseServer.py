@@ -12,11 +12,13 @@ import traceback
 import select
 import ssl
 from DDDProxy.ThreadPool import ThreadPool
+import threading
+import os
 
 debuglevel = 2
 
-
-
+createCertLock = threading.RLock()
+socket.setdefaulttimeout(30)
 class sockConnect(object):
 	"""
 	@type sock: _socketobject
@@ -42,11 +44,40 @@ class sockConnect(object):
 		return self.connectName if self.connectName else  ( self.filenoStr()+str(self.address))
 	def filenoStr(self):
 		return "["+str(self.fileno())+"]"
-	def _doConnectSock(self,address,sock,cb=None):
+	
+	def SSLLocalCertPath(self,remoteServerHost,remoteServerPort):
+		return "/tmp/dddproxy_cert.%s-%d.pem"%(remoteServerHost,remoteServerPort)
+
+	def fetchRemoteCert(self,remoteServerHost,remoteServerPort):
+		ok = False
+		createCertLock.acquire()
+		try:
+			if not os.path.exists(self.SSLLocalCertPath(remoteServerHost,remoteServerPort)):
+				cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerPort))
+				open(self.SSLLocalCertPath(remoteServerHost,remoteServerPort), "wt").write(cert)
+			ok = True
+		except:
+			baseServer.log(3,remoteServerHost,remoteServerPort)
+		createCertLock.release()
+		return ok
+	def _doConnectSock(self,address,useSsl=False,cb=None):
 		ok = True
 		try:
+			sock = None
 			addr = (socket.gethostbyname(address[0]),address[1])
-			sock.connect(addr)
+			if useSsl:
+				if self.fetchRemoteCert(address[0], address[1]):
+					sock = ssl.wrap_socket(
+								sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
+								ca_certs	=	self.SSLLocalCertPath(address[0], addr[1]),
+								cert_reqs	=	ssl.CERT_REQUIRED)
+			else:
+				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+			if sock:
+				sock.connect(addr)
+			else:
+				ok = False
 		except:
 			baseServer.log(3,address)
 			ok = False
@@ -56,15 +87,13 @@ class sockConnect(object):
 			self.server.addCallback(self.onClose)
 		if cb:
 			self.server.addCallback(cb,self if ok else None)
-	connectPool = ThreadPool(2)
-	def connect(self,address,sock=None,cb=None):
+	connectPool = ThreadPool()
+	def connect(self,address,useSsl=False,cb=None):
 		"""
 		@param address: 仅记录
 		"""
 		address = address
-		if not sock:
-			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sockConnect.connectPool.apply_async(self._doConnectSock,address,sock,cb)
+		sockConnect.connectPool.apply_async(self._doConnectSock,address,useSsl,cb)
 # 		thread.start_new_thread(self._doConnectSock,())
 	def _setConnect(self,sock,address):
 		"""
@@ -129,7 +158,7 @@ class baseServer():
 		if not connect.sock in self.socketList:
 			connect.sock.setblocking(False)
 			self.socketList[connect.sock] = connect
-			baseServer.log(2,connect,">	connect")
+# 			baseServer.log(2,connect,">	connect")
 	
 
 	@staticmethod
@@ -193,7 +222,7 @@ class baseServer():
 		sock,address = sock.accept()
 		connect = self.handler(server=self)
 		connect._setConnect(sock, address)
-		baseServer.log(2,connect,"*	connect")
+# 		baseServer.log(2,connect,"*	connect")
 		
 	def onSend(self,sock):
 		if sock in self.socketList:
@@ -238,7 +267,7 @@ class baseServer():
 	def onExcept(self,sock):
 		if sock in self.socketList:
 			handler = self.socketList[sock]
-			baseServer.log(2,handler,"<	close")
+# 			baseServer.log(2,handler,"<	close")
 			del self.socketList[sock]
 			handler.onClose()
 			
