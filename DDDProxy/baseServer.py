@@ -39,8 +39,9 @@ class sockConnect(object):
 		self.connectName = ""
 		
 	def __str__(self, *args, **kwargs):
-		return "["+str(self.fileno())+"] "+(self.connectName if self.connectName else  str(self.address))
-
+		return self.connectName if self.connectName else  ( self.filenoStr()+str(self.address))
+	def filenoStr(self):
+		return "["+str(self.fileno())+"]"
 	def _doConnectSock(self,address,sock,cb=None):
 		ok = True
 		try:

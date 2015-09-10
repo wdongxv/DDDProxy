@@ -47,7 +47,7 @@ class localProxyServerConnectHandler(sockConnect):
 		if self.messageParse.appendData(data):
 			method = self.messageParse.method()
 			path = self.messageParse.path()
-			self.connectName = method+" "+path
+			self.connectName = self.filenoStr()+"	"+method+"	"+path
 			if not path.startswith("http://") and method in ["GET","POST"]:
 				path = path.split("?")
 				self.onHTTP(self.messageParse.headers,
@@ -81,7 +81,7 @@ class localProxyServerConnectHandler(sockConnect):
 		connect.setRecvCallback(self.fileno(), self.send)
 		self.remoteConnect = connect
 		self.onRecv("");
-		self.connectName = "["+str(connect.fileno())+"] > "+self.connectName
+		self.connectName = connect.filenoStr()+"	<	"+self.connectName
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
 		if self.connectHost:
