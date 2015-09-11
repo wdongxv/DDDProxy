@@ -53,28 +53,45 @@ div.domainLine {
 }
 
 #connectList .client{
-	width: 100%;
-	word-break: break-all;
-}
-#connectList .client div{
-	display: block;
-	padding: 0 1em;
+	overflow: hidden;
+	margin:0 1em;
 }
 #connectList .clientAddr{
 	background: #aaa;
 	color: #fff;
 	margin-top: 1em;
+	padding:0 1em; 
+}
+#connectList span{
+	font-size: 12px;
+	line-height: 16px;
+	display: inline-block;
+	height: 16px;
+}
+#connectList div.connect{
+	display: inline-block;
+ 	width: 2000px;
 }
 #connectList .connectInfo{
 }
 #connectList .send,#connectList .recv{
 	width: 60px;
-	display: inline-block;
+}
+#mainContent{
+	width: 80%;
+	max-width: 1024px;
+	min-width: 240px;
+	margin: 0 auto;
+}
+@media screen and (max-width:600px) {
+	#mainContent{
+		width: 95%;
+	}
 }
 </style>
 </head>
 <body>
-	<div style="width: 80%; max-width: 1024px; min-width: 240px;margin: 0 auto;">
+	<div id="mainContent">
 		<div>
 			<h1>DDDProxy 安全代理服务</h1>
 			<p>
@@ -115,7 +132,7 @@ div.domainLine {
 				<p>
 					> 连接池：<span id="status">loading...</span>
 				</p>
-				<p id="connectList"></p>
+				<div id="connectList"></div>
 			</div>
 		</div>
 		<div class="help" style="font-style: italic;">
@@ -312,16 +329,16 @@ div.domainLine {
 								var clientConectHtml = ""
 								for (var j = 0; j < remoteConnectList.length; j++) {
 									var connect = remoteConnectList[j]
-									clientConectHtml += "<p class='connect'>"+
+									clientConectHtml += "<div class='connect'>"+
 											"<span class='send'>↾"+IntToDataCount(connect.send)+"</span>"+
-											"<span class='recv'>&emsp;⇃"+IntToDataCount(connect.recv)+"</span>"+
-											"<span class='connectInfo'>&emsp;"+connect.name+"</span>"+
-											"</p>"
+											"<span class='recv'>⇃"+IntToDataCount(connect.recv)+"</span>"+
+											"<span class='connectInfo'>"+connect.name+"</span>"+
+											"</div>"
 								}
 								connectCount += remoteConnectList.length
 								
-								html += "<div class='client'>";
 								html += "<div class='clientAddr'>"+i+" count("+remoteConnectList.length+")</div>"
+								html += "<div class='client'>";
 								html += clientConectHtml
 								html += "</div>"
 							}
