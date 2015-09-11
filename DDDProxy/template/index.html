@@ -105,7 +105,7 @@ div.domainLine {
 		</div>
 		<div class="help">
 			<div class="part">
-				自动代理地址：<span class="pacAddr"></span>
+				自动代理地址：<a href="" class="pacAddr"></a>
 			</div>
 			<div>
 				> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
@@ -300,7 +300,8 @@ div.domainLine {
 			function getServerList() {
 				proxyapi("serverList", null, function(data) {
 
-					$(".pacAddr").text(data["pac"])
+					$(".pacAddr").text(data["pac"]).attr("href",data["pac"])
+					
 					var domainList = data["list"];
 					var html = "";
 					if(domainList){
