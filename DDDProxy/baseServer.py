@@ -146,7 +146,7 @@ class baseServer():
 		
 	def addListen(self,port,host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
-		
+		baseServer.log(1,"run in ",host,":",port)
 		server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
 		server.bind((host, port))
