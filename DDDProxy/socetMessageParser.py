@@ -82,7 +82,7 @@ class httpMessageParser():
 		return self.messageCache
 	def connection(self):
 		connection = self.getHeader("connection")
-		return "keep-alive" if connection and connection=="keep-alive" else "close"
+		return "keep-alive" if (connection and connection.lower() =="keep-alive") else "close"
 	def appendData(self, data):
 		if self.status == "bodyReadding":
 			self.messageCache += data

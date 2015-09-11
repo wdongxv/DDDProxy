@@ -87,7 +87,7 @@ class localProxyServerConnectHandler(sockConnect):
 		if self.connectHost:
 			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
 		if self.mode == "http":
-			if self.messageParse.connection() == "close":
+			if self.messageParse.connection() != "keep-alive":
 				self.close()
 			self.messageParse.clear()
 		
