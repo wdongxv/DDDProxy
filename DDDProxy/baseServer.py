@@ -5,15 +5,18 @@ Created on 2015年9月3日
 @author: dxw
 '''
 import logging
+import os
+import select
 import socket
+import ssl
 import sys
+import threading
 import time
 import traceback
-import select
-import ssl
-from DDDProxy.ThreadPool import ThreadPool
-import threading
-import os
+
+from ThreadPool import ThreadPool
+from configFile import configFile
+
 
 debuglevel = 2
 
@@ -46,7 +49,7 @@ class sockConnect(object):
 		return "["+str(self.fileno())+"]"
 	
 	def SSLLocalCertPath(self,remoteServerHost,remoteServerPort):
-		return "/tmp/dddproxy_cert.%s-%d.pem"%(remoteServerHost,remoteServerPort)
+		return configFile.makeConfigFilePathName("%s-%d.pem"%(remoteServerHost,remoteServerPort))
 
 	def fetchRemoteCert(self,remoteServerHost,remoteServerPort):
 		ok = False

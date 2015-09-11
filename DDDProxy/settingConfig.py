@@ -17,7 +17,7 @@ class settingConfig(configFile):
 		self.serverListLoop = 0
 	
 	def getConfigfileFilePath(self):
-		return "/tmp/dddproxy_setting_config.json"
+		return configFile.makeConfigFilePathName("setting.json")
 
 	def __getitem__(self, k):
 		if k == settingConfig.remoteServerKey:

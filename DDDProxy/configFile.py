@@ -5,6 +5,8 @@ Created on 2015年9月5日
 @author: dxw
 '''
 import json
+import os
+from __builtin__ import BaseException
 
 
 class autoDataObject(dict):
@@ -38,3 +40,11 @@ class configFile:
 		fp.close()
 	def getConfigfileFilePath(self):
 		raise NotImplementedError()
+	@staticmethod
+	def makeConfigFilePathName(name):
+		dirName = os.path.expanduser('~')+"/.DDDProxy/"
+		if not os.path.exists(dirName):
+			os.makedirs(dirName)
+		elif not os.path.isdir(dirName):
+			raise BaseException(dirName+" not is dir!")
+		return dirName+name

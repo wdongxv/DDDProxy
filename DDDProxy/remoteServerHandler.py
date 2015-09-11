@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import math
+import os
+import socket
+import ssl
 import struct
 import time
 
-from baseServer import baseServer
+from configFile import configFile
 from baseServer import sockConnect
-from socetMessageParser import httpMessageParser
-import os
-import ssl
-import socket
 from hostParser import parserUrlAddrPort
+from socetMessageParser import httpMessageParser
+
 
 remoteAuth = "1"
 
@@ -187,8 +188,8 @@ class remoteConnectServerHandler(remoteServerConnect):
 		for connect in self.realConnectList.values():
 			connect.close()
 		remoteServerConnect.onClose(self)
-SSLCertPath = "/tmp/dddproxy.remote.cert"
-SSLKeyPath = "/tmp/dddproxy.remote.key"
+SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert")
+SSLKeyPath = configFile.makeConfigFilePathName("dddproxy.remote.key")
 def createSSLCert():
 	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
 		shell = "openssl req -new -newkey rsa:1024 -days 3650 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=ddd\" -keyout %s  -out %s"%(

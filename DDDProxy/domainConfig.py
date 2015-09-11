@@ -20,7 +20,7 @@ class domainConfig(configFile):
 				self.addDomain(domain)
 			self.save()
 	def getConfigfileFilePath(self):
-		return "/tmp/pacDomainConfig.json"
+		return configFile.makeConfigFilePathName("pacDomainConfig.json")
 
 	def getDomainOpenedList(self):
 		pacList = []

@@ -4,15 +4,15 @@ Created on 2015年9月9日
 
 @author: dxw
 '''
-import urlparse
+import json
 import re
 import time
-import json
-import thread
-import domainConfig
-import threading
-from configFile import autoDataObject
+import urlparse
+
 from baseServer import baseServer
+from configFile import autoDataObject
+from configFile import configFile
+import domainConfig
 
 
 def getDomainName(host):
@@ -69,7 +69,7 @@ class analysisSiteList(object):
 		if minSite:
 			self.siteList.remove(minSite)
 		return minSite;
-domainAnalysisConfig = "/tmp/domainAnalysisConfig.json"
+domainAnalysisConfig = configFile.makeConfigFilePathName("domainAnalysisConfig.json")
 class domainAnalysisType:
 	connect = "connect"
 	incoming = "incoming"
