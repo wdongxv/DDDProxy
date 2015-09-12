@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import hashlib
-import math
 import os
-import socket
 import ssl
 import struct
 import time
@@ -12,6 +10,7 @@ from configFile import configFile
 from baseServer import sockConnect
 from hostParser import parserUrlAddrPort
 from socetMessageParser import httpMessageParser
+from DDDProxy import log
 
 
 remoteAuth = "1"
@@ -157,6 +156,22 @@ class remoteConnectServerHandler(remoteServerConnect):
 		remoteServerConnect.__init__(self, *args, **kwargs)
 		self.realConnectList = {}
 		self.authPass = False
+	
+	
+	def wrapToSll(self):
+		try:
+			createSSLCert()
+			self.sock = ssl.wrap_socket(self.sock, certfile=SSLCertPath,keyfile=SSLKeyPath, server_side=True)
+			self.server.addCallback(remoteServerConnect.onConnected,self)
+		except:
+			log.log(3)
+			self.server.addCallback(self.onClose)
+	def onConnected(self):
+		
+		sockConnect.connectPool.apply_async(self.wrapToSll)
+
+		
+		
 	def onRealConnectClose(self,connect):
 		"""
 		@param connect:realServerConnect 

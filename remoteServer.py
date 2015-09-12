@@ -6,9 +6,8 @@ Created on 2015年1月11日
 @author: dx.wang
 '''
 from DDDProxy.baseServer import baseServer
-from DDDProxy import remoteServerHandler
+from DDDProxy import remoteServerHandler, log
 import socket
-import ssl
 from optparse import OptionParser
 if __name__ == "__main__":
 	
@@ -22,16 +21,10 @@ if __name__ == "__main__":
 		print parser.get_usage()
 		exit()
 		
-	baseServer.debuglevel = int(startUpArgs.loglevel)
+	log.debuglevel = int(startUpArgs.loglevel)
 		
-	remoteServerHandler.createSSLCert()
 	
 	server = baseServer(handler=remoteServerHandler.remoteConnectServerHandler)
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
-	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
-	s.bind(("", int(startUpArgs.port)))
-	s.listen(1024)
-	s = ssl.wrap_socket(s, certfile=remoteServerHandler.SSLCertPath,keyfile=remoteServerHandler.SSLKeyPath, server_side=True)
-	
-	server.addSockListen(s)
+	server.addListen(port=int(startUpArgs.port))
 	server.start()
+	
