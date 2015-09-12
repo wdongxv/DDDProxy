@@ -86,7 +86,11 @@ class realServerConnect(sockConnect):
 			if method == "CONNECT":
 				path = "https://"+path
 				self.dataCache = ""
-			self.connect(parserUrlAddrPort(path))
+			addr,port = parserUrlAddrPort(path)
+			if addr in ["127.0.0.1","localhost"]:
+				self.server.addCallback(self.onClose)
+			else:
+				self.connect((addr,port))
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":

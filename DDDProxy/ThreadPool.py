@@ -6,7 +6,7 @@ Created on 2015年9月10日
 '''
 from threading import Thread
 from Queue import Queue
-import logging
+from DDDProxy import log
 
 
 class Worker(Thread):
@@ -23,7 +23,7 @@ class Worker(Thread):
 			try:
 				func(*args, **kargs)
 			except Exception, e:
-				logging.error(e)
+				log.log(3)
 
 class ThreadPool:
 	def __init__(self, maxThread=20):
@@ -32,6 +32,10 @@ class ThreadPool:
 		self.threadList = []
 	def apply_async(self, func, *args, **kargs):
 		self.tasks.put((func, args, kargs))
+# 		log.log(2,"apply_async",
+# 			threadList = len(self.threadList),
+# 			maxThread=self.maxThread,
+# 			tasks=self.tasks.qsize())
 		if len(self.threadList) < self.maxThread and  len(self.threadList) < self.tasks.qsize():
 			self.threadList.append(Worker(self.tasks))
 		

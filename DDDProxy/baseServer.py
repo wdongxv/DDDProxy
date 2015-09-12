@@ -4,24 +4,23 @@ Created on 2015年9月3日
 
 @author: dxw
 '''
-import logging
 import os
 import select
 import socket
 import ssl
-import sys
 import threading
 import time
-import traceback
 
 from ThreadPool import ThreadPool
 from configFile import configFile
+from DDDProxy import log
+import json
 
 
-debuglevel = 2
 
 createCertLock = threading.RLock()
 socket.setdefaulttimeout(5)
+
 class sockConnect(object):
 	"""
 	@type sock: _socketobject
@@ -60,7 +59,7 @@ class sockConnect(object):
 				open(self.SSLLocalCertPath(remoteServerHost,remoteServerPort), "wt").write(cert)
 			ok = True
 		except:
-			baseServer.log(3,remoteServerHost,remoteServerPort)
+			log.log(3,remoteServerHost,remoteServerPort)
 		createCertLock.release()
 		return ok
 	def _doConnectSock(self,address,useSsl=False,cb=None):
@@ -82,7 +81,7 @@ class sockConnect(object):
 			else:
 				ok = False
 		except:
-			baseServer.log(3,address)
+			log.log(3,address)
 			ok = False
 		if ok:
 			self.server.addCallback(self._setConnect,sock,address)
@@ -118,9 +117,11 @@ class sockConnect(object):
 		self.server.addSockConnect(self)
 		
 	def onRecv(self,data):
+# 		log.log(2,self,"<<",repr(data))
 		self.info["recv"] += len(data)
 		
 	def onSend(self,data):
+# 		log.log(2,self,">>",repr(data))
 		self.info["send"] += len(data)
 		self.sock.send(data)
 	def onClose(self):
@@ -131,7 +132,7 @@ class baseServer():
 	def __init__(self,handler):
 		self.handler = handler
 
-		self.socketList = {}
+		self._socketConnectList = {}
 		self.serverList = []
 
 		self.callbackList = []
@@ -146,49 +147,35 @@ class baseServer():
 		
 	def addListen(self,port,host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
-		baseServer.log(1,"run in ",host,":",port)
+		log.log(1,"run in ",host,":",port)
 		server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
 		server.bind((host, port))
 		server.listen(1024)
-		server.setblocking(False)
-		self.serverList.append(server)
+		self.addSockListen(server)
 	def addSockListen(self,sock):
 		sock.setblocking(False)
 		self.serverList.append(sock)
 		
 	def addSockConnect(self,connect):
-		if not connect.sock in self.socketList:
+		if not connect.sock in self._socketConnectList:
 			connect.sock.setblocking(False)
-			self.socketList[connect.sock] = connect
-# 			baseServer.log(2,connect,">	connect")
+			self._socketConnectList[connect.sock] = connect
 	
 
-	@staticmethod
-	def log(level, *args, **kwargs):
-		if level < debuglevel:
-			return
-		
-		data = "	".join(str(i) for i in args)
-		if level==3:
-			data += "	"+str(sys.exc_info())
-			data += "	"+str(traceback.format_exc())
-		
-		data = time.strftime("%y-%B-%d %H:%M:%S:	")+ data
-		if level<2:
-			print data+""
-		else:
-			logging.log([logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][level], data)
 	def start(self):
 		
 		while True:
-			rlist = self.serverList + self.socketList.keys()
+			rlist = self.serverList + self._socketConnectList.keys()
 			wlist = []
-			for connect in self.socketList.values():
+			for connect in self._socketConnectList.values():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
-			readable,writable,exceptional = select.select(rlist, wlist, rlist,1)
-			
+			try:
+				readable,writable,exceptional = select.select(rlist, wlist, rlist,10)
+			except:
+				log.log(3)
+				continue;
 # 			timeCheck = []
 # 			timeCheck.append(("start",time.time()))
 			for sock in readable:
@@ -219,24 +206,24 @@ class baseServer():
 # 				if lastCheck:
 # 					usetime = check[1] - lastCheck[1]
 # 					if usetime >1:
-# 						baseServer.log(3,"usetime",usetime,check[2])
+# 						log.log(3,"usetime",usetime,check[2])
 # 				lastCheck = check
 	def onConnect(self,sock):
 		sock,address = sock.accept()
 		connect = self.handler(server=self)
 		connect._setConnect(sock, address)
-# 		baseServer.log(2,connect,"*	connect")
+# 		log.log(2,connect,"*	connect")
 		
 	def onSend(self,sock):
-		if sock in self.socketList:
-			connect = self.socketList[sock]
+		if sock in self._socketConnectList:
+			connect = self._socketConnectList[sock]
 			data = connect.dataSendList.pop(0)
 			if data:
 				try:
 					connect.onSend(data)
 					return
 				except:
-					baseServer.log(3)
+					log.log(3)
 			sock.close()
 			self.onExcept(sock)
 			
@@ -248,9 +235,9 @@ class baseServer():
 		except ssl.SSLError as e:
 			if e.errno == 2:
 				return
-			baseServer.log(3)
+			log.log(3)
 		except:
-			baseServer.log(3)
+			log.log(3)
 		
 		
 		if isinstance(sock, ssl.SSLSocket):
@@ -262,16 +249,16 @@ class baseServer():
 					break
 		
 		if data:
-			if sock in self.socketList:
-				handler = self.socketList[sock]
+			if sock in self._socketConnectList:
+				handler = self._socketConnectList[sock]
 				handler.onRecv(data)
 		else:
 			self.onExcept(sock)
 	def onExcept(self,sock):
-		if sock in self.socketList:
-			handler = self.socketList[sock]
-# 			baseServer.log(2,handler,"<	close")
-			del self.socketList[sock]
+		if sock in self._socketConnectList:
+			handler = self._socketConnectList[sock]
+# 			log.log(2,handler,"<	close")
+			del self._socketConnectList[sock]
 			handler.onClose()
 			
 if __name__ == "__main__":

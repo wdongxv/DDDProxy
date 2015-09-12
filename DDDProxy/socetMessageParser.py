@@ -59,6 +59,8 @@
 
 
 import re
+import json
+from DDDProxy import log
 class httpMessageParser():
 	def __init__(self):
 		self.clear()
@@ -109,7 +111,7 @@ class httpMessageParser():
 						return self.appendData("")
 					self.status = "end"
 					return True
-				header = line.split(": ")
+				header = line.split(": ",1)
 				if(len(header)==2):
 					self.headers.append((header[0].lower(),header[1]))
 				else:

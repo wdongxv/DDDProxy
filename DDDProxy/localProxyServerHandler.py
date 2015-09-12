@@ -2,19 +2,20 @@
 # -*- coding: utf-8 -*-
 
 
-from baseServer import sockConnect
-from socetMessageParser import httpMessageParser
-import httplib
-from baseServer import baseServer
-from os.path import dirname
-import json
-from settingConfig import settingConfig
-import domainConfig
 from datetime import datetime
-from remoteConnectManger import remoteConnectManger
-from remoteServerHandler import remoteServerConnect
+import httplib
+import json
+from os.path import dirname
+
 from DDDProxy.domainAnalysis import analysis, domainAnalysisType
 from DDDProxy.hostParser import parserUrlAddrPort
+from baseServer import sockConnect
+import domainConfig
+from remoteConnectManger import remoteConnectManger
+from remoteServerHandler import remoteServerConnect
+from settingConfig import settingConfig
+from socetMessageParser import httpMessageParser
+from DDDProxy import log
 
 class localProxyServerConnectHandler(sockConnect):
 	"""
@@ -35,7 +36,6 @@ class localProxyServerConnectHandler(sockConnect):
 		sockConnect.onClose(self)
 	def onRecv(self, data):
 		sockConnect.onRecv(self, data)
-		
 		self.recvCache += data
 		if self.mode == "proxy":
 			if self.remoteConnect and self.recvCache:
@@ -59,7 +59,7 @@ class localProxyServerConnectHandler(sockConnect):
 			else:
 				
 				self.mode = "proxy"
-# 				baseServer.log(1,self,"proxy mode",method,path)
+# 				log.log(1,self,"proxy mode",method,path)
 				connect = remoteConnectManger.getConnect()
 				if connect:
 					connect.addAuthCallback(self.onRemoteConnectAuth)
@@ -69,7 +69,8 @@ class localProxyServerConnectHandler(sockConnect):
 				
 				self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
 				analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
-				
+		else:
+			pass
 # 	def onRemoteConnectRecv(self,connect,data):
 # 		self.send(data)
 	def onRemoteConnectClose(self, connect):
@@ -115,7 +116,7 @@ class localProxyServerConnectHandler(sockConnect):
 		
 # 		connection = self.messageParse.getHeader("connection")
 		
-# 		baseServer.log(1,self,code,ContentType,httpMessage)
+# 		log.log(1,self,code,ContentType,httpMessage)
 		
 		httpMessage += "\r\n"
 		httpMessage += data
@@ -134,7 +135,7 @@ class localProxyServerConnectHandler(sockConnect):
 		return content
 	
 	def onHTTP(self, header, method, path, query, post):
-# 		baseServer.log(1,self,header,method,path,query,post)
+# 		log.log(1,self,header,method,path,query,post)
 		if method == "POST":
 			postJson = json.loads(post)
 			opt = postJson["opt"]
@@ -169,7 +170,7 @@ class localProxyServerConnectHandler(sockConnect):
 			self.reseponse(content)
 		elif path == "/api_status":
 			connects = {}
-			for handler in self.server.socketList.values():
+			for handler in self.server._socketConnectList.values():
 				connect = handler.address[0]
 				if not connect in connects:
 					connects[connect] = []

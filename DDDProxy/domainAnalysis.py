@@ -13,6 +13,7 @@ from baseServer import baseServer
 from configFile import autoDataObject
 from configFile import configFile
 import domainConfig
+from DDDProxy import log
 
 
 def getDomainName(host):
@@ -166,7 +167,7 @@ class domainAnalysis():
 				open(domainAnalysisConfig, "wt").write(domainAnalysisJson)
 
 		except:
-			baseServer.log(3,"analysis error!")
+			log.log(3,"analysis error!")
 		server.addDelay(5, analysis.analysisThread,server)
 		
 analysis = domainAnalysis()

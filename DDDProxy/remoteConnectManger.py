@@ -9,6 +9,7 @@ from remoteServerHandler import remoteServerConnect
 from baseServer import baseServer
 import math
 import time
+from DDDProxy import log
 
 
 
@@ -31,7 +32,7 @@ class remoteServerConnectLocalHander(remoteServerConnect):
 # 		elif opt == remoteServerConnect.optCloseConnect:
 # 			self.close()
 		super(remoteServerConnectLocalHander, self).onOpt(connectId,opt)
-# 		baseServer.log(2,"onOpt",connectId,opt)
+# 		log.log(2,"onOpt",connectId,opt)
 	def auth(self,auth):
 		randomNum = math.floor(time.time())
 		self.sendData(-1,self.authMake(auth, randomNum))
@@ -89,7 +90,7 @@ class remoteConnectManger():
 					c.setConnectCloseCallBack(-1,self.onConnectClose)
 					self.remoteConnectList.append(c)
 				except:
-					baseServer.log(3,host, port)
+					log.log(3,host, port)
 		return self.getConnectWithLoop();
 	manager = None
 	@staticmethod
