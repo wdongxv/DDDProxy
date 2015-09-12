@@ -16,6 +16,7 @@ from remoteServerHandler import remoteServerConnect
 from settingConfig import settingConfig
 from socetMessageParser import httpMessageParser
 from DDDProxy import log
+import time
 
 class localProxyServerConnectHandler(sockConnect):
 	"""
@@ -180,7 +181,7 @@ class localProxyServerConnectHandler(sockConnect):
 			
 			for l in connects.values():
 				l.sort(cmp=lambda x, y : cmp(y["send"] + y["recv"], x["send"] + x["recv"]))
-			self.reseponse({"connect":connects})
+			self.reseponse({"connect":connects,"currentTime":int(time.time())})
 		else:
 			if path == "/":
 				path = "/index.html"

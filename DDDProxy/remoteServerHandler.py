@@ -196,10 +196,15 @@ class remoteConnectServerHandler(remoteServerConnect):
 		if connectId==-1:
 			size = struct.calcsize("i")
 			timenum = struct.unpack("i",data[:size])[0]
-			if time.time()-300 < timenum and time.time()+300 > timenum and self.authMake(remoteAuth, timenum)==data:
-				self.authPass = True
-				self.sendOpt(-1, remoteServerConnect.optAuthOK)
+			if time.time()-1800 < timenum and time.time()+1800 > timenum:
+				if self.authMake(remoteAuth, timenum)==data:
+					self.authPass = True
+					self.sendOpt(-1, remoteServerConnect.optAuthOK)
+				else:
+					log.log(2,self,"auth not Math:",self.authMake(remoteAuth, timenum),repr(data))
 			else:
+				log.log(2,self,"timenum is Expired")
+			if not self.authPass:
 				self.close()
 		elif self.authPass:
 			self.getRealConnect(connectId).onlocalRecv(data)

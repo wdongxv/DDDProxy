@@ -31,16 +31,19 @@ class sockConnect(object):
 	def __init__(self,server):
 		self.server = server
 		self.info = {
-					"startTime":time.time(),
+					"startTime":int(time.time()),
 					"send":0,
 					"recv":0
 					}
+		self.makeAlive()
 		self.sock = None
 		self.address = (None,None)
 		self.dataSendList = []
 		sockConnect._filenoLoop+=1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
+	def makeAlive(self):
+		self.info["lastAlive"] = int(time.time())
 		
 	def __str__(self, *args, **kwargs):
 		return self.connectName if self.connectName else  ( self.filenoStr()+str(self.address))
@@ -119,11 +122,13 @@ class sockConnect(object):
 	def onRecv(self,data):
 # 		log.log(2,self,"<<",repr(data))
 		self.info["recv"] += len(data)
+		self.makeAlive()
 		
 	def onSend(self,data):
 # 		log.log(2,self,">>",repr(data))
 		self.info["send"] += len(data)
 		self.sock.send(data)
+		self.makeAlive()
 	def onClose(self):
 		pass
 	def close(self):
@@ -168,9 +173,13 @@ class baseServer():
 		while True:
 			rlist = self.serverList + self._socketConnectList.keys()
 			wlist = []
+			currentTime = time.time()
 			for connect in self._socketConnectList.values():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
+				elif connect.info["lastAlive"] < currentTime-120:
+					connect.close()
+				
 			try:
 				readable,writable,exceptional = select.select(rlist, wlist, rlist,10)
 			except:

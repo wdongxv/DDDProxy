@@ -333,7 +333,7 @@ div.domainLine {
 									clientConectHtml += "<div class='connect'>"+
 											"<span class='send'>↾"+IntToDataCount(connect.send)+"</span>"+
 											"<span class='recv'>⇃"+IntToDataCount(connect.recv)+"</span>"+
-											"<span class='connectInfo'>"+connect.name+"</span>"+
+											"<span class='connectInfo'>"+connect.name+" "+(data.currentTime-connect.lastAlive)+"s</span>"+
 											"</div>"
 								}
 								connectCount += remoteConnectList.length
