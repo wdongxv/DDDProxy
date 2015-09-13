@@ -177,7 +177,7 @@ class baseServer():
 			for connect in self._socketConnectList.values():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
-				elif connect.info["lastAlive"] < currentTime-120:
+				elif connect.info["lastAlive"] < currentTime-300:
 					connect.close()
 				
 			try:
