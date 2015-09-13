@@ -128,7 +128,7 @@ class sockConnect(object):
 # 		log.log(2,self,">>",repr(data))
 		self.info["send"] += len(data)
 		self.sock.send(data)
-# 		self.makeAlive()
+		self.makeAlive()
 	def onClose(self):
 		pass
 	def close(self):
@@ -177,8 +177,8 @@ class baseServer():
 			for connect in self._socketConnectList.values():
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
-				elif connect.info["lastAlive"] < currentTime-300:
-					connect.close()
+# 				elif connect.info["lastAlive"] < currentTime-300:
+# 					connect.close()
 				
 			try:
 				readable,writable,exceptional = select.select(rlist, wlist, rlist,10)
