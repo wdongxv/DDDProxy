@@ -128,7 +128,7 @@ class sockConnect(object):
 # 		log.log(2,self,">>",repr(data))
 		self.info["send"] += len(data)
 		self.sock.send(data)
-		self.makeAlive()
+# 		self.makeAlive()
 	def onClose(self):
 		pass
 	def close(self):

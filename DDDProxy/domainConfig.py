@@ -6,7 +6,7 @@ Created on 2015年9月8日
 '''
 from configFile import configFile
 import time
-from DDDProxy.hostParser import hostMatch
+from DDDProxy.hostParser import hostMatch, getDomainName
 class domainConfig(configFile):
 	defaultDomainList = ["google.com","gstatic.com","googleusercontent.com","googleapis.com","googleusercontent.com",
 						"googlevideo.com","facebook.com","youtube.com","akamaihd.net","ytimg.com","twitter.com",
@@ -49,7 +49,8 @@ class domainConfig(configFile):
 			return True
 		return False
 	def addDomain(self,domain,formGwflist = False):
-		if domain and hostMatch.match(domain):
+		domain = getDomainName(domain)
+		if domain:
 			if not domain in self.setting:
 				self.setting[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist,"createTime":time.time()}
 				return True
@@ -64,6 +65,7 @@ class domainConfig(configFile):
 					return True
 		return False
 	def domainConnectTimes(self,domain,times):
+		domain = getDomainName(domain)
 		if domain in self.setting:
 			data = self.setting[domain]
 			data["connectTimes"] += times
