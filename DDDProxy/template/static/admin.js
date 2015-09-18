@@ -127,8 +127,8 @@ $(document).ready(function(){
 				'<div class="content"><div class="times"><p>'+(times<1000?times:IntToDataCount(times,1000))+'</p></div>'+
 				'<div class="domain"><a class="domain_link" target="_blank" href="//'+ domain +'">'+domain+'</a></div></div>' +
 				'<div class="optbox">'+
-				'<a href="?opt='+statusStr+'&domain='+domain+'">'+(status == 1 ? '⌧' : '⇄︎')+'</a>' +
-				'<a href="?opt=delete&domain='+domain+'" class="delete">del</a>' +
+				'<a href="#" class="'+statusStr+'" >'+(status == 1 ? '⌧' : '⇄︎')+'</a>' +
+				'<a href="#" class="delete">del</a>' +
 				'</div>'+
 				'</div>';
 		return f;
@@ -142,6 +142,12 @@ $(document).ready(function(){
 				html += echoName(domain.domain,domain.open,domain.connectTimes,i);
 			}
 			$("#proxyDomainList").html(html);
+			$(".close,.open,.delete").click(function(){
+				var cls = this.className;
+				proxyapi("domainList",{"action":cls,"domain":$(this).parents(".line").find(".domain a").text()},function(){
+					refreshDomainList();
+				});
+			})
 		})
 	}
 	refreshDomainList();

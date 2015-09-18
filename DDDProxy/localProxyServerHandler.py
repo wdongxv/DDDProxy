@@ -150,7 +150,21 @@ class localProxyServerConnectHandler(sockConnect):
 			elif opt == "testRemoteProxy":
 				respons["status"] = "unknow"
 			elif opt == "domainList":
-				respons["domainList"] = domainConfig.config.getDomainListWithAnalysis()
+				
+				if "action" in postJson:
+					action = postJson["action"]
+					domain = postJson["domain"]
+					respons={"status":"ok"}
+					if action == "delete":
+						domainConfig.config.removeDomain(domain)
+					elif action == "open":
+						domainConfig.config.openDomain(domain)
+					elif action == "close":
+						domainConfig.config.closeDomain(domain)
+					else:
+						respons={"status":"no found action"}
+				else:
+					respons["domainList"] = domainConfig.config.getDomainListWithAnalysis()
 			elif opt == "analysisData":
 				respons["analysisData"] = analysis.getAnalysisData(
 																selectDomain=postJson["domain"],
