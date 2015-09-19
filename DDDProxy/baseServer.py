@@ -125,9 +125,9 @@ class sockConnect(object):
 		self.makeAlive()
 		
 	def onSend(self,data):
-# 		log.log(2,self,">>",repr(data))
 		self.info["send"] += len(data)
-		self.sock.send(data)
+		l = self.sock.send(data)
+# 		log.log(2,self,">>",len(data),l)
 		self.makeAlive()
 	def onClose(self):
 		pass
@@ -142,9 +142,8 @@ class baseServer():
 
 		self.callbackList = []
 
-		socket.setdefaulttimeout(30)
+		socket.setdefaulttimeout(10)
 
-		
 	def addCallback(self,cb, *args, **kwargs):
 		self.callbackList.append((cb,0,args,kwargs))
 	def addDelay(self,delay,cb, *args, **kwargs):
@@ -155,16 +154,25 @@ class baseServer():
 		log.log(1,"run in ",host,":",port)
 		server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
+		
 		server.bind((host, port))
 		server.listen(1024)
 		self.addSockListen(server)
 	def addSockListen(self,sock):
+		"""
+		@param sock: _socketobject
+		"""
 		sock.setblocking(False)
 		self.serverList.append(sock)
 		
 	def addSockConnect(self,connect):
 		if not connect.sock in self._socketConnectList:
 			connect.sock.setblocking(False)
+			connect.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+			connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
+			connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+			TCP_KEEPALIVE = 0x10
+			connect.sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
 			self._socketConnectList[connect.sock] = connect
 	
 
@@ -181,24 +189,24 @@ class baseServer():
 					connect.close()
 				
 			try:
-				readable,writable,exceptional = select.select(rlist, wlist, rlist,10)
+				s_readable,s_writable,s_exceptional = select.select(rlist, wlist, rlist,10)
 			except:
 				log.log(3)
 				continue;
-# 			timeCheck = []
-# 			timeCheck.append(("start",time.time()))
-			for sock in readable:
+			timeCheck = []
+			timeCheck.append(("start",time.time()))
+			for sock in s_readable:
 				if sock in self.serverList:
 					self.onConnect(sock)
 				else:
 					self.onData(sock)
-# 			timeCheck.append(("read",time.time(),readable))
-			for sock in writable:
+					timeCheck.append(("read",time.time(),sock))
+			for sock in s_writable:
 				self.onSend(sock)
-# 			timeCheck.append(("write",time.time(),writable))
-			for sock in exceptional:
+				timeCheck.append(("write",time.time(),sock))
+			for sock in s_exceptional:
 				self.onExcept(sock)
-# 			timeCheck.append(("except",time.time(),exceptional))
+				timeCheck.append(("except",time.time(),sock))
 				
 			cblist = self.callbackList
 			self.callbackList = []
@@ -208,20 +216,20 @@ class baseServer():
 					cbobj[0](*cbobj[2],**cbobj[3])
 				else:
 					self.callbackList.append(cbobj)
-# 			timeCheck.append(("callback",time.time(),cblist))
+				timeCheck.append(("callback",time.time(),cbobj))
 			
-# 			lastCheck = None
-# 			for check in timeCheck:
-# 				if lastCheck:
-# 					usetime = check[1] - lastCheck[1]
-# 					if usetime >1:
-# 						log.log(3,"usetime",usetime,check[2])
-# 				lastCheck = check
+			lastCheck = None
+			for check in timeCheck:
+				if lastCheck:
+					usetime = check[1] - lastCheck[1]
+					if usetime >1:
+						log.log(3,check[0],"usetime > 1.0s",usetime,check[2])
+				lastCheck = check
 	def onConnect(self,sock):
 		sock,address = sock.accept()
 		connect = self.handler(server=self)
 		connect._setConnect(sock, address)
-# 		log.log(2,connect,"*	connect")
+		log.log(2,connect,"*	connect")
 		
 	def onSend(self,sock):
 		if sock in self._socketConnectList:
@@ -237,6 +245,7 @@ class baseServer():
 			self.onExcept(sock)
 			
 	def onData(self,sock):
+		
 		data = None
 		
 		try:
@@ -266,7 +275,7 @@ class baseServer():
 	def onExcept(self,sock):
 		if sock in self._socketConnectList:
 			handler = self._socketConnectList[sock]
-# 			log.log(2,handler,"<	close")
+			log.log(2,handler,"<	close")
 			del self._socketConnectList[sock]
 			handler.onClose()
 			
