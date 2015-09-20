@@ -11,8 +11,8 @@
         <string>/usr/bin/python</string>
         <string>localServer.py</string>
     </array>
-    <key>WorkingDirectory</key><string></path/to/DDDProxy></string>
-<key>StandardErrorPath</key><string>/tmp/ddproxy.err.log</string>
-<key>StandardOutPath</key><string>/tmp/ddproxy.out.log</string>
+    <key>WorkingDirectory</key><string>path-to-DDDProxy</string>
+	<key>StandardErrorPath</key><string>/tmp/ddproxy.err.log</string>
+	<key>StandardOutPath</key><string>/tmp/ddproxy.out.log</string>
   </dict>
 </plist>
