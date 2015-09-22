@@ -168,11 +168,18 @@ class baseServer():
 	def addSockConnect(self,connect):
 		if not connect.sock in self._socketConnectList:
 			connect.sock.setblocking(False)
-			connect.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+			try:
+				connect.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+			except:
+				pass
+			
 			connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
 			connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
-			TCP_KEEPALIVE = 0x10
-			connect.sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
+			try:
+				TCP_KEEPALIVE = 0x10
+				connect.sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
+			except:
+				pass
 			self._socketConnectList[connect.sock] = connect
 	
 
