@@ -36,37 +36,44 @@ class domainConfig(configFile):
 	def removeDomain(self,domain):
 		if domain in self.setting:
 			del self.setting[domain]
+			self.save()
 			return True
 		return False
 	def closeDomain(self,domain):
 		if domain in self.setting:
 			self.setting[domain]["open"] = False
+			self.save()
 			return True
 		return False
 	def openDomain(self,domain):
 		if domain in self.setting:
 			self.setting[domain]["open"] = True
+			self.save()
 			return True
 		return False
 	def addDomain(self,domain,formGwflist = False):
 		if domain:
 			if not domain in self.setting:
 				self.setting[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist,"createTime":time.time()}
+				self.save()
 				return True
 			else:
 				currentDomain = self.setting[domain];
 				if formGwflist:
 					if currentDomain["connectTimes"]==0 and currentDomain["formGwflist"] and time.time()-currentDomain["createTime"] > 3600*24*30:
 						currentDomain["open"] = False
+						self.save()
 						return True
 				else:
 					currentDomain["open"] = True
+					self.save()
 					return True
 		return False
 	def domainConnectTimes(self,domain,times):
 		if domain in self.setting:
 			data = self.setting[domain]
 			data["connectTimes"] += times
+			self.save()
 		else:
 			_domain = getDomainName(domain)
 			if not _domain == domain:
