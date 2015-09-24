@@ -14,16 +14,9 @@ from configFile import autoDataObject
 from configFile import configFile
 import domainConfig
 from DDDProxy import log
+from DDDProxy.hostParser import parserUrlAddrPort
 
 
-def getDomainName(host):
-	hostMatch = re.compile('^(.*?)\.*([^\.]+)(\.(?:net\.cn|com\.cn|com\.hk|co\.jp|org\.cn|[^\.\d]{2,3}))$')
-	match = hostMatch.match(host)
-	if match:
-		hostGroup = match.groups()
-		if len(hostGroup) > 2:
-			host = "%s%s" % (hostGroup[1], hostGroup[2])
-	return host
 class analysisSite(object):
 	def __init__(self,domain,fromIp,timeMark):
 		self.domain = domain
@@ -40,12 +33,10 @@ class analysisSiteList(object):
 		self.siteList = []
 	def get(self,fromIp,domain,timeMark):
 		try:
-			url = urlparse.urlparse(domain)
-			domain = url.netloc if len(url.netloc)>0 else domain
+			url = parserUrlAddrPort(domain)[0]
+			domain = url if url else domain
 		except:
 			pass
-		
-		domain = getDomainName(domain)
 		for s in self.siteList:
 			if domain == s.domain and fromIp == s.fromIp and timeMark == s.timeMark:
 				return s

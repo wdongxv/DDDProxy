@@ -90,6 +90,9 @@ class realServerConnect(sockConnect):
 				self.server.addCallback(self.onClose)
 			else:
 				self.connect((addr,port))
+	def __str__(self, *args, **kwargs):
+		return self.handler.filenoStr() + " << " + self.filenoStr() + str(self.address)
+				
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":

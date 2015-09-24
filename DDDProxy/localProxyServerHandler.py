@@ -8,7 +8,7 @@ import json
 from os.path import dirname
 
 from DDDProxy.domainAnalysis import analysis, domainAnalysisType
-from DDDProxy.hostParser import parserUrlAddrPort
+from DDDProxy.hostParser import parserUrlAddrPort, getDomainName
 from baseServer import sockConnect
 import domainConfig
 from remoteConnectManger import remoteConnectManger
@@ -172,7 +172,13 @@ class localProxyServerConnectHandler(sockConnect):
 																todayStartTime=postJson["todayStartTime"]
 																)
 			elif opt == "addDomain":
-				respons["status"] = "ok" if domainConfig.config.addDomain(parserUrlAddrPort(postJson["url"])[0]) else "error"
+				url = postJson["url"]
+				host = parserUrlAddrPort(url)[0]
+				if host:
+					host = getDomainName(host)
+				else:
+					host = url if getDomainName(url) else ""
+				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
 			self.reseponse(respons)
 		elif path == "/pac":
 			content = self.getFileContent("/pac.js")
