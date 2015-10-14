@@ -14,7 +14,7 @@ from configFile import autoDataObject
 from configFile import configFile
 import domainConfig
 from DDDProxy import log
-from DDDProxy.hostParser import parserUrlAddrPort
+from DDDProxy.hostParser import parserUrlAddrPort, getDomainName
 
 
 class analysisSite(object):
@@ -137,8 +137,8 @@ class domainAnalysis():
 			if domainData:
 				if domainData.connect:
 					domainConfig.config.domainConnectTimes(domainData.domain,domainData.connect)
-				
-				data = self.domainAnalysis[domainData.timeMark][domainData.fromIp][domainData.domain]
+				domain = getDomainName(domainData.domain)
+				data = self.domainAnalysis[domainData.timeMark][domainData.fromIp][domain if domain else domainData.domain]
 				if not "connect" in data:
 					data["connect"] = 0
 					data["incoming"] = 0
