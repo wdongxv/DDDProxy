@@ -9,7 +9,7 @@ import traceback
 import time
 import logging
 
-debuglevel = 2
+debuglevel = 3
 
 def log(level, *args, **kwargs):
 	if level < debuglevel:
