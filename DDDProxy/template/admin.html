@@ -130,18 +130,22 @@ body {
 <script src="/static/admin.js"></script>
 </head>
 <body>
-	<a href="/"> &lt;&lt; 首页 </a>
-	<div
-		style="width: 100%; text-align: center; padding-top: 10px;">
-		<div id="domainAnalysis"></div>
-		<div id="dataAnalysis" style="height: 500px;"></div>
+		<div><a href="/" style="margin-right:20px;"> &lt;&lt; 首页 </a> 
 	</div>
-	<div style="display: block; margin-top: 100px;text-align: center; ">
+	<div style="display: block;text-align: center; ">
 		<input id="newUrl"style="width: 300px;" name="url" />
 		<input id="newUrlSubmit" value="add url to auto proxy list" type="submit" />
-		<p id="newUrlInfo"></p>
+		<p id="newUrlInfo" style="color:#888;font-style: italic;">其它帮助:在网址管理页面添加网站后：chrome请地址栏输入 <a 
+			href="chrome://net-internals/#proxy" style="color:#888;">chrome://net-internals/#proxy</a>
+		，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成</p>
 	</div>
+	
 	<div id="proxyDomainList"
-		style="width: 100%; text-align: center; padding-top: 10px;margin-top: 20px; "></div>
+		style="width: 100%; text-align: center; padding-top: 10px;margin-top: 10px;"></div>
+	<div
+		style="width: 100%; text-align: center; padding-top: 10px;margin-top: 100px;">
+		<div id="dataAnalysis" style="height: 500px;"></div>
+		<div id="domainAnalysis"></div>
+	</div>
 </body>
 </html>
