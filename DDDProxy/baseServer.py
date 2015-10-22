@@ -241,16 +241,23 @@ class baseServer():
 	def onSend(self,sock):
 		if sock in self._socketConnectList:
 			connect = self._socketConnectList[sock]
+			sendData = ""
 			while len(connect.dataSendList)>0:
 				data = connect.dataSendList.pop(0)
 				if data:
-					try:
-						connect.onSend(data)
-						continue
-					except:
-						log.log(3)
-				sock.close()
-				self.onExcept(sock)
+					sendData += data
+				else:
+					if sendData:
+						connect.dataSendList.insert(0,data)
+					break
+			if sendData:
+				try:
+					connect.onSend(data)
+					return
+				except:
+					log.log(3)
+			sock.close()
+			self.onExcept(sock)
 	
 	def onData(self,sock):
 		
