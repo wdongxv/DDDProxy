@@ -92,7 +92,7 @@ class sockConnect(object):
 			self.server.addCallback(self.onClose)
 		if cb:
 			self.server.addCallback(cb,self if ok else None)
-	connectPool = ThreadPool()
+	connectPool = ThreadPool(maxThread=100)
 	def connect(self,address,useSsl=False,cb=None):
 		"""
 		@param address: 仅记录
