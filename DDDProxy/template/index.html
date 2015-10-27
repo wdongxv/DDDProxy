@@ -144,7 +144,7 @@
 								status.text("testting")
 								status.attr("linejs", linejs)
 								getRemoteStatus(line.host,line.port,function(data) {
-									status.html(data?"<a href='/remote.html#"+line.host+":"+line.port+"'>ok</a>":"")
+									status.html(data?"<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>":"")
 								})
 							}
 						})(domainLineList[i]);

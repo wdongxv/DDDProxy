@@ -71,8 +71,7 @@ class localProxyServerConnectHandler(sockConnect):
 								connect = v
 					except:
 						pass
-# 				else:
-				if not connect:
+				else:
 					connect = remoteConnectManger.getConnect()
 				
 				if connect:
