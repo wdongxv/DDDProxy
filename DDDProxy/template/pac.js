@@ -5,7 +5,7 @@ function FindProxyForURL(url, host) {
 	function B(a) {
 		return shExpMatch(url, '*' + a + '*')
 	}
-	if({{domainList}}B("get_real_ip_p")) {
+	if( {{domainList}} A("status.dddproxy.com")) {
 		return "PROXY {{proxy_ddr}}; DIRECT";
 	} else {
 		return "DIRECT";

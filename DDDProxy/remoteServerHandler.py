@@ -11,6 +11,7 @@ from baseServer import sockConnect
 from hostParser import parserUrlAddrPort
 from socetMessageParser import httpMessageParser
 from DDDProxy import log
+import json
 
 
 remoteAuth = "1"
@@ -86,10 +87,27 @@ class realServerConnect(sockConnect):
 				path = "https://"+path
 				self.dataCache = ""
 			addr,port = parserUrlAddrPort(path)
-			if addr in ["127.0.0.1","localhost"]:
+			if addr.find("status.dddproxy.com")>0:
+				path = path.split("?")
+				self.onHTTP(method)
+			elif addr in ["127.0.0.1","localhost"]:
 				self.server.addCallback(self.onClose)
 			else:
 				self.connect((addr,port))
+	def onHTTP(self,  method):
+		
+		try:
+			if method == "POST":
+# 				postJson = json.loads(self.messageParse.getBody())
+				self.handler.sendData(self.connectId,
+					self.makeReseponse(self.server.dumpConnects(),
+									connection=self.messageParse.connection(),
+									header={"Access-Control-Allow-Origin":self.messageParse.getHeader("origin")}))
+				return
+		except:
+			log.log(3)
+		self.handler.sendData(self.connectId,self.makeReseponse("1", code=405))
+
 	def __str__(self, *args, **kwargs):
 		return self.handler.filenoStr() + " << " + self.filenoStr() + str(self.address)
 				
@@ -161,8 +179,9 @@ class remoteConnectServerHandler(remoteServerConnect):
 		self.authPass = False
 	
 	
-	def wrapToSll(self):
+	def wrapToSll(self,setThreadName=None):
 		try:
+			setThreadName(str(self)+"wrapToSll")
 			createSSLCert()
 			self.sock = ssl.wrap_socket(self.sock, certfile=SSLCertPath,keyfile=SSLKeyPath, server_side=True)
 			self.server.addCallback(remoteServerConnect.onConnected,self)
@@ -170,10 +189,7 @@ class remoteConnectServerHandler(remoteServerConnect):
 			log.log(3)
 			self.server.addCallback(self.onClose)
 	def onConnected(self):
-		
 		sockConnect.connectPool.apply_async(self.wrapToSll)
-
-		
 		
 	def onRealConnectClose(self,connect):
 		"""

@@ -1,0 +1,83 @@
+body {
+	font-size: 12px;
+	font-family: monospace;
+}
+
+.info_block {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.help {
+	color: #333;
+	margin-top: 50px;
+	line-height: 20px;
+	font-size: 13px;
+}
+
+.help .part{
+	margin: 1em 0;
+	display: inline-block;
+}
+
+a.pacAddr {
+	font-weight: bold;
+	color: #000;
+}
+
+#serverList {
+	width: 100%;
+}
+
+button {
+	padding: 0 20px;
+}
+
+div.domainLine {
+	margin: 5px 0;
+}
+
+.domainLine input {
+	margin: 0 5px 0 0;
+}
+
+.domainLine [name="port"] {
+	width: 40px;
+}
+
+#connectList .client{
+	overflow: hidden;
+	margin:0 1em;
+}
+#connectList .clientAddr{
+	background: #aaa;
+	color: #fff;
+	margin-top: 1em;
+	padding:0 1em; 
+}
+#connectList span{
+	font-size: 12px;
+	line-height: 16px;
+	display: inline-block;
+	height: 16px;
+}
+#connectList div.connect{
+	display: inline-block;
+ 	width: 2000px;
+}
+#connectList .connectInfo{
+}
+#connectList .send,#connectList .recv{
+	width: 60px;
+}
+#mainContent{
+	width: 80%;
+	max-width: 1024px;
+	min-width: 240px;
+	margin: 0 auto;
+}
+@media screen and (max-width:600px) {
+	#mainContent{
+		width: 95%;
+	}
+}

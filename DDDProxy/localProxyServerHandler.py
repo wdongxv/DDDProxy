@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-from datetime import datetime
-import httplib
 import json
 from os.path import dirname
 
@@ -15,8 +13,9 @@ from remoteConnectManger import remoteConnectManger
 from remoteServerHandler import remoteServerConnect
 from settingConfig import settingConfig
 from socetMessageParser import httpMessageParser
-from DDDProxy import log
 import time
+from email import mime
+from DDDProxy.baseServer import get_mime_type
 
 class localProxyServerConnectHandler(sockConnect):
 	"""
@@ -60,8 +59,22 @@ class localProxyServerConnectHandler(sockConnect):
 			else:
 				
 				self.mode = "proxy"
-# 				log.log(1,self,"proxy mode",method,path)
-				connect = remoteConnectManger.getConnect()
+				
+				connect = None
+				if path.find("status.dddproxy.com")>0:
+					try:
+						jsonMessage = self.messageParse.getBody()
+						jsonBody = json.loads(jsonMessage)
+						connectList = remoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
+						if connectList:
+							for _,v in connectList.items():
+								connect = v
+					except:
+						pass
+# 				else:
+				if not connect:
+					connect = remoteConnectManger.getConnect()
+				
 				if connect:
 					connect.addAuthCallback(self.onRemoteConnectAuth)
 					connect.setConnectCloseCallBack(self.fileno(), self.onRemoteConnectClose)
@@ -93,36 +106,6 @@ class localProxyServerConnectHandler(sockConnect):
 				self.close()
 			else:
 				self.messageParse.clear()
-		
-	def reseponse(self, data, ContentType="text/html", code=200):
-		def httpdate():
-			dt = datetime.now();
-			weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][dt.weekday()]
-			month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-					"Oct", "Nov", "Dec"][dt.month - 1]
-			return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
-		        dt.year, dt.hour, dt.minute, dt.second)
-		if type(data) is unicode:
-			data = data.encode("utf-8")
-		elif not type(data) is str:
-			data = json.dumps(data)
-			ContentType = "application/json"
-		httpMessage = ""
-		httpMessage += "HTTP/1.1 " + str(code) + " " + (httplib.responses[code]) + "\r\n"
-		httpMessage += "Server: DDDProxy/2.0\r\n"
-		httpMessage += "Date: " + httpdate() + "\r\n"
-		httpMessage += "Content-Length: " + str(len(data)) + "\r\n"
-		httpMessage += "Content-Type: " + ContentType + "\r\n"
-		httpMessage += "Connection: " + self.messageParse.connection() + "\r\n"
-		
-# 		connection = self.messageParse.getHeader("connection")
-		
-# 		log.log(1,self,code,ContentType,httpMessage)
-		
-		httpMessage += "\r\n"
-		httpMessage += data
-		
-		self.send(httpMessage)
 	
 	def getFileContent(self, name):
 		content = None
@@ -141,14 +124,17 @@ class localProxyServerConnectHandler(sockConnect):
 			postJson = json.loads(post)
 			opt = postJson["opt"]
 			respons = {}
-			if(opt == "serverList"):
+
+			if(opt == "status"):
+				respons = self.server.dumpConnects()
+			elif(opt == "serverList"):
 				respons["pac"] = "http://" + self.messageParse.getHeader("host") + "/pac"
 				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
 			elif opt == "setServerList":
 				settingConfig.setting(settingConfig.remoteServerList, postJson["data"])
 				respons["status"] = "ok"
-			elif opt == "testRemoteProxy":
-				respons["status"] = "unknow"
+# 			elif opt == "testRemoteProxy":
+# 				respons["status"] = ""
 			elif opt == "domainList":
 				
 				if "action" in postJson:
@@ -179,7 +165,7 @@ class localProxyServerConnectHandler(sockConnect):
 				else:
 					host = url if getDomainName(url) else ""
 				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
-			self.reseponse(respons)
+			self.reseponse(respons,connection=self.messageParse.connection())
 		elif path == "/pac":
 			content = self.getFileContent("/pac.js")
 			domainList = domainConfig.config.getDomainOpenedList()
@@ -188,27 +174,15 @@ class localProxyServerConnectHandler(sockConnect):
 				domainListJs += "A(\"" + domain + "\")||"
 			content = content.replace("{{domainList}}", domainListJs)
 			content = content.replace("{{proxy_ddr}}", self.messageParse.getHeader("host"))
-			self.reseponse(content)
-		elif path == "/api_status":
-			connects = {}
-			for handler in self.server._socketConnectList.values():
-				connect = handler.address[0]
-				if not connect in connects:
-					connects[connect] = []
-				info = {"name":str(handler)}
-				info.update(handler.info)
-				connects[connect].append(info)
-			
-			for l in connects.values():
-				l.sort(cmp=lambda x, y : cmp(y["send"] + y["recv"], x["send"] + x["recv"]))
-			self.reseponse({"connect":connects,"currentTime":int(time.time())})
+			self.reseponse(content,connection=self.messageParse.connection())
 		else:
 			if path == "/":
 				path = "/index.html"
 			content = self.getFileContent(path)
 			if content:
-				self.reseponse(content)
+				
+				self.reseponse(content,ContentType=get_mime_type(path),connection=self.messageParse.connection())
 			else:
-				self.reseponse("\"" + path + "\" not found", code=404)
+				self.reseponse("\"" + path + "\" not found", code=404,connection=self.messageParse.connection())
 		
 

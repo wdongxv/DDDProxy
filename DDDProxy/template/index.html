@@ -3,92 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>DDDProxy</title>
-<script src="/static/main.js"></script>
-<style type="text/css">
-body {
-	font-size: 12px;
-	font-family: monospace;
-}
-
-.info_block {
-	display: inline-block;
-	vertical-align: top;
-}
-
-.help {
-	color: #333;
-	margin-top: 50px;
-	line-height: 20px;
-	font-size: 13px;
-}
-
-.help .part{
-	margin: 1em 0;
-	display: inline-block;
-}
-
-a.pacAddr {
-	font-weight: bold;
-	color: #000;
-}
-
-#serverList {
-	width: 100%;
-}
-
-button {
-	padding: 0 20px;
-}
-
-div.domainLine {
-	margin: 5px 0;
-}
-
-.domainLine input {
-	margin: 0 5px 0 0;
-}
-
-.domainLine [name="port"] {
-	width: 40px;
-}
-
-#connectList .client{
-	overflow: hidden;
-	margin:0 1em;
-}
-#connectList .clientAddr{
-	background: #aaa;
-	color: #fff;
-	margin-top: 1em;
-	padding:0 1em; 
-}
-#connectList span{
-	font-size: 12px;
-	line-height: 16px;
-	display: inline-block;
-	height: 16px;
-}
-#connectList div.connect{
-	display: inline-block;
- 	width: 2000px;
-}
-#connectList .connectInfo{
-}
-#connectList .send,#connectList .recv{
-	width: 60px;
-}
-#mainContent{
-	width: 80%;
-	max-width: 1024px;
-	min-width: 240px;
-	margin: 0 auto;
-}
-@media screen and (max-width:600px) {
-	#mainContent{
-		width: 95%;
-	}
-}
-</style>
+<link rel="stylesheet" href="/static/style.css" type="text/css" media="all">
 </head>
 <body>
 	<div id="mainContent">
@@ -113,13 +28,13 @@ div.domainLine {
 			</div>
 			<div>
 				> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
-					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span class="pacAddr"></span> ”。 <br />
-				<i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
+					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span
+					class="pacAddr"></span> ”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
 			</div>
 			<div>
 				> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
-				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“
-				<span class="pacAddr"></span> ”
+				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“ <span
+					class="pacAddr"></span> ”
 			</div>
 		</div>
 		<div class="help">
@@ -137,28 +52,11 @@ div.domainLine {
 			</div>
 		</div>
 	</div>
+	<script src="/static/main.js"></script>
 	<script src="/static/jquery.min.js"></script>
 	<script src="/static/URI.js"></script>
-<!-- 	<script src="{{pacAddrOrigin}}"></script> -->
-
 	<script type="text/javascript">
 		(function() {
-			function statusApi(opt, callback) {
-				var xhr = new XMLHttpRequest();
-				xhr.open("GET", "/api_" + opt, true);
-				xhr.onreadystatechange = function(e) {
-					if (xhr.readyState == 4) {
-						var json = {};
-						try {
-							if (xhr.status == 200)
-								json = JSON.parse(xhr.responseText);
-						} catch (e) {
-						}
-						callback(json);
-					}
-				};
-				xhr.send();
-			}
 			function dnsDomainIs(a, b) {
 				a = "." + a;
 				var search = a.search(b);
@@ -229,7 +127,7 @@ div.domainLine {
 						saveServerButton.hide();
 				});
 			})
-			
+
 			var doCheckTimer = null
 			function connectCheck() {
 				function doCheck() {
@@ -237,21 +135,22 @@ div.domainLine {
 					for (var i = 0; i < domainLineList.length; i++) {
 						(function(lineDom) {
 							var line = getInputLineData(lineDom)
-							if(!line)
+							if (!line)
 								return
+
 							var status = $(lineDom).find(".status")
 							var linejs = JSON.stringify(line);
-							if (linejs!=status.attr("linejs")) {
+							if (linejs != status.attr("linejs")) {
 								status.text("testting")
-								status.attr("linejs",linejs)
-								proxyapi("testRemoteProxy",{"host":line.host,"port":line.port,"auth":line.auth}, function(data) {
-									status.text(data["status"])
-								});
+								status.attr("linejs", linejs)
+								getRemoteStatus(line.host,line.port,function(data) {
+									status.html(data?"<a href='/remote.html#"+line.host+":"+line.port+"'>ok</a>":"")
+								})
 							}
 						})(domainLineList[i]);
 					}
 				}
-				if(doCheckTimer)
+				if (doCheckTimer)
 					clearTimeout(doCheckTimer)
 				doCheckTimer = setTimeout(doCheck, 2000);
 			}
@@ -289,17 +188,18 @@ div.domainLine {
 				connectCheck();
 			}
 			function bindInputKey() {
-				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
+				var inputList = serverList
+						.find("[name='host'],[name='auth'],[name='port']");
 				inputList.keyup(domainListChangedHandler)
 			}
 			function getServerList() {
 				proxyapi("serverList", null, function(data) {
 
-					$(".pacAddr").text(data["pac"]).attr("href",data["pac"])
-					
+					$(".pacAddr").text(data["pac"]).attr("href", data["pac"])
+
 					var domainList = data["list"];
 					var html = "";
-					if(domainList){
+					if (domainList) {
 						for (var i = 0; i < domainList.length; i++) {
 							var domain = domainList[i]
 							html += makeDomainHtml(domain.host, domain.port,
@@ -312,42 +212,20 @@ div.domainLine {
 					connectCheck()
 				})
 			}
-			$(document).ready(
-					function() {
-						var status = $("#status");
-						var getStatus = function(){statusApi("status", function(data) {
-							var count = data.connect;
-							var connectList = data.connect
-							var html = "";
-							var connectCount = 0
-							for(var i in connectList){
-								var remoteConnectList = connectList[i];
-								var clientConectHtml = ""
-								for (var j = 0; j < remoteConnectList.length; j++) {
-									var connect = remoteConnectList[j]
-									clientConectHtml += "<div class='connect'>"+
-											"<span class='send'>↾"+IntToDataCount(connect.send)+"</span>"+
-											"<span class='recv'>⇃"+IntToDataCount(connect.recv)+"</span>"+
-											"<span class='connectInfo'>"+connect.name+" "+(data.currentTime-connect.lastAlive)+"s</span>"+
-											"</div>"
-								}
-								connectCount += remoteConnectList.length
-								
-								html += "<div class='clientAddr'>"+i+" count("+remoteConnectList.length+")</div>"
-								html += "<div class='client'>";
-								html += clientConectHtml
-								html += "</div>"
-							}
-							status.text("count("+connectCount+")");
-							$("#connectList").html(html);
-						})}
-						setInterval(getStatus, 2000)
-						getStatus();
-						getServerList();
-					});
+			$(document).ready(function() {
+				var status = $("#status");
+				var getStatus = function() {
+					proxyapi("status",null,function(data) {
+						var parser = dumpdataParse(data)
+						status.text("count(" + parser[1] + ")");
+						$("#connectList").html(parser[0]);
+					})
+				}
+				setInterval(getStatus, 2000)
+				getStatus();
+				getServerList();
+			});
 		})();
-		
-		
 	</script>
 </body>
 </html>

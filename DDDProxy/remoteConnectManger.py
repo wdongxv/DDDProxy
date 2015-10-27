@@ -48,55 +48,58 @@ class remoteConnectManger():
 	"""
 	def __init__(self,server):
 		self.server = server;
-		self.remoteConnectList = []
+		self.remoteConnectList = {}
 		self.remoteConnectListLoop = 0
-	def _remoteServerConnected(self,connect,authOk):
-		while len(self.getConnectCallback)>0:
-			self.getConnectCallback.pop(0)(self._getAuthedConnect())
-
-	def getConnectWithLoop(self):
-		if self.count()==0:
-			return None
-		self.remoteConnectListLoop += 1;
-		if self.remoteConnectListLoop >= self.count():
-			self.remoteConnectListLoop = 0
-		connect = self.remoteConnectList[self.remoteConnectListLoop]
-		return connect
-	def count(self):
-		return len(self.remoteConnectList)
-	
-	def onConnectClose(self,connect):
-		self.remoteConnectList.remove(connect)
-	def onConnectAuth(self,connect):
-		pass
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
 		maxCount = 2
+		self.remoteConnectListLoop += 1;
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
-		if remoteServerList:
-			maxCount = 2*len(remoteServerList)
-		
-		if self.count() < maxCount:
-			host,port,auth = settingConfig.setting(settingConfig.remoteServerKey)
-			if host and auth:
-				try:
-					c = remoteServerConnectLocalHander(self.server)
-					c.connect((host,port),True)
-					c.auth(auth)
-					
-					c.addAuthCallback(self.onConnectAuth)
-					c.setConnectCloseCallBack(-1,self.onConnectClose)
-					self.remoteConnectList.append(c)
-				except:
-					log.log(3,host, port)
-		return self.getConnectWithLoop();
+		if self.remoteConnectListLoop >= len(remoteServerList)*maxCount:
+			self.remoteConnectListLoop = 0
+		i = 0
+		for remoteServer in remoteServerList:
+			connectList = None
+			port = int(remoteServer["port"]) if remoteServer["port"] else 8082
+			remoteServerKey = remoteServer["host"]+":"+str(port)
+			if remoteServerKey in self.remoteConnectList:
+				connectList = self.remoteConnectList[remoteServerKey]
+			else:
+				self.remoteConnectList[remoteServerKey] = connectList = {}
+				
+			if  self.remoteConnectListLoop >= i and self.remoteConnectListLoop < i + maxCount:
+				index = self.remoteConnectListLoop-i
+				connect = None
+				if index in connectList:
+					connect = connectList[index]
+				else:
+					connect = remoteServerConnectLocalHander(self.server)
+					connect.connect((remoteServer["host"],port),True)
+					connect.auth(remoteServer["auth"])
+					connect.setConnectCloseCallBack(-1,self.onConnectClose)
+					connectList[index] = connect
+				return connect
+			i += maxCount
+		return None
+	def onConnectClose(self,connect):
+		for _,connectList in self.remoteConnectList.items():
+			for k,v in connectList.items():
+				if v == connect:
+					del connectList[k]
+					return
+
 	manager = None
 	@staticmethod
 	def install(server):
 		if not remoteConnectManger.manager:
 			remoteConnectManger.manager = remoteConnectManger(server)
+	@staticmethod
+	def getConnectHost(host,port):
+		port = port if str(port) else "8082"
+		return remoteConnectManger.manager.remoteConnectList[host+":"+port]
+		
 	@staticmethod
 	def getConnect():
 		"""

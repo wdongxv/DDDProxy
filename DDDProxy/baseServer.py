@@ -15,6 +15,8 @@ from ThreadPool import ThreadPool
 from configFile import configFile
 from DDDProxy import log
 import json
+from datetime import datetime
+import httplib
 
 
 
@@ -65,10 +67,11 @@ class sockConnect(object):
 			log.log(3,remoteServerHost,remoteServerPort)
 		createCertLock.release()
 		return ok
-	def _doConnectSock(self,address,useSsl=False,cb=None):
+	def _doConnectSock(self,address,useSsl=False,cb=None,setThreadName=None):
 		ok = True
 		try:
 			sock = None
+			setThreadName("connect %s:%s"%(address[0],address[1]))
 			addr = (socket.gethostbyname(address[0]),address[1])
 			if useSsl:
 				if self.fetchRemoteCert(address[0], address[1]):
@@ -133,6 +136,39 @@ class sockConnect(object):
 		pass
 	def close(self):
 		self.send(None)
+		
+		
+		
+		
+	def makeReseponse(self,data, ContentType="text/html", code=200,connection="close",header={}):	
+		def httpdate():
+			dt = datetime.now();
+			weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][dt.weekday()]
+			month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+					"Oct", "Nov", "Dec"][dt.month - 1]
+			return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
+		        dt.year, dt.hour, dt.minute, dt.second)
+		if type(data) is unicode:
+			data = data.encode("utf-8")
+		elif not type(data) is str:
+			data = json.dumps(data)
+			ContentType = "application/json"
+		httpMessage = ""
+		httpMessage += "HTTP/1.1 " + str(code) + " " + (httplib.responses[code]) + "\r\n"
+		httpMessage += "Server: DDDProxy/2.0\r\n"
+		httpMessage += "Date: " + httpdate() + "\r\n"
+		httpMessage += "Content-Length: " + str(len(data)) + "\r\n"
+		httpMessage += "Content-Type: " + ContentType + "\r\n"
+		httpMessage += "Connection: " +connection + "\r\n"
+		for k,v in header.items():
+			httpMessage += k+": " +v + "\r\n"
+		httpMessage += "\r\n"
+		httpMessage += data
+		return httpMessage
+	
+	def reseponse(self, data, ContentType="text/html", code=200,connection="close",header={}):
+		self.send(self.makeReseponse(data, ContentType, code,connection,header))
+
 class baseServer():
 	def __init__(self,handler):
 		self.handler = handler
@@ -285,7 +321,126 @@ class baseServer():
 			log.log(2,handler,"<	close")
 			del self._socketConnectList[sock]
 			handler.onClose()
-			
+	def dumpConnects(self):
+		connects = {}
+		for handler in self._socketConnectList.values():
+			connect = handler.address[0]
+			if not connect in connects:
+				connects[connect] = []
+			info = {"name":str(handler)}
+			info.update(handler.info)
+			connects[connect].append(info)
+		
+		for l in connects.values():
+			l.sort(cmp=lambda x, y : cmp(y["send"] + y["recv"], x["send"] + x["recv"]))
+		
+		return {"connect":connects,"threads":sockConnect.connectPool.dump(),"currentTime":int(time.time())}
+	
+
+def get_mime_type(filename):
+	filename_type = os.path.splitext(filename)[1][1:]
+	type_list = {
+	'html' : 'text/html',
+	'htm' : 'text/html',
+	'shtml' : 'text/html',
+	'css' : 'text/css',
+	'xml' : 'text/xml',
+	'gif' : 'image/gif',
+	'jpeg' : 'image/jpeg',
+	'jpg' : 'image/jpeg',
+	'js' : 'application/x-javascript',
+	'atom' : 'application/atom+xml',
+	'rss' : 'application/rss+xml',
+	'mml' : 'text/mathml',
+	'txt' : 'text/plain',
+	'jad' : 'text/vnd.sun.j2me.app-descriptor',
+	'wml' : 'text/vnd.wap.wml',
+	'htc' : 'text/x-component',
+	'png' : 'image/png',
+	'tif' : 'image/tiff',
+	'tiff' : 'image/tiff',
+	'wbmp' : 'image/vnd.wap.wbmp',
+	'ico' : 'image/x-icon',
+	'jng' : 'image/x-jng',
+	'bmp' : 'image/x-ms-bmp',
+	'svg' : 'image/svg+xml',
+	'svgz' : 'image/svg+xml',
+	'webp' : 'image/webp',
+	'jar' : 'application/java-archive',
+	'war' : 'application/java-archive',
+	'ear' : 'application/java-archive',
+	'hqx' : 'application/mac-binhex40',
+	'doc' : 'application/msword',
+	'pdf' : 'application/pdf',
+	'ps' : 'application/postscript',
+	'eps' : 'application/postscript',
+	'ai' : 'application/postscript',
+	'rtf' : 'application/rtf',
+	'xls' : 'application/vnd.ms-excel',
+	'ppt' : 'application/vnd.ms-powerpoint',
+	'wmlc' : 'application/vnd.wap.wmlc',
+	'kml' : 'application/vnd.google-earth.kml+xml',
+	'kmz' : 'application/vnd.google-earth.kmz',
+	'7z' : 'application/x-7z-compressed',
+	'cco' : 'application/x-cocoa',
+	'jardiff' : 'application/x-java-archive-diff',
+	'jnlp' : 'application/x-java-jnlp-file',
+	'run' : 'application/x-makeself',
+	'pl' : 'application/x-perl',
+	'pm' : 'application/x-perl',
+	'prc' : 'application/x-pilot',
+	'pdb' : 'application/x-pilot',
+	'rar' : 'application/x-rar-compressed',
+	'rpm' : 'application/x-redhat-package-manager',
+	'sea' : 'application/x-sea',
+	'swf' : 'application/x-shockwave-flash',
+	'sit' : 'application/x-stuffit',
+	'tcl' : 'application/x-tcl',
+	'tk' : 'application/x-tcl',
+	'der' : 'application/x-x509-ca-cert',
+	'pem' : 'application/x-x509-ca-cert',
+	'crt' : 'application/x-x509-ca-cert',
+	'xpi' : 'application/x-xpinstall',
+	'xhtml' : 'application/xhtml+xml',
+	'zip' : 'application/zip',
+	'bin' : 'application/octet-stream',
+	'exe' : 'application/octet-stream',
+	'dll' : 'application/octet-stream',
+	'deb' : 'application/octet-stream',
+	'dmg' : 'application/octet-stream',
+	'eot' : 'application/octet-stream',
+	'iso' : 'application/octet-stream',
+	'img' : 'application/octet-stream',
+	'msi' : 'application/octet-stream',
+	'msp' : 'application/octet-stream',
+	'msm' : 'application/octet-stream',
+	'mid' : 'audio/midi',
+	'midi' : 'audio/midi',
+	'kar' : 'audio/midi',
+	'mp3' : 'audio/mpeg',
+	'ogg' : 'audio/ogg',
+	'm4a' : 'audio/x-m4a',
+	'ra' : 'audio/x-realaudio',
+	'3gpp' : 'video/3gpp',
+	'3gp' : 'video/3gpp',
+	'mp4' : 'video/mp4',
+	'mpeg' : 'video/mpeg',
+	'mpg' : 'video/mpeg',
+	'mov' : 'video/quicktime',
+	'webm' : 'video/webm',
+	'flv' : 'video/x-flv',
+	'm4v' : 'video/x-m4v',
+	'mng' : 'video/x-mng',
+	'asx' : 'video/x-ms-asf',
+	'asf' : 'video/x-ms-asf',
+	'wmv' : 'video/x-ms-wmv',
+	'avi' : 'video/x-msvideo'
+	}
+	if ( filename_type in type_list.keys() ):
+		return type_list[filename_type]
+	else:
+		return ''	
+
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)
 	server.addListen(port=8888)

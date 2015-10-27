@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>DDDProxy</title>
+<link rel="stylesheet" href="static/style.css" type="text/css"
+	media="all">
+</head>
+<body>
+		<div><a href="/" style="margin-right:20px;"> &lt;&lt; 首页 </a> 
+	</div>
+	<div id="mainContent">
+		<div>
+			<h1>远程状态</h1>
+		</div>
+		<div class="help">
+			<div>
+				<p>
+					> 连接池：<span id="status">loading...</span>
+				</p>
+				<div id="connectList"></div>
+			</div>
+		</div>
+	</div>
+	<script src="/static/main.js"></script>
+	<script src="/static/jquery.min.js"></script>
+	<script type="text/javascript">
+		(function() {
+			$(document).ready(function() {
+				var status = $("#status");
+				var getStatus = function() {
+					var hash = location.hash.substring(1)
+					var hostPort = hash.split(":")
+					getRemoteStatus(hostPort[0],hostPort[1],function(data) {
+						var parser = dumpdataParse(data)
+						status.text("count(" + parser[1] + ")");
+						$("#connectList").html(parser[0]);
+					})
+				};
+				setInterval(getStatus, 5000)
+				getStatus();
+			});
+		})();
+	</script>
+</body>
+</html>
