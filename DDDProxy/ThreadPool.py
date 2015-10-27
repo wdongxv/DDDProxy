@@ -42,7 +42,7 @@ class ThreadPool:
 		infos = []
 		for thread in self.threadList:
 			if thread.runing:
-				infos.append({"startTime":thread.startTime,"name":thread.name()})
+				infos.append({"startTime":thread.startTime,"name":thread.name})
 		return infos
 	def apply_async(self, func, *args, **kargs):
 		self.tasks.put((func, args, kargs))
