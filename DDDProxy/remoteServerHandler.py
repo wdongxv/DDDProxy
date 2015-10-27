@@ -179,7 +179,6 @@ class remoteConnectServerHandler(remoteServerConnect):
 		remoteServerConnect.__init__(self, *args, **kwargs)
 		self.realConnectList = {}
 		self.authPass = False
-		self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
 	
 	def wrapToSll(self,setThreadName=None):
 		try:
@@ -192,7 +191,8 @@ class remoteConnectServerHandler(remoteServerConnect):
 			self.server.addCallback(self.onClose)
 	def onConnected(self):
 		sockConnect.connectPool.apply_async(self.wrapToSll)
-		
+		self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
+
 	def onRealConnectClose(self,connect):
 		"""
 		@param connect:realServerConnect 
