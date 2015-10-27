@@ -83,6 +83,9 @@ class realServerConnect(sockConnect):
 		if self.messageParse.appendData(data):
 			method = self.messageParse.method()
 			path = self.messageParse.path()
+			
+			self.connectName = self.handler.filenoStr() + "	<	" + self.filenoStr()+" "+method+" "+path
+			
 			if method == "CONNECT":
 				path = "https://"+path
 				self.dataCache = ""
@@ -108,8 +111,8 @@ class realServerConnect(sockConnect):
 			log.log(3)
 		self.handler.sendData(self.connectId,self.makeReseponse("1", code=405))
 
-	def __str__(self, *args, **kwargs):
-		return self.handler.filenoStr() + " << " + self.filenoStr() + str(self.address)
+# 	def __str__(self, *args, **kwargs):
+# 		return self.handler.filenoStr() + " << " + self.filenoStr() + str(self.address)
 				
 	def onConnected(self):
 		sockConnect.onConnected(self)
@@ -177,7 +180,7 @@ class remoteConnectServerHandler(remoteServerConnect):
 		remoteServerConnect.__init__(self, *args, **kwargs)
 		self.realConnectList = {}
 		self.authPass = False
-	
+		self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
 	
 	def wrapToSll(self,setThreadName=None):
 		try:
