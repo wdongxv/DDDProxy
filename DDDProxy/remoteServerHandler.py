@@ -84,8 +84,6 @@ class realServerConnect(sockConnect):
 			method = self.messageParse.method()
 			path = self.messageParse.path()
 			
-			self.connectName = self.handler.filenoStr() + "	<	" + self.filenoStr()+" "+method+" "+path
-			
 			if method == "CONNECT":
 				path = "https://"+path
 				self.dataCache = ""
@@ -118,6 +116,7 @@ class realServerConnect(sockConnect):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":
 			self.handler.sendData(self.connectId,"HTTP/1.1 200 OK\r\n\r\n")
+		self.connectName = self.handler.filenoStr() + "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()
 		if self.dataCache:
 			self.onlocalRecv("")
 	def onClose(self):
