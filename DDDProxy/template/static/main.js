@@ -50,7 +50,7 @@ function dumpdataParse(data) {
 		html += "<div class='client'>";
 		for (var j = 0; j < threads.length; j++) {
 			var thread = threads[j]
-			clientConectHtml += "<div class='connect'>"
+			html += "<div class='connect'>"
 					+ "<span class='connectInfo'>" + thread.name + " "
 					+ (data.currentTime - thread.lastAlive) + "s</span>"
 					+ "</div>"
