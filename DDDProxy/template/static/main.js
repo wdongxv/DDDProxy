@@ -52,7 +52,7 @@ function dumpdataParse(data) {
 			var thread = threads[j]
 			html += "<div class='connect'>"
 					+ "<span class='connectInfo'>" + thread.name + " "
-					+ (data.currentTime - thread.lastAlive) + "s</span>"
+					+ (data.currentTime - thread.startTime) + "s</span>"
 					+ "</div>"
 		}
 		html += "</div>"
