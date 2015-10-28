@@ -60,9 +60,10 @@ class localProxyServerConnectHandler(sockConnect):
 				
 				self.mode = "proxy"
 				
-				connect = None
+				connect = remoteConnectManger.getConnect()
 				if path.find("status.dddproxy.com")>0:
 					try:
+						connect = None
 						jsonMessage = self.messageParse.getBody()
 						jsonBody = json.loads(jsonMessage)
 						connectList = remoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
@@ -71,8 +72,6 @@ class localProxyServerConnectHandler(sockConnect):
 								connect = v
 					except:
 						pass
-				else:
-					connect = remoteConnectManger.getConnect()
 				
 				if connect:
 					connect.addAuthCallback(self.onRemoteConnectAuth)
