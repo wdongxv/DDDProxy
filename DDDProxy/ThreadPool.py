@@ -26,7 +26,7 @@ class ThreadPoolWorker(Thread):
 			except:
 				pass
 			try:
-				self.startTime = time.time()
+				self.startTime = int(time.time())
 				self.runing = True
 				kargs["setThreadName"]=self.setName
 				func( *args, **kargs)
