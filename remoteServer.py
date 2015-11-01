@@ -24,7 +24,7 @@ if __name__ == "__main__":
 	log.debuglevel = int(startUpArgs.loglevel)
 		
 	
-	server = baseServer(handler=remoteServerHandler.remoteConnectServerHandler)
+	server = baseServer(handler=remoteServerHandler.remoteServerHandler)
 	server.addListen(port=int(startUpArgs.port))
 	server.start()
 	

@@ -31,7 +31,7 @@ class messageHandler:
 			_headSize = messageHandler._headSize
 			if bufferLen >= _headSize:
 				connectId,dataSize = struct.unpack("ih",self.buffer[:_headSize])
-				if dataSize>0:
+				if dataSize>=0:
 					endIndex = dataSize+_headSize
 					if bufferLen > endIndex:
 						dataMessage = self.buffer[_headSize:endIndex]
@@ -46,6 +46,8 @@ class messageHandler:
 				break	
 	
 	def optChunk(self,connectId,opt):
+		if opt >=0:
+			raise Exception("opt must > 0")
 		return struct.pack("i", connectId)+struct.pack("h", opt) +"\n"
 	
 	def dataChunk(self,connectId,data):
@@ -128,10 +130,23 @@ class remoteServerConnect(sockConnect,messageHandler):
 	optCloseConnect = -1
 	optAuthOK = -2
 	optAuthError = -3
+	optServerPing = -4
+	optServerPingRespones = -5
+
+
+	serverToServerJsonMessageConnectId = -2
+
 	
+	serverPing_MessagePauseCacheLimit = 500
+		
 	def __init__(self, server, *args, **kwargs):
 		sockConnect.__init__(self, server, *args, **kwargs)
 		messageHandler.__init__(self)
+
+		self.serverPing_MessagePauseCount = 0
+		self.serverPing_MessagePauseCache = []
+		self.serverPing = False
+		
 		self.recvCallback = {}
 		self.connectCloseCallback = {}
 	def setConnectCloseCallBack(self,connectid,cb):
@@ -151,22 +166,52 @@ class remoteServerConnect(sockConnect,messageHandler):
 		self.connectCloseCallback = {}
 		self.recvCallback = {}
 	def onMessage(self,connectId,data):
-		cb = self.recvCallback[connectId] if connectId in self.recvCallback else None
-		if cb:
-			cb(data)
+		if connectId == remoteServerConnect.serverToServerJsonMessageConnectId:
+			serverMessage = json.loads(data)
+			for k,v in serverMessage.items():
+				if k == "serverPing":
+					self.serverPing = v
 		else:
-			self.sendOpt(connectId, remoteServerConnect.optCloseConnect)
+			cb = self.recvCallback[connectId] if connectId in self.recvCallback else None
+			if cb:
+				cb(data)
+			else:
+				self.sendOpt(connectId, remoteServerConnect.optCloseConnect)
 	def onOpt(self,connectId,opt):
 		if opt==remoteServerConnect.optCloseConnect:
 			if connectId in self.connectCloseCallback:
 				self.connectCloseCallback[connectId](self)
 				del self.connectCloseCallback[connectId]
+		elif connectId == remoteServerConnect.serverToServerJsonMessageConnectId:
+			if opt==remoteServerConnect.optServerPing:
+				self.sendOpt(remoteServerConnect.serverToServerJsonMessageConnectId , remoteServerConnect.optServerPingRespones)
+			elif opt ==  remoteServerConnect.optServerPingRespones:
+				self.serverPing_MessagePauseCount = 0;
+				cache = self.serverPing_MessagePauseCache
+				self.serverPing_MessagePauseCache = []
+				for i in cache:
+					self.sendData(*i)
 	def sendOpt(self,connectId,opt):
 		self.send(self.optChunk(connectId, opt))
+		
+	
 	def sendData(self,connectId,data):
+		if self.serverPing:
+			self.serverPing_MessagePauseCount += 1
+			if self.serverPing_MessagePauseCount >= remoteServerConnect.serverPing_MessagePauseCacheLimit:
+				if self.serverPing_MessagePauseCount == remoteServerConnect.serverPing_MessagePauseCacheLimit:
+					self.sendOpt(remoteServerConnect.serverToServerJsonMessageConnectId, remoteServerConnect.optServerPing)
+				self.serverPing_MessagePauseCache.append(tuple(connectId,data))
+				return
+			
+		
 		for d in self.dataChunk(connectId, data):
 			self.send(d)
-			
+	
+	def setServerPing(self,isOpen=True):
+		self.serverPing = isOpen
+		self.sendData( remoteServerConnect.serverToServerJsonMessageConnectId,
+					json.dumps({"serverPing":isOpen}))
 	def onRecv(self,data):
 		sockConnect.onRecv(self, data)
 		self.appendData(data)
@@ -174,7 +219,9 @@ class remoteServerConnect(sockConnect,messageHandler):
 	def authMake(self,auth,timenum):
 		return struct.pack("i", timenum)+hashlib.md5("%s%d" % (auth, timenum)).hexdigest()
 	
-class remoteConnectServerHandler(remoteServerConnect):  
+class remoteServerHandler(remoteServerConnect):
+	serverToServerAuthConnectId = -1
+	
 	def __init__(self, *args, **kwargs):
 		remoteServerConnect.__init__(self, *args, **kwargs)
 		self.realConnectList = {}
@@ -214,7 +261,10 @@ class remoteConnectServerHandler(remoteServerConnect):
 		self.realConnectList[connectId] = connect
 		return connect 
 	def onMessage(self,connectId,data):
-		if connectId==-1:
+		if connectId>=0:
+			if self.authPass:
+				self.getRealConnect(connectId).onlocalRecv(data)
+		elif connectId==remoteServerHandler.serverToServerAuthConnectId:
 			size = struct.calcsize("i")
 			timenum = struct.unpack("i",data[:size])[0]
 			if time.time()-1800 < timenum and time.time()+1800 > timenum:
@@ -227,8 +277,9 @@ class remoteConnectServerHandler(remoteServerConnect):
 				log.log(2,self,"timenum is Expired")
 			if not self.authPass:
 				self.close()
-		elif self.authPass:
-			self.getRealConnect(connectId).onlocalRecv(data)
+		else:
+			remoteServerConnect.onMessage(self,connectId,data)
+			
 	def onClose(self):
 		for connect in self.realConnectList.values():
 			connect.close()

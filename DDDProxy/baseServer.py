@@ -114,11 +114,11 @@ class sockConnect(object):
 	def fileno(self):
 		return self._fileno
 	def send(self,data):
-		if data and len(data)>1024:
-			self.dataSendList.append(data[:1024])
-			self.send(data[1024:])
-		else:
-			self.dataSendList.append(data)
+# 		if data and len(data)>1024:
+# 			self.dataSendList.append(data[:1024])
+# 			self.send(data[1024:])
+# 		else:
+		self.dataSendList.append(data)
 	def onConnected(self):
 		self.server.addSockConnect(self)
 		
@@ -300,16 +300,14 @@ class baseServer():
 		except:
 			log.log(3)
 		
-		
-		if isinstance(sock, ssl.SSLSocket):
-			while 1:
-				data_left = sock.pending()
-				if data_left:
-					data += sock.recv(data_left)
-				else:
-					break
-		
 		if data:
+			if isinstance(sock, ssl.SSLSocket):
+				while 1:
+					data_left = sock.pending()
+					if data_left:
+						data += sock.recv(data_left)
+					else:
+						break
 			if sock in self._socketConnectList:
 				handler = self._socketConnectList[sock]
 				handler.onRecv(data)

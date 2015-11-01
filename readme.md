@@ -1,4 +1,4 @@
-<h2>DDDProxy 2.0</h2>
+<h2>DDDProxy 2.1.0</h2>
 私有安全的代理软件，翻墙用的，用Python写的 - by dx.wang
 
 E-Mail：wdongxv@gmail.com

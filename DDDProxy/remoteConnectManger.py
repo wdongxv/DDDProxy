@@ -6,10 +6,9 @@ Created on 2015年9月6日
 '''
 from settingConfig import settingConfig
 from remoteServerHandler import remoteServerConnect
-from baseServer import baseServer
 import math
 import time
-from DDDProxy import log
+from DDDProxy.remoteServerHandler import remoteServerHandler
 
 
 
@@ -20,22 +19,23 @@ class remoteServerConnectLocalHander(remoteServerConnect):
 		self.authPass = False
 		
 	def onOpt(self, connectId, opt):
-		if opt == remoteServerConnect.optAuthOK:
-			if connectId == -1:
+		if connectId == remoteServerHandler.serverToServerAuthConnectId:
+			if opt == remoteServerConnect.optAuthOK:
 				for cb in self.authCallbackList:
 					self.server.addCallback(cb,connect=self)
 				self.authCallbackList = []
 				self.authPass = True
 				self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
-		elif opt == remoteServerConnect.optAuthError:
-			self.close()
+			elif opt == remoteServerConnect.optAuthError:
+				self.close()
 # 		elif opt == remoteServerConnect.optCloseConnect:
 # 			self.close()
-		super(remoteServerConnectLocalHander, self).onOpt(connectId,opt)
+		else:
+			remoteServerConnect.onOpt(self,connectId,opt)
 # 		log.log(2,"onOpt",connectId,opt)
 	def auth(self,auth):
 		randomNum = math.floor(time.time())
-		self.sendData(-1,self.authMake(auth, randomNum))
+		self.sendData(remoteServerHandler.serverToServerAuthConnectId,self.authMake(auth, randomNum))
 	def addAuthCallback(self,cb):
 		if self.authPass:
 			self.server.addCallback(cb,connect=self)
