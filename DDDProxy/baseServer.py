@@ -22,6 +22,8 @@ import httplib
 
 createCertLock = threading.RLock()
 socket.setdefaulttimeout(5)
+socketBufferMaxLenght = 1024*4
+
 
 class sockConnect(object):
 	"""
@@ -115,10 +117,9 @@ class sockConnect(object):
 		return self._fileno
 	
 	def send(self,data):
-		maxLenght = 1024*2
-		if data and len(data)>maxLenght:
-			self.dataSendList.append(data[:maxLenght])
-			self.send(data[maxLenght:])
+		if data and len(data)>socketBufferMaxLenght:
+			self.dataSendList.append(data[:socketBufferMaxLenght])
+			self.send(data[socketBufferMaxLenght:])
 		else:
 			self.dataSendList.append(data)
 	def onConnected(self):
@@ -294,7 +295,7 @@ class baseServer():
 		data = None
 		
 		try:
-			data = sock.recv(1024)
+			data = sock.recv(socketBufferMaxLenght)
 		except ssl.SSLError as e:
 			if e.errno == 2:
 				return
