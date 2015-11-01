@@ -232,7 +232,7 @@ class baseServer():
 					connect.close()
 				
 			try:
-				s_readable,s_writable,s_exceptional = select.select(rlist, wlist, rlist,10)
+				s_readable,s_writable,s_exceptional = select.select(rlist, wlist, rlist,1)
 			except:
 				log.log(3)
 				continue;
