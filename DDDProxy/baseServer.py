@@ -113,12 +113,14 @@ class sockConnect(object):
 	
 	def fileno(self):
 		return self._fileno
+	
 	def send(self,data):
-# 		if data and len(data)>1024:
-# 			self.dataSendList.append(data[:1024])
-# 			self.send(data[1024:])
-# 		else:
-		self.dataSendList.append(data)
+		maxLenght = 1024*2
+		if data and len(data)>maxLenght:
+			self.dataSendList.append(data[:maxLenght])
+			self.send(data[maxLenght:])
+		else:
+			self.dataSendList.append(data)
 	def onConnected(self):
 		self.server.addSockConnect(self)
 		
