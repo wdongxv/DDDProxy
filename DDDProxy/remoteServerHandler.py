@@ -169,8 +169,9 @@ class remoteServerConnect(sockConnect,messageHandler):
 		if connectId == remoteServerConnect.serverToServerJsonMessageConnectId:
 			serverMessage = json.loads(data)
 			for k,v in serverMessage.items():
-				if k == "serverPing":
+				if k == "serverPing" and self.serverPing != v:
 					self.serverPing = v
+					self.sendData(connectId, json.dumps({"serverPing":v}))
 		else:
 			cb = self.recvCallback[connectId] if connectId in self.recvCallback else None
 			if cb:
@@ -193,8 +194,6 @@ class remoteServerConnect(sockConnect,messageHandler):
 					self.sendData(*i)
 	def sendOpt(self,connectId,opt):
 		self.send(self.optChunk(connectId, opt))
-		
-	
 	def sendData(self,connectId,data):
 		if self.serverPing:
 			self.serverPing_MessagePauseCount += 1
@@ -209,7 +208,6 @@ class remoteServerConnect(sockConnect,messageHandler):
 			self.send(d)
 	
 	def setServerPing(self,isOpen=True):
-		self.serverPing = isOpen
 		self.sendData( remoteServerConnect.serverToServerJsonMessageConnectId,
 					json.dumps({"serverPing":isOpen}))
 	def onRecv(self,data):
@@ -284,6 +282,8 @@ class remoteServerHandler(remoteServerConnect):
 		for connect in self.realConnectList.values():
 			connect.close()
 		remoteServerConnect.onClose(self)
+		
+
 SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert")
 SSLKeyPath = configFile.makeConfigFilePathName("dddproxy.remote.key")
 def createSSLCert():
