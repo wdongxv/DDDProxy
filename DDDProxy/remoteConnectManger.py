@@ -10,6 +10,7 @@ import math
 import time
 from DDDProxy.remoteServerHandler import remoteServerHandler
 
+maxConnectByOnServer = 1
 
 
 class remoteServerConnectLocalHander(remoteServerConnect):
@@ -56,10 +57,9 @@ class remoteConnectManger():
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
-		maxCount = 2
 		self.remoteConnectListLoop += 1;
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
-		if self.remoteConnectListLoop >= len(remoteServerList)*maxCount:
+		if self.remoteConnectListLoop >= len(remoteServerList)*maxConnectByOnServer:
 			self.remoteConnectListLoop = 0
 		i = 0
 		for remoteServer in remoteServerList:
@@ -71,7 +71,7 @@ class remoteConnectManger():
 			else:
 				self.remoteConnectList[remoteServerKey] = connectList = {}
 				
-			if  self.remoteConnectListLoop >= i and self.remoteConnectListLoop < i + maxCount:
+			if  self.remoteConnectListLoop >= i and self.remoteConnectListLoop < i + maxConnectByOnServer:
 				index = self.remoteConnectListLoop-i
 				connect = None
 				if index in connectList:
@@ -83,7 +83,7 @@ class remoteConnectManger():
 					connect.setConnectCloseCallBack(-1,self.onConnectClose)
 					connectList[index] = connect
 				return connect
-			i += maxCount
+			i += maxConnectByOnServer
 		return None
 	def onConnectClose(self,connect):
 		for _,connectList in self.remoteConnectList.items():

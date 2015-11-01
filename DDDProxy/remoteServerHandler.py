@@ -47,7 +47,7 @@ class messageHandler:
 	
 	def optChunk(self,connectId,opt):
 		if opt >=0:
-			raise Exception("opt must > 0")
+			raise Exception("opt must < 0")
 		return struct.pack("i", connectId)+struct.pack("h", opt) +"\n"
 	
 	def dataChunk(self,connectId,data):
@@ -137,7 +137,7 @@ class remoteServerConnect(sockConnect,messageHandler):
 	serverToServerJsonMessageConnectId = -2
 
 	
-	serverPing_MessagePauseCacheLimit = 500
+	serverPing_MessagePauseCacheLimit = 50
 		
 	def __init__(self, server, *args, **kwargs):
 		sockConnect.__init__(self, server, *args, **kwargs)
@@ -191,13 +191,15 @@ class remoteServerConnect(sockConnect,messageHandler):
 				cache = self.serverPing_MessagePauseCache
 				self.serverPing_MessagePauseCache = []
 				for i in cache:
-					self.sendData(i[0],[1])
+					self.sendData(i[0],i[1])
 	def sendOpt(self,connectId,opt):
 		self.send(self.optChunk(connectId, opt))
 	
 	def sendData(self,connectId,data):
 		if self.serverPing:
 			self.serverPing_MessagePauseCount += 1
+			if self.serverPing_MessagePauseCount%10 == 0:
+				print self.serverPing_MessagePauseCount
 			if self.serverPing_MessagePauseCount >= remoteServerConnect.serverPing_MessagePauseCacheLimit:
 				if self.serverPing_MessagePauseCount == remoteServerConnect.serverPing_MessagePauseCacheLimit:
 					self.sendOpt(remoteServerConnect.serverToServerJsonMessageConnectId, remoteServerConnect.optServerPing)
@@ -251,7 +253,7 @@ class remoteServerHandler(remoteServerConnect):
 			connect = self.realConnectList[connectId]
 			if opt == remoteServerConnect.optCloseConnect:
 				connect.close()
-			
+		remoteServerConnect.onOpt(self, connectId, opt)
 	def getRealConnect(self,connectId):
 		if connectId in self.realConnectList:
 			return self.realConnectList[connectId]
