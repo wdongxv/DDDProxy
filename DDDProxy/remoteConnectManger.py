@@ -10,7 +10,7 @@ import math
 import time
 from DDDProxy.remoteServerHandler import remoteServerHandler
 
-maxConnectByOnServer = 1
+maxConnectByOnServer = 2
 
 
 class remoteServerConnectLocalHander(remoteServerConnect):
