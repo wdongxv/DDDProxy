@@ -191,16 +191,17 @@ class remoteServerConnect(sockConnect,messageHandler):
 				cache = self.serverPing_MessagePauseCache
 				self.serverPing_MessagePauseCache = []
 				for i in cache:
-					self.sendData(*i)
+					self.sendData(i[0],[1])
 	def sendOpt(self,connectId,opt):
 		self.send(self.optChunk(connectId, opt))
+	
 	def sendData(self,connectId,data):
 		if self.serverPing:
 			self.serverPing_MessagePauseCount += 1
 			if self.serverPing_MessagePauseCount >= remoteServerConnect.serverPing_MessagePauseCacheLimit:
 				if self.serverPing_MessagePauseCount == remoteServerConnect.serverPing_MessagePauseCacheLimit:
 					self.sendOpt(remoteServerConnect.serverToServerJsonMessageConnectId, remoteServerConnect.optServerPing)
-				self.serverPing_MessagePauseCache.append(tuple(connectId,data))
+				self.serverPing_MessagePauseCache.append([connectId,data])
 				return
 			
 		

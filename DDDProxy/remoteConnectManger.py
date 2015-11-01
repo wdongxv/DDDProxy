@@ -26,6 +26,8 @@ class remoteServerConnectLocalHander(remoteServerConnect):
 				self.authCallbackList = []
 				self.authPass = True
 				self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
+				
+				self.setServerPing(True)
 			elif opt == remoteServerConnect.optAuthError:
 				self.close()
 # 		elif opt == remoteServerConnect.optCloseConnect:
