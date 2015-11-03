@@ -235,7 +235,7 @@ class baseServer():
 			currentTime = time.time()
 			for connect in self._socketConnectList.values():
 				rlist.append(connect.sock)
-				if connect.requestSend()>0:
+				if connect.requestSend():
 					wlist.append(connect.sock)
 				elif connect.info["lastAlive"] < currentTime-3600:
 					connect.close()
