@@ -46,7 +46,6 @@ class sockConnect(object):
 		sockConnect._filenoLoop+=1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
-		self.requestClose = False
 	def makeAlive(self):
 		self.info["lastAlive"] = int(time.time())
 		
@@ -142,7 +141,6 @@ class sockConnect(object):
 	def onClose(self):
 		pass
 	def close(self):
-		self.requestClose = True
 		self.send(None)
 		
 		
@@ -236,8 +234,7 @@ class baseServer():
 			for connect in self._socketConnectList.values():
 				if connect.pauseRecvAndSend():
 					continue
-				if not connect.requestClose:
-					rlist.append(connect.sock)
+				rlist.append(connect.sock)
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
 				elif connect.info["lastAlive"] < currentTime-3600:

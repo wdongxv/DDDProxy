@@ -127,7 +127,9 @@ class realServerConnect(sockConnect):
 		while len(self.closeCallbackList):
 			self.server.addCallback(self.closeCallbackList.pop(0),self)
 		sockConnect.onClose(self)
-		
+	def close(self):
+		sockConnect.close(self)
+		self.sock.close()
 class remoteServerConnect(sockConnect,messageHandler):
 	optCloseConnect = -1
 	optAuthOK = -2
