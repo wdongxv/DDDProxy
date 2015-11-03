@@ -59,9 +59,9 @@ class messageHandler:
 			yield struct.pack("i", connectId)+struct.pack("h", l) +data+"\n"
 		
 class realServerConnect(sockConnect):
-	def __init__(self, connectId,hander):
-		sockConnect.__init__(self, hander.server)
-		self.hander =hander
+	def __init__(self, connectId,handler):
+		sockConnect.__init__(self, handler.server)
+		self.handler =handler
 		self.connectId = connectId
 		self.messageParse = httpMessageParser()
 		self.dataCache = ""
