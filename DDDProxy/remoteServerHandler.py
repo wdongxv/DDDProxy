@@ -59,24 +59,19 @@ class messageHandler:
 			yield struct.pack("i", connectId)+struct.pack("h", l) +data+"\n"
 		
 class realServerConnect(sockConnect):
-	def __init__(self, handler,connectId):
-		sockConnect.__init__(self, handler.server)
-		self.handler = handler
+	def __init__(self, connectId,server):
+		sockConnect.__init__(self, server)
 		self.connectId = connectId
-		
 		self.messageParse = httpMessageParser()
 		self.dataCache = ""
-		
 		self.closeCallbackList = []
-		
+		self.requestSendToLocalDataCache = []
 	def onRecv(self,data):
 		"""
 		从真实服务器到本机
 		"""
 		sockConnect.onRecv(self, data)
-		self.handler.sendData(self.connectId,data)
-	def pauseRecvAndSend(self):
-		self.handler.isPause()
+		self.requestSendToLocalDataCache.append(data)
 	def onlocalRecv(self,data):
 		self.dataCache += data
 		if self.sock:
@@ -99,19 +94,19 @@ class realServerConnect(sockConnect):
 				self.server.addCallback(self.onClose)
 			else:
 				self.connect((addr,port))
+				
 	def onHTTP(self,  method):
 		
 		try:
 			if method == "POST":
 # 				postJson = json.loads(self.messageParse.getBody())
-				self.handler.sendData(self.connectId,
-					self.makeReseponse(self.server.dumpConnects(),
+				self.requestSendToLocalDataCache.append(self.makeReseponse(self.server.dumpConnects(),
 									connection=self.messageParse.connection(),
 									header={"Access-Control-Allow-Origin":self.messageParse.getHeader("origin")}))
 				return
 		except:
 			log.log(3)
-		self.handler.sendData(self.connectId,self.makeReseponse("1", code=405))
+		self.requestSendToLocalDataCache.append(self.makeReseponse("1", code=405))
 
 # 	def __str__(self, *args, **kwargs):
 # 		return self.handler.filenoStr() + " << " + self.filenoStr() + str(self.address)
@@ -119,7 +114,7 @@ class realServerConnect(sockConnect):
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":
-			self.handler.sendData(self.connectId,"HTTP/1.1 200 OK\r\n\r\n")
+			self.requestSendToLocalDataCache.append("HTTP/1.1 200 OK\r\n\r\n")
 		self.connectName = self.handler.filenoStr() + "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()
 		if self.dataCache:
 			self.onlocalRecv("")
@@ -127,9 +122,7 @@ class realServerConnect(sockConnect):
 		while len(self.closeCallbackList):
 			self.server.addCallback(self.closeCallbackList.pop(0),self)
 		sockConnect.onClose(self)
-	def close(self):
-		sockConnect.close(self)
-		self.sock.close()
+		
 class remoteServerConnect(sockConnect,messageHandler):
 	optCloseConnect = -1
 	optAuthOK = -2
@@ -229,7 +222,7 @@ class remoteServerHandler(remoteServerConnect):
 		remoteServerConnect.__init__(self, *args, **kwargs)
 		self.realConnectList = {}
 		self.authPass = False
-	
+		self.realConnectListSendLoop = 0
 	def wrapToSll(self,setThreadName=None):
 		try:
 			setThreadName(str(self)+"wrapToSll")
@@ -259,10 +252,21 @@ class remoteServerHandler(remoteServerConnect):
 	def getRealConnect(self,connectId):
 		if connectId in self.realConnectList:
 			return self.realConnectList[connectId]
-		connect = realServerConnect(self,connectId)
+		connect = realServerConnect(connectId,self.server)
 		connect.closeCallbackList.append(self.onRealConnectClose)
 		self.realConnectList[connectId] = connect
-		return connect 
+		return connect
+	def requestSend(self):
+		if not remoteServerConnect.requestSend(self):
+			connects = self.realConnectList.values()
+			for _ in range(len(connects)):
+				self.realConnectListSendLoop+=1
+				if self.realConnectListSendLoop >= len(connects):
+					self.realConnectListSendLoop = 0
+				connect = connects[self.realConnectListSendLoop]
+				if len(connect.requestSendToLocalDataCache)>0:
+					self.sendData(connect.connectId, connect.requestSendToLocalDataCache.pop(0))
+		return remoteServerConnect.requestSend(self)
 	def onMessage(self,connectId,data):
 		if connectId>=0:
 			if self.authPass:
@@ -282,7 +286,7 @@ class remoteServerHandler(remoteServerConnect):
 				self.close()
 		else:
 			remoteServerConnect.onMessage(self,connectId,data)
-			
+
 	def onClose(self):
 		for connect in self.realConnectList.values():
 			connect.close()

@@ -42,7 +42,7 @@ class sockConnect(object):
 		self.makeAlive()
 		self.sock = None
 		self.address = (None,None)
-		self.dataSendList = []
+		self._dataSendList = []
 		sockConnect._filenoLoop+=1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
@@ -118,10 +118,10 @@ class sockConnect(object):
 	
 	def send(self,data):
 		if data and len(data)>socketBufferMaxLenght:
-			self.dataSendList.append(data[:socketBufferMaxLenght])
+			self._dataSendList.append(data[:socketBufferMaxLenght])
 			self.send(data[socketBufferMaxLenght:])
 		else:
-			self.dataSendList.append(data)
+			self._dataSendList.append(data)
 	def onConnected(self):
 		self.server.addSockConnect(self)
 		
@@ -130,14 +130,16 @@ class sockConnect(object):
 		self.info["recv"] += len(data)
 		self.makeAlive()
 	
-	def pauseRecvAndSend(self):
-		return False
+	def requestSend(self):
+		return len(self._dataSendList)>0
+	def requestSendData(self):
+		return self._dataSendList.pop(0)
 	
 	def onSend(self,data):
 		self.info["send"] += len(data)
-		l = self.sock.send(data)
-# 		log.log(2,self,">>",len(data),l)
+		self.sock.send(data)
 		self.makeAlive()
+	
 	def onClose(self):
 		pass
 	def close(self):
@@ -232,10 +234,8 @@ class baseServer():
 			wlist = []
 			currentTime = time.time()
 			for connect in self._socketConnectList.values():
-				if connect.pauseRecvAndSend():
-					continue
 				rlist.append(connect.sock)
-				if len(connect.dataSendList)>0:
+				if connect.requestSend()>0:
 					wlist.append(connect.sock)
 				elif connect.info["lastAlive"] < currentTime-3600:
 					connect.close()
@@ -286,7 +286,7 @@ class baseServer():
 	def onSend(self,sock):
 		if sock in self._socketConnectList:
 			connect = self._socketConnectList[sock]
-			data = connect.dataSendList.pop(0)
+			data = connect.requestSendData()
 			if data:
 				try:
 					connect.onSend(data)
