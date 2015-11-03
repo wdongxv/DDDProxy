@@ -75,6 +75,8 @@ class realServerConnect(sockConnect):
 		"""
 		sockConnect.onRecv(self, data)
 		self.handler.sendData(self.connectId,data)
+	def pauseRecvAndSend(self):
+		self.handler.isPause()
 	def onlocalRecv(self,data):
 		self.dataCache += data
 		if self.sock:
@@ -194,16 +196,16 @@ class remoteServerConnect(sockConnect,messageHandler):
 					self.sendData(i[0],i[1])
 	def sendOpt(self,connectId,opt):
 		self.send(self.optChunk(connectId, opt))
-	
+	def isPause(self):
+		return self.serverPing_MessagePauseCount >= remoteServerConnect.serverPing_MessagePauseCacheLimit
 	def sendData(self,connectId,data):
 		if self.serverPing:
 			self.serverPing_MessagePauseCount += 1
-			if self.serverPing_MessagePauseCount >= remoteServerConnect.serverPing_MessagePauseCacheLimit:
+			if self.isPause():
 				if self.serverPing_MessagePauseCount == remoteServerConnect.serverPing_MessagePauseCacheLimit:
 					self.sendOpt(remoteServerConnect.serverToServerJsonMessageConnectId, remoteServerConnect.optServerPing)
 				self.serverPing_MessagePauseCache.append([connectId,data])
 				return
-			
 		
 		for d in self.dataChunk(connectId, data):
 			self.send(d)
