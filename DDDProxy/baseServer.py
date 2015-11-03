@@ -129,7 +129,8 @@ class sockConnect(object):
 # 		log.log(2,self,"<<",repr(data))
 		self.info["recv"] += len(data)
 		self.makeAlive()
-	
+	def pauseSendAndRecv(self):
+		return False
 	def requestSend(self):
 		return len(self._dataSendList)>0
 	def requestSendData(self):
@@ -234,7 +235,8 @@ class baseServer():
 			wlist = []
 			currentTime = time.time()
 			for connect in self._socketConnectList.values():
-				rlist.append(connect.sock)
+				if not connect.pauseSendAndRecv():
+					rlist.append(connect.sock)
 				if connect.requestSend():
 					wlist.append(connect.sock)
 				elif connect.info["lastAlive"] < currentTime-3600:

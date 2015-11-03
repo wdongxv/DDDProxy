@@ -95,6 +95,8 @@ class realServerConnect(sockConnect):
 				self.server.addCallback(self.onClose)
 			else:
 				self.connect((addr,port))
+	def pauseSendAndRecv(self):
+		return len(self.requestSendToLocalDataCache)>0
 				
 	def onHTTP(self,  method):
 		
@@ -111,7 +113,7 @@ class realServerConnect(sockConnect):
 
 # 	def __str__(self, *args, **kwargs):
 # 		return self.handler.filenoStr() + " << " + self.filenoStr() + str(self.address)
-				
+	
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":
