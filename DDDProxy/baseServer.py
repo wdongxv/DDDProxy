@@ -236,7 +236,7 @@ class baseServer():
 			for connect in self._socketConnectList.values():
 				if connect.pauseRecvAndSend():
 					continue
-				if not self.requestClose:
+				if not connect.requestClose:
 					rlist.append(connect.sock)
 				if len(connect.dataSendList)>0:
 					wlist.append(connect.sock)
