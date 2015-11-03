@@ -59,8 +59,9 @@ class messageHandler:
 			yield struct.pack("i", connectId)+struct.pack("h", l) +data+"\n"
 		
 class realServerConnect(sockConnect):
-	def __init__(self, connectId,server):
-		sockConnect.__init__(self, server)
+	def __init__(self, connectId,hander):
+		sockConnect.__init__(self, hander.server)
+		self.hander =hander
 		self.connectId = connectId
 		self.messageParse = httpMessageParser()
 		self.dataCache = ""
@@ -252,7 +253,7 @@ class remoteServerHandler(remoteServerConnect):
 	def getRealConnect(self,connectId):
 		if connectId in self.realConnectList:
 			return self.realConnectList[connectId]
-		connect = realServerConnect(connectId,self.server)
+		connect = realServerConnect(connectId,self)
 		connect.closeCallbackList.append(self.onRealConnectClose)
 		self.realConnectList[connectId] = connect
 		return connect
