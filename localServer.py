@@ -18,11 +18,14 @@ if __name__ == "__main__":
 	parser = OptionParser()
 	parser.add_option("-p", "--port",help="proxy server bind port" , default=8080)
 	parser.add_option("-l", "--loglevel",help="log level" , default=2)
+	parser.add_option("-c", "--RemoteConnectLimit",help="one remote address connect limit" , default=2)
 	
 	startUpArgs = parser.parse_args()[0]
 	
 	
 	baseServer.debuglevel = int(startUpArgs.loglevel)
+	
+	remoteConnectManger.maxConnectByOnServer = max(1,int(startUpArgs.RemoteConnectLimit))
 	
 	server = baseServer.baseServer(handler=localProxyServerConnectHandler)
 
