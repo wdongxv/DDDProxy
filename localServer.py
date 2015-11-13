@@ -6,9 +6,8 @@ Created on 2015年1月11日
 @author: dx.wang
 '''
 from DDDProxy.localProxyServerHandler import localProxyServerConnectHandler
-from DDDProxy.remoteConnectManger import remoteConnectManger
 from optparse import OptionParser
-from DDDProxy import baseServer
+from DDDProxy import baseServer, remoteConnectManger
 from DDDProxy.domainAnalysis import domainAnalysis
 
 
@@ -30,7 +29,7 @@ if __name__ == "__main__":
 	server = baseServer.baseServer(handler=localProxyServerConnectHandler)
 
 	domainAnalysis.startAnalysis(server)
-	remoteConnectManger.install(server)
+	remoteConnectManger.remoteConnectManger.install(server)
 	
 	server.addListen(port=int(startUpArgs.port))
 	server.start()
