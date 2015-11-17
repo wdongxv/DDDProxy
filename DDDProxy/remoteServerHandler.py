@@ -250,7 +250,7 @@ class remoteServerHandler(remoteServerConnect):
 		if connectId in self.realConnectList:
 			connect = self.realConnectList[connectId]
 			if opt == remoteServerConnect.optCloseConnect:
-				connect.close()
+				connect.shutdown()
 		remoteServerConnect.onOpt(self, connectId, opt)
 	def getRealConnect(self,connectId):
 		if connectId in self.realConnectList:
@@ -292,7 +292,7 @@ class remoteServerHandler(remoteServerConnect):
 
 	def onClose(self):
 		for connect in self.realConnectList.values():
-			connect.close()
+			connect.shutdown()
 		remoteServerConnect.onClose(self)
 		
 

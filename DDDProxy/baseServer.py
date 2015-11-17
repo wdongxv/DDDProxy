@@ -122,6 +122,9 @@ class sockConnect(object):
 			self.send(data[socketBufferMaxLenght:])
 		else:
 			self._dataSendList.append(data)
+			
+			
+	
 	def onConnected(self):
 		self.server.addSockConnect(self)
 		
@@ -141,13 +144,51 @@ class sockConnect(object):
 		self.sock.send(data)
 		self.makeAlive()
 	
+	def onReadySend(self):
+		data = self.requestSendData()
+		if data:
+			try:
+				self.onSend(data)
+				return
+			except:
+				log.log(3)
+		self.shutdown()
+	def onReadyRecv(self):
+		data = None
+		
+		try:
+			data = self.sock.recv(socketBufferMaxLenght)
+		except ssl.SSLError as e:
+			if e.errno == 2:
+				return
+			log.log(3)
+		except:
+			log.log(3)
+		
+		if data:
+			if isinstance(self.sock, ssl.SSLSocket):
+				while 1:
+					data_left = self.sock.pending()
+					if data_left:
+						data += self.sock.recv(data_left)
+					else:
+						break
+				self.onRecv(data)
+		else:
+			self.shutdown()
+
 	def onClose(self):
 		pass
+	
 	def close(self):
 		self.send(None)
-		
-		
-		
+	def shutdown(self):
+		try:
+			self.sock.close()
+			self.sock.shutdown()
+		except:
+			pass
+		self.server.removeSocketConnect(self.sock)
 		
 	def makeReseponse(self,data, ContentType="text/html", code=200,connection="close",header={}):	
 		def httpdate():
@@ -235,13 +276,16 @@ class baseServer():
 			wlist = []
 			currentTime = time.time()
 			for connect in self._socketConnectList.values():
+				if connect.info["lastAlive"] < currentTime-3600:
+					connect.shutdown()
+					continue
+
 				if connect.pauseSendAndRecv():
 					continue
 				rlist.append(connect.sock)
 				if connect.requestSend():
 					wlist.append(connect.sock)
-				elif connect.info["lastAlive"] < currentTime-3600:
-					connect.close()
+				
 				
 			try:
 				s_readable,s_writable,s_exceptional = select.select(rlist, wlist, rlist,1)
@@ -260,7 +304,7 @@ class baseServer():
 				self.onSend(sock)
 				timeCheck.append(("write",time.time(),sock))
 			for sock in s_exceptional:
-				self.onExcept(sock)
+				self.removeSocketConnect(sock)
 				timeCheck.append(("except",time.time(),sock))
 				
 			cblist = self.callbackList
@@ -280,6 +324,7 @@ class baseServer():
 					if usetime >1:
 						log.log(3,check[0],"usetime > 1.0s",usetime,check[2])
 				lastCheck = check
+	
 	def onConnect(self,sock):
 		sock,address = sock.accept()
 		connect = self.handler(server=self)
@@ -289,48 +334,21 @@ class baseServer():
 	def onSend(self,sock):
 		if sock in self._socketConnectList:
 			connect = self._socketConnectList[sock]
-			data = connect.requestSendData()
-			if data:
-				try:
-					connect.onSend(data)
-					return
-				except:
-					log.log(3)
-			sock.close()
-			self.onExcept(sock)
+			connect.onReadySend()
 			
 	def onData(self,sock):
-		
-		data = None
-		
-		try:
-			data = sock.recv(socketBufferMaxLenght)
-		except ssl.SSLError as e:
-			if e.errno == 2:
-				return
-			log.log(3)
-		except:
-			log.log(3)
-		
-		if data:
-			if isinstance(sock, ssl.SSLSocket):
-				while 1:
-					data_left = sock.pending()
-					if data_left:
-						data += sock.recv(data_left)
-					else:
-						break
-			if sock in self._socketConnectList:
-				handler = self._socketConnectList[sock]
-				handler.onRecv(data)
-		else:
-			self.onExcept(sock)
-	def onExcept(self,sock):
+		if sock in self._socketConnectList:
+			handler = self._socketConnectList[sock]
+			handler.onReadyRecv()
+			
+			
+	def removeSocketConnect(self,sock):
 		if sock in self._socketConnectList:
 			handler = self._socketConnectList[sock]
 			log.log(2,handler,"<	close")
 			del self._socketConnectList[sock]
 			handler.onClose()
+			
 	def dumpConnects(self):
 		connects = {}
 		for handler in self._socketConnectList.values():
