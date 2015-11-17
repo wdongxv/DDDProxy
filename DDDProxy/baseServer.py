@@ -173,7 +173,7 @@ class sockConnect(object):
 						data += self.sock.recv(data_left)
 					else:
 						break
-				self.onRecv(data)
+			self.onRecv(data)
 		else:
 			self.shutdown()
 
@@ -259,8 +259,14 @@ class baseServer():
 			except:
 				pass
 			
-			connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
-			connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+			try:
+				connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
+			except:
+				pass
+			try:
+				connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+			except:
+				pass
 			try:
 				TCP_KEEPALIVE = 0x10
 				connect.sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
@@ -339,8 +345,10 @@ class baseServer():
 	def onData(self,sock):
 		if sock in self._socketConnectList:
 			handler = self._socketConnectList[sock]
-			handler.onReadyRecv()
-			
+			try:
+				handler.onReadyRecv()
+			except:
+				log.log(3)
 			
 	def removeSocketConnect(self,sock):
 		if sock in self._socketConnectList:
