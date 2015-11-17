@@ -32,7 +32,9 @@ if __name__ == "__main__":
 	remoteConnectManger.remoteConnectManger.install(server)
 	
 	server.addListen(port=int(startUpArgs.port))
-	server.start()
 	
+	print "start server on: 0.0.0.0:"+str(startUpArgs.port)
+	
+	server.start()
 	
 	
