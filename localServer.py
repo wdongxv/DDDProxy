@@ -9,6 +9,7 @@ from optparse import OptionParser
 from DDDProxy import baseServer
 from DDDProxy.domainAnalysis import domainAnalysis
 from DDDProxy.localProxyServerHandler import localConnectHandler
+from DDDProxy import localToRemoteConnectManger
 
 
 if __name__ == "__main__":
@@ -24,12 +25,12 @@ if __name__ == "__main__":
 	
 	baseServer.debuglevel = int(startUpArgs.loglevel)
 	
-	remoteConnectManger.maxConnectByOnServer = max(1,int(startUpArgs.RemoteConnectLimit))
+	localToRemoteConnectManger.maxConnectByOnServer = max(1,int(startUpArgs.RemoteConnectLimit))
 	
 	server = baseServer.baseServer(handler=localConnectHandler)
 
 	domainAnalysis.startAnalysis(server)
-	remoteConnectManger.remoteConnectManger.install(server)
+	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
 	
 	server.addListen(port=int(startUpArgs.port))
 	

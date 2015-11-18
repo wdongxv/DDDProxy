@@ -18,6 +18,9 @@ class symmetryConnect(sockConnect):
 	"""
 
 	optCloseSymmetryConnect = -1
+
+	optSymmetryPing = -2
+	optSymmetryPingResponse = -3
 	
 	def __init__(self,server):
 		sockConnect.__init__(self, server)
@@ -25,8 +28,19 @@ class symmetryConnect(sockConnect):
 		self._symmetryConnectSendPendingCache = ""
 		self._requestRemove = False
 		self.symmetryConnectManager = None
+		self.waitSymmetryPingResponse = False
 #--------
 
+
+	def pauseSendAndRecv(self):
+		return self.waitSymmetryPingResponse
+
+	def onRecv(self, data):
+		sockConnect.onRecv(self, data)
+		self.waitSymmetryPingResponse = True
+		self.sendDataToSymmetryConnect(data)
+		self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
+		
 	def onClose(self):
 		self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
 		self._requestRemove = True
@@ -39,7 +53,11 @@ class symmetryConnect(sockConnect):
 	def onSymmetryConnectOpt(self,opt):
 		if opt == symmetryConnect.optCloseSymmetryConnect:
 			self.shutdown()
-	
+		elif opt == symmetryConnect.optSymmetryPing:
+			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPingResponse)
+		elif opt == symmetryConnect.optSymmetryPingResponse:
+			self.waitSymmetryPingResponse = False
+		
 	def sendOptToSymmetryConnect(self,opt):
 		if self._requestRemove:
 			return
@@ -114,7 +132,7 @@ class symmetryConnectServerHandler(sockConnect):
 			bufferLen = len(self._socketMessageBuffer)
 			_headSize = symmetryConnectServerHandler._headSize
 			if bufferLen >= _headSize:
-				symmetryConnectId,dataSize = struct.unpack("ih",self.buffer[:_headSize])
+				symmetryConnectId,dataSize = struct.unpack("ih",self._socketMessageBuffer[:_headSize])
 				if dataSize>=0:
 					endIndex = dataSize+_headSize
 					if bufferLen > endIndex:
@@ -127,26 +145,29 @@ class symmetryConnectServerHandler(sockConnect):
 					self._socketMessageBuffer = self._socketMessageBuffer[_headSize+1:]
 					self._onRecvOpt(symmetryConnectId, dataSize)
 			else:
-				break	
+				break
+	
 	def _onRecvData(self,symmetryConnectId,data):
 		if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 			serverMessage = json.loads(data)
 			self.onServerToServerMessage(serverMessage)
 		else:
-			connect = self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
+			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectData(data)
 			else:
-				self.sendOpt(symmetryConnectId, symmetryConnectServerHandler.optCloseSymmetryConnect)
+				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseSymmetryConnect)
 
 	def _onRecvOpt(self,symmetryConnectId,opt):
 		if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 			pass
 		else:
-			connect = self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
+			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectOpt(opt)
-
+	def getSymmetryConnect(self,symmetryConnectId):
+		return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
+		
 # -----------
 	def sendOpt(self,symmetryConnectId,opt):
 		self.send(self.optChunk(symmetryConnectId, opt))

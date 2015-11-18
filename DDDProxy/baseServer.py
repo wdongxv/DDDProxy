@@ -43,7 +43,7 @@ class sockConnect(object):
 					"recv":0
 					}
 		self.makeAlive()
-		self.sock = None
+		self._sock = None
 		self.address = (None, None)
 		sockConnect._filenoLoop += 1
 		self._fileno = sockConnect._filenoLoop
@@ -115,7 +115,7 @@ class sockConnect(object):
 		"""
 		@type sock: _socketobject
 		"""
-		self.sock = sock
+		self._sock = sock
 		self.address = address
 		self.server.addSockConnect(self)
 		self.onConnected()
@@ -123,6 +123,8 @@ class sockConnect(object):
 # 	send method
 
 	def getSendPending(self):
+		if self._requsetClose:
+			return True
 		return len(self._sendPendingCache)
 	def getSendData(self, length):
 		data = self._sendPendingCache[:length]
@@ -140,15 +142,19 @@ class sockConnect(object):
 		self._sendPendingCache += data
 	def close(self):
 		self._requsetClose = True
+		self.makeAlive()
 	def shutdown(self):
 		try:
-			self.sock.shutdown()
+			self._sock.close()
+# 			self._sock.shutdown()
 		except:
 			pass
-		self.sock = None
+		
 		self.server.removeSocketConnect(self)
+		self._sock = None
 		self.server.addCallback(self.onClose)
-
+		
+# 		self.close()
 # 	for server
 
 	def pauseSendAndRecv(self):
@@ -157,7 +163,7 @@ class sockConnect(object):
 		data = None
 		
 		try:
-			data = self.sock.recv(socketBufferMaxLenght)
+			data = self._sock.recv(socketBufferMaxLenght)
 		except ssl.SSLError as e:
 			if e.errno == 2:
 				return
@@ -166,23 +172,23 @@ class sockConnect(object):
 			log.log(3)
 		
 		if data:
-			if isinstance(self.sock, ssl.SSLSocket):
+			if isinstance(self._sock, ssl.SSLSocket):
 				while 1:
-					data_left = self.sock.pending()
+					data_left = self._sock.pending()
 					if data_left:
-						data += self.sock.recv(data_left)
+						data += self._sock.recv(data_left)
 					else:
 						break
 			self.info["recv"] += len(data)
 			self.onRecv(data)
 		else:
-			self.shutdown()
+			self.close()
 	def _onReadySend(self):
 		data = self.getSendData(socketBufferMaxLenght)
 		if data:
 			self.info["send"] += len(data)
 			try:
-				self.sock.send(data)
+				self._sock.send(data)
 				self.onSend(data)
 				return
 			except:
@@ -195,6 +201,7 @@ class sockConnect(object):
 			self._onReadySend()
 		elif event == sockConnect.socketEventExcept:
 			self.shutdown()
+
 		self.makeAlive()
 			
 # 	for http
@@ -279,30 +286,29 @@ class baseServer():
 # manager connect
 
 	def addSockConnect(self, connect):
-		if not connect.sock in self._socketConnectList:
-			connect.sock.setblocking(False)
+		if not connect._sock in self._socketConnectList:
+			connect._sock.setblocking(False)
 			try:
-				connect.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+				connect._sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 			except:
 				pass
 			
 			try:
-				connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
+				connect._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
 			except:
 				pass
 			try:
-				connect.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+				connect._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
 			except:
 				pass
 			try:
 				TCP_KEEPALIVE = 0x10
-				connect.sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
+				connect._sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
 			except:
 				pass
-			self._socketConnectList[connect.sock] = connect
+			self._socketConnectList[connect._sock] = connect
 	def removeSocketConnectBySocket(self, sock):
 		if sock in self._socketConnectList:
-			handler = self._socketConnectList[sock]
 			del self._socketConnectList[sock]
 			
 	def removeSocketConnect(self, handler):
@@ -317,25 +323,25 @@ class baseServer():
 		while True:
 			rlist = [] + self.serverList
 			wlist = []
+			allList = [] + self.serverList
 			currentTime = time.time()
 			
-			s_exceptional = []
-			for connect in self._socketConnectList.values():
+			for _,connect in self._socketConnectList.items():
+				allList.append(connect._sock)
 				if connect.info["lastAlive"] < currentTime - 3600:
-					connect.shutdown()
+					connect.close()
 					continue
-
 				if connect.pauseSendAndRecv():
 					continue
-				rlist.append(connect.sock)
+				rlist.append(connect._sock)
 				if connect.getSendPending():
-					wlist.append(connect.sock)
-				elif connect._requsetClose:
-					s_exceptional.append(connect.sock)
+					wlist.append(connect._sock)
 			try:
-				s_readable, s_writable, _s_exceptional = select.select(rlist, wlist, rlist, 1)
-				s_exceptional += _s_exceptional
+				s_readable, s_writable, s_exceptional = select.select(rlist, wlist, rlist, 1)
+			except KeyboardInterrupt:
+				break
 			except:
+				time.sleep(1)
 				log.log(3)
 				continue;
 			for sock in s_readable:
@@ -381,7 +387,7 @@ class baseServer():
 		for l in connects.values():
 			l.sort(cmp=lambda x, y : cmp(y["send"] + y["recv"], x["send"] + x["recv"]))
 		
-		return {"connect":connects, "threads":sockConnect.connectPool.dump(), "currentTime":int(time.time())}
+		return {"connect":connects, "threads":sockConnect._connectPool.dump(), "currentTime":int(time.time())}
 
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)

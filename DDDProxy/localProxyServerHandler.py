@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from DDDProxy.socetMessageParser import httpMessageParser
-from DDDProxy.domainAnalysis import analysis, domainAnalysisType
-from DDDProxy.localServerRemoteConnectManger import localSymmetryConnect,\
-	localServerRemoteConnectManger
 import json
-from DDDProxy.hostParser import parserUrlAddrPort, getDomainName
 from os.path import dirname
-from DDDProxy.settingConfig import settingConfig
-from DDDProxy import domainConfig
-from DDDProxy.mime import get_mime_type
+
+from domainAnalysis import analysis, domainAnalysisType
+import domainConfig
+from hostParser import parserUrlAddrPort, getDomainName
+from localToRemoteConnectManger import localSymmetryConnect
+from localToRemoteConnectManger import localToRemoteConnectManger
+from mime import get_mime_type
+from settingConfig import settingConfig
+from socetMessageParser import httpMessageParser
 
 
 class localConnectHandler(localSymmetryConnect):
@@ -29,7 +30,7 @@ class localConnectHandler(localSymmetryConnect):
 			if self.serverAuthPass and self.preConnectRecvCache:
 
 				if self.connectHost:
-					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.recvCache))
+					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 					
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
 				self.preConnectRecvCache = ""
@@ -50,14 +51,14 @@ class localConnectHandler(localSymmetryConnect):
 				
 				self.mode = "proxy"
 				
-				connect = localServerRemoteConnectManger.getConnect()
+				connect = localToRemoteConnectManger.getConnect()
 				
 				if path.find("status.dddproxy.com")>0:
 					try:
 						connect = None
-						jsonMessage = self.messageParse.getBody()
+						jsonMessage = self.httpMessageParse.getBody()
 						jsonBody = json.loads(jsonMessage)
-						connectList = localServerRemoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
+						connectList = localToRemoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
 						if connectList:
 							for _,v in connectList.items():
 								connect = v
@@ -73,8 +74,8 @@ class localConnectHandler(localSymmetryConnect):
 				analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 		else:
 			pass
-# 	def onRemoteConnectRecv(self,connect,data):
-# 		self.send(data)
+	def onSymmetryConnectData(self,data):
+		self.send(data)
 	def onServerAuthPass(self):
 		localSymmetryConnect.onServerAuthPass(self)
 		"""
@@ -86,11 +87,11 @@ class localConnectHandler(localSymmetryConnect):
 	def onSend(self, data):
 		if self.connectHost:
 			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
-		if self.mode == "http" and not self.requestSend():
-			if self.messageParse.connection() != "keep-alive":
+		if self.mode == "http" and not self.getSendPending():
+			if self.httpMessageParse.connection() != "keep-alive":
 				self.close()
 			else:
-				self.messageParse.clear()
+				self.httpMessageParse.clear()
 	
 	
 	def onHTTP(self, header, method, path, query, post):
@@ -103,7 +104,7 @@ class localConnectHandler(localSymmetryConnect):
 			if(opt == "status"):
 				respons = self.server.dumpConnects()
 			elif(opt == "serverList"):
-				respons["pac"] = "http://" + self.messageParse.getHeader("host") + "/pac"
+				respons["pac"] = "http://" + self.httpMessageParse.getHeader("host") + "/pac"
 				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
 			elif opt == "setServerList":
 				settingConfig.setting(settingConfig.remoteServerList, postJson["data"])
@@ -140,7 +141,7 @@ class localConnectHandler(localSymmetryConnect):
 				else:
 					host = url if getDomainName(url) else ""
 				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
-			self.reseponse(respons,connection=self.messageParse.connection())
+			self.reseponse(respons,connection=self.httpMessageParse.connection())
 		elif path == "/pac":
 			content = self.getFileContent(dirname(__file__) + "/template/pac.js")
 			domainList = domainConfig.config.getDomainOpenedList()
@@ -148,16 +149,16 @@ class localConnectHandler(localSymmetryConnect):
 			for domain in domainList:
 				domainListJs += "A(\"" + domain + "\")||"
 			content = content.replace("{{domainList}}", domainListJs)
-			content = content.replace("{{proxy_ddr}}", self.messageParse.getHeader("host"))
-			self.reseponse(content,connection=self.messageParse.connection())
+			content = content.replace("{{proxy_ddr}}", self.httpMessageParse.getHeader("host"))
+			self.reseponse(content,connection=self.httpMessageParse.connection())
 		else:
 			if path == "/":
 				path = "/index.html"
 			content = self.getFileContent(dirname(__file__) + "/template" +path)
 			if content:
 				
-				self.reseponse(content,ContentType=get_mime_type(path),connection=self.messageParse.connection())
+				self.reseponse(content,ContentType=get_mime_type(path),connection=self.httpMessageParse.connection())
 			else:
-				self.reseponse("\"" + path + "\" not found", code=404,connection=self.messageParse.connection())
+				self.reseponse("\"" + path + "\" not found", code=404,connection=self.httpMessageParse.connection())
 		
 

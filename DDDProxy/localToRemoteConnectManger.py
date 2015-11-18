@@ -38,22 +38,21 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 				self.authPass = True
 				self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
 				
-				self.setServerPing(True)
 			else:
 				self.close()
 	def addLocalRealConnect(self,connect):
 		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
 		if self.authPass:
-			connect.setServerAuthPass()
+			self.server.addCallback(connect.setServerAuthPass)
 	def auth(self,auth):
 		timenum = math.floor(time.time())
 		data = {"opt":"auth"}
 		data.update(self.authMake(auth, timenum))
 		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,json.dumps(data))
-	
-class localServerRemoteConnectManger():
+	def onClose(self):
+		symmetryConnectServerHandler.onClose(self)
+class localToRemoteConnectManger():
 	"""
-	@param manager: remoteServerConnecter
 	"""
 	def __init__(self,server):
 		self.server = server;
@@ -82,9 +81,11 @@ class localServerRemoteConnectManger():
 				connect = None
 				if index in connectList:
 					connect = connectList[index]
-				else:
+					if not connect._sock:
+						connect = None
+				if not connect:
 					connect = remoteServerConnecter(self.server)
-					connect.connect((remoteServer["host"],port),True)
+					connect.connect((remoteServer["host"],port),False)
 					connect.auth(remoteServer["auth"])
 					connectList[index] = connect
 				return connect
@@ -100,17 +101,17 @@ class localServerRemoteConnectManger():
 	manager = None
 	@staticmethod
 	def install(server):
-		if not localServerRemoteConnectManger.manager:
-			localServerRemoteConnectManger.manager = localServerRemoteConnectManger(server)
+		if not localToRemoteConnectManger.manager:
+			localToRemoteConnectManger.manager = localToRemoteConnectManger(server)
 	@staticmethod
 	def getConnectHost(host,port):
 		port = port if str(port) else "8082"
-		return localServerRemoteConnectManger.manager.remoteConnectList[host+":"+port]
+		return localToRemoteConnectManger.manager.remoteConnectList[host+":"+port]
 		
 	@staticmethod
 	def getConnect():
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
-		return localServerRemoteConnectManger.manager.get()
+		return localToRemoteConnectManger.manager.get()
 	

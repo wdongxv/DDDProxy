@@ -23,21 +23,12 @@ class realServerConnect(symmetryConnect):
 		self.messageParse = httpMessageParser()
 		self.dataCache = ""
 
-		self.waitLocalConnectResponse = False
-
-
-	def pauseSendAndRecv(self):
-		return self.waitLocalConnectRecvRespons
-
-	def onRecv(self, data):
-		symmetryConnect.onRecv(self, data)
-		self.waitLocalConnectRecvRespons = True
-		self.sendToLocalData(data)
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":
 			self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
-		self.connectName = self.handler.filenoStr() + "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()
+		#self.handler.filenoStr() +
+		self.connectName =  "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()
 		if self.dataCache:
 			self.onSymmetryConnectData("")
 		
@@ -54,7 +45,7 @@ class realServerConnect(symmetryConnect):
 
 	def onSymmetryConnectData(self, data):
 		self.dataCache += data
-		if self.sock:
+		if self._sock:
 			if self.dataCache:
 				self.send(self.dataCache)
 				self.dataCache = ""
@@ -84,35 +75,39 @@ class remoteServerHandler(symmetryConnectServerHandler):
 		self.authPass = False
 
 	def _setConnect(self, sock, address):
-		sockConnect._connectPool.apply_async(self.wrapToSll,sock,address)
+		symmetryConnectServerHandler._setConnect(self, sock, address)
+# 		sockConnect._connectPool.apply_async(self.wrapToSll,sock,address)
+	def onConnected(self):
+		symmetryConnectServerHandler.onConnected(self)
 		self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
-	def wrapToSll(self,sock, address):
+	def wrapToSll(self,sock, address,setThreadName):
 		try:
 			createSSLCert()
 			sock = ssl.wrap_socket(sock, certfile=SSLCertPath,keyfile=SSLKeyPath, server_side=True)
-			symmetryConnectServerHandler._setConnect(self, sock, address)	
+# 			symmetryConnectServerHandler._setConnect(self, sock, address)
 			self.server.addCallback(symmetryConnectServerHandler._setConnect,self, sock, address)
 		except:
 			log.log(3)
 			self.server.addCallback(self.onClose)
-
-
-	def getRealConnect(self,symmetryConnectId):
-		if symmetryConnectId in self.symmetryConnectList:
-			return self.symmetryConnectList[symmetryConnectId]
-		connect = realServerConnect(self.server)
-		self.addSymmetryConnect(connect, symmetryConnectId)
-		return connect
+	def getSymmetryConnect(self, symmetryConnectId):
+		symmetryConnect = symmetryConnectServerHandler.getSymmetryConnect(self, symmetryConnectId)
+		if not symmetryConnect:
+			symmetryConnect = realServerConnect(self.server)
+			self.addSymmetryConnect(symmetryConnect, symmetryConnectId)
+		return symmetryConnect
+		
 	def onServerToServerMessage(self, serverMessage):
 		opt = serverMessage["opt"]
 		if opt == "auth":
 			timenum = serverMessage["time"]
-			if time.time()-1800 < timenum and time.time()+1800 > timenum and self.authMake(remoteAuth, timenum) == serverMessage["password"]:
+			if time.time()-1800 < timenum and time.time()+1800 > timenum and self.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
 				self.authPass = True
 				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth","status":"ok"}))
 			else:
+				log.log(2,"auth failed",serverMessage,self.authMake(remoteAuth, timenum))
 				self.close()
-
+	def onClose(self):
+		symmetryConnectServerHandler.onClose(self)
 SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert")
 SSLKeyPath = configFile.makeConfigFilePathName("dddproxy.remote.key")
 def createSSLCert():
