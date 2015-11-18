@@ -5,10 +5,10 @@ Created on 2015年1月11日
 
 @author: dx.wang
 '''
-from DDDProxy.localProxyServerHandler import localProxyServerConnectHandler
 from optparse import OptionParser
-from DDDProxy import baseServer, remoteConnectManger
+from DDDProxy import baseServer
 from DDDProxy.domainAnalysis import domainAnalysis
+from DDDProxy.localProxyServerHandler import localConnectHandler
 
 
 if __name__ == "__main__":
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	
 	remoteConnectManger.maxConnectByOnServer = max(1,int(startUpArgs.RemoteConnectLimit))
 	
-	server = baseServer.baseServer(handler=localProxyServerConnectHandler)
+	server = baseServer.baseServer(handler=localConnectHandler)
 
 	domainAnalysis.startAnalysis(server)
 	remoteConnectManger.remoteConnectManger.install(server)

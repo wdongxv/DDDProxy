@@ -5,49 +5,55 @@ Created on 2015年9月6日
 @author: dxw
 '''
 from settingConfig import settingConfig
-from remoteServerHandler import remoteServerConnect
 import math
 import time
-from DDDProxy.remoteServerHandler import remoteServerHandler
+from symmetryConnectServerHandler import symmetryConnectServerHandler
+import json
+from DDDProxy.symmetryConnectServerHandler import symmetryConnect
 
 maxConnectByOnServer = 2
 
-
-class remoteServerConnectLocalHander(remoteServerConnect):
-	def __init__(self, server, *args, **kwargs):
-		remoteServerConnect.__init__(self, server, *args, **kwargs)
-		self.authCallbackList = []
-		self.authPass = False
+class localSymmetryConnect(symmetryConnect):
+	def __init__(self, server):
+		symmetryConnect.__init__(self, server)
+		self.serverAuthPass = False
 		
-	def onOpt(self, connectId, opt):
-		if connectId == remoteServerHandler.serverToServerAuthConnectId:
-			if opt == remoteServerConnect.optAuthOK:
-				for cb in self.authCallbackList:
-					self.server.addCallback(cb,connect=self)
+	def onServerAuthPass(self):
+		pass
+	def setServerAuthPass(self):
+		self.serverAuthPass = True
+		self.onServerAuthPass()
+	
+class remoteServerConnecter(symmetryConnectServerHandler):
+	def __init__(self, server, *args, **kwargs):
+		symmetryConnectServerHandler.__init__(self, server, *args, **kwargs)
+		self.authPass = False
+	def onServerToServerMessage(self, serverMessage):
+		opt = serverMessage["opt"]
+		if opt == "auth":
+			if serverMessage["status"] == "ok":
+				for connect in self.symmetryConnectList.values():
+					self.server.addCallback(connect.setServerAuthPass)
 				self.authCallbackList = []
 				self.authPass = True
 				self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
 				
 				self.setServerPing(True)
-			elif opt == remoteServerConnect.optAuthError:
+			else:
 				self.close()
-# 		elif opt == remoteServerConnect.optCloseConnect:
-# 			self.close()
-		else:
-			remoteServerConnect.onOpt(self,connectId,opt)
-# 		log.log(2,"onOpt",connectId,opt)
-	def auth(self,auth):
-		randomNum = math.floor(time.time())
-		self.sendData(remoteServerHandler.serverToServerAuthConnectId,self.authMake(auth, randomNum))
-	def addAuthCallback(self,cb):
+	def addLocalRealConnect(self,connect):
+		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
 		if self.authPass:
-			self.server.addCallback(cb,connect=self)
-		else:
-			self.authCallbackList.append(cb)
-
-class remoteConnectManger():
+			connect.setServerAuthPass()
+	def auth(self,auth):
+		timenum = math.floor(time.time())
+		data = {"opt":"auth"}
+		data.update(self.authMake(auth, timenum))
+		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,json.dumps(data))
+	
+class localServerRemoteConnectManger():
 	"""
-	@param manager: remoteConnectManger
+	@param manager: remoteServerConnecter
 	"""
 	def __init__(self,server):
 		self.server = server;
@@ -77,10 +83,9 @@ class remoteConnectManger():
 				if index in connectList:
 					connect = connectList[index]
 				else:
-					connect = remoteServerConnectLocalHander(self.server)
+					connect = remoteServerConnecter(self.server)
 					connect.connect((remoteServer["host"],port),True)
 					connect.auth(remoteServer["auth"])
-					connect.setConnectCloseCallBack(-1,self.onConnectClose)
 					connectList[index] = connect
 				return connect
 			i += maxConnectByOnServer
@@ -95,17 +100,17 @@ class remoteConnectManger():
 	manager = None
 	@staticmethod
 	def install(server):
-		if not remoteConnectManger.manager:
-			remoteConnectManger.manager = remoteConnectManger(server)
+		if not localServerRemoteConnectManger.manager:
+			localServerRemoteConnectManger.manager = localServerRemoteConnectManger(server)
 	@staticmethod
 	def getConnectHost(host,port):
 		port = port if str(port) else "8082"
-		return remoteConnectManger.manager.remoteConnectList[host+":"+port]
+		return localServerRemoteConnectManger.manager.remoteConnectList[host+":"+port]
 		
 	@staticmethod
 	def getConnect():
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
-		return remoteConnectManger.manager.get()
+		return localServerRemoteConnectManger.manager.get()
 	

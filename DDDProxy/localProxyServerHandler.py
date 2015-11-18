@@ -1,72 +1,63 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-
-import json
-from os.path import dirname
-
+from DDDProxy.socetMessageParser import httpMessageParser
 from DDDProxy.domainAnalysis import analysis, domainAnalysisType
+from DDDProxy.localServerRemoteConnectManger import localSymmetryConnect,\
+	localServerRemoteConnectManger
+import json
 from DDDProxy.hostParser import parserUrlAddrPort, getDomainName
-from baseServer import sockConnect
-import domainConfig
-from remoteConnectManger import remoteConnectManger
-from remoteServerHandler import remoteServerConnect
-from settingConfig import settingConfig
-from socetMessageParser import httpMessageParser
-import time
-from email import mime
-from DDDProxy.baseServer import get_mime_type
+from os.path import dirname
+from DDDProxy.settingConfig import settingConfig
+from DDDProxy import domainConfig
+from DDDProxy.mime import get_mime_type
 
-class localProxyServerConnectHandler(sockConnect):
-	"""
-	@type remoteConnect: remoteServerConnect
-	"""
+
+class localConnectHandler(localSymmetryConnect):
 	def __init__(self, *args, **kwargs):
-		sockConnect.__init__(self, *args, **kwargs)
-		self.messageParse = httpMessageParser()
+		localSymmetryConnect.__init__(self, *args, **kwargs)
 		self.mode = ""
-		self.remoteConnect = None
-		self.recvCache = ""
-		
 		self.connectHost = ""
-	def onClose(self):
-		if(self.remoteConnect):
-			self.remoteConnect.sendOpt(self.fileno(), remoteServerConnect.optCloseConnect)
-			self.remoteConnect.removeAllCallback(self.fileno())
-		sockConnect.onClose(self)
+
+		self.preConnectRecvCache = ""
+
+		self.httpMessageParse = httpMessageParser()
+		
 	def onRecv(self, data):
-		sockConnect.onRecv(self, data)
-		self.recvCache += data
+
+		self.preConnectRecvCache += data
 		if self.mode == "proxy":
-			if self.remoteConnect and self.recvCache:
+			if self.serverAuthPass and self.preConnectRecvCache:
+
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.recvCache))
-				self.remoteConnect.sendData(self.fileno(), self.recvCache)
-				self.recvCache = ""
+					
+				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
+				self.preConnectRecvCache = ""
 			return
-		if self.messageParse.appendData(data):
-			method = self.messageParse.method()
-			path = self.messageParse.path()
+		if self.httpMessageParse.appendData(data):
+			method = self.httpMessageParse.method()
+			path = self.httpMessageParse.path()
 			self.connectName = self.filenoStr() + "	" + method + "	" + path
 			if not path.startswith("http://") and method in ["GET", "POST"]:
 				path = path.split("?")
-				self.onHTTP(self.messageParse.headers,
+				self.onHTTP(self.httpMessageParse.headers,
 						method,
 						path[0],
 						path[1] if len(path) > 1 else "",
-						self.messageParse.getBody() if method == "POST" else "")
+						self.httpMessageParse.getBody() if method == "POST" else "")
 				self.mode = "http"
 			else:
 				
 				self.mode = "proxy"
 				
-				connect = remoteConnectManger.getConnect()
+				connect = localServerRemoteConnectManger.getConnect()
+				
 				if path.find("status.dddproxy.com")>0:
 					try:
 						connect = None
 						jsonMessage = self.messageParse.getBody()
 						jsonBody = json.loads(jsonMessage)
-						connectList = remoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
+						connectList = localServerRemoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
 						if connectList:
 							for _,v in connectList.items():
 								connect = v
@@ -74,8 +65,7 @@ class localProxyServerConnectHandler(sockConnect):
 						pass
 				
 				if connect:
-					connect.addAuthCallback(self.onRemoteConnectAuth)
-					connect.setConnectCloseCallBack(self.fileno(), self.onRemoteConnectClose)
+					connect.addLocalRealConnect(self)
 				else:
 					self.close()
 				
@@ -85,18 +75,15 @@ class localProxyServerConnectHandler(sockConnect):
 			pass
 # 	def onRemoteConnectRecv(self,connect,data):
 # 		self.send(data)
-	def onRemoteConnectClose(self, connect):
-		self.close()
-	def onRemoteConnectAuth(self, connect):
+	def onServerAuthPass(self):
+		localSymmetryConnect.onServerAuthPass(self)
 		"""
 		@type connect: remoteServerConnectLocalHander
 		"""
-		connect.setRecvCallback(self.fileno(), self.send)
-		self.remoteConnect = connect
+		self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.connectName
 		self.onRecv("");
-		self.connectName = connect.filenoStr() + "	<	" + self.connectName
+		
 	def onSend(self, data):
-		sockConnect.onSend(self, data)
 		if self.connectHost:
 			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
 		if self.mode == "http" and not self.requestSend():
@@ -105,16 +92,6 @@ class localProxyServerConnectHandler(sockConnect):
 			else:
 				self.messageParse.clear()
 	
-	def getFileContent(self, name):
-		content = None
-		try:
-			f = dirname(__file__) + "/template" + name
-			f = open(f)
-			content = f.read()
-			f.close()
-		except:
-			pass
-		return content
 	
 	def onHTTP(self, header, method, path, query, post):
 # 		log.log(1,self,header,method,path,query,post)
@@ -165,7 +142,7 @@ class localProxyServerConnectHandler(sockConnect):
 				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
 			self.reseponse(respons,connection=self.messageParse.connection())
 		elif path == "/pac":
-			content = self.getFileContent("/pac.js")
+			content = self.getFileContent(dirname(__file__) + "/template/pac.js")
 			domainList = domainConfig.config.getDomainOpenedList()
 			domainListJs = ""
 			for domain in domainList:
@@ -176,7 +153,7 @@ class localProxyServerConnectHandler(sockConnect):
 		else:
 			if path == "/":
 				path = "/index.html"
-			content = self.getFileContent(path)
+			content = self.getFileContent(dirname(__file__) + "/template" +path)
 			if content:
 				
 				self.reseponse(content,ContentType=get_mime_type(path),connection=self.messageParse.connection())
