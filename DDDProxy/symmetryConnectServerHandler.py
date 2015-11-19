@@ -97,7 +97,7 @@ class symmetryConnectServerHandler(sockConnect):
 		return sockConnect.getSendPending(self)
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
-# 		print "<onSend  ------\n",data,"\n--------->"
+		print "<onSend  ------\n",data,"\n--------->"
 
 # -------------  
 
@@ -149,7 +149,7 @@ class symmetryConnectServerHandler(sockConnect):
 				break
 	
 	def _onRecvData(self,symmetryConnectId,data):
-# 		print "<_onRecvData ",symmetryConnectId," ----------\n",data,"\n------------->"
+		print "<_onRecvData ",symmetryConnectId," ----------\n",data,"\n------------->"
 		if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 			serverMessage = json.loads(data)
 			self.onServerToServerMessage(serverMessage)
@@ -161,7 +161,7 @@ class symmetryConnectServerHandler(sockConnect):
 				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseSymmetryConnect)
 
 	def _onRecvOpt(self,symmetryConnectId,opt):
-# 		print "<_onRecvOpt ",symmetryConnectId," ------",opt,"--------->"
+		print "<_onRecvOpt ",symmetryConnectId," ------",opt,"--------->"
 		if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 			pass
 		else:
