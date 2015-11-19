@@ -27,7 +27,6 @@ class realServerConnect(symmetryConnect):
 		sockConnect.onConnected(self)
 		if self.messageParse.method() == "CONNECT":
 			self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
-		#self.handler.filenoStr() +
 		self.connectName =  "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()
 		if self.dataCache:
 			self.onSymmetryConnectData("")
@@ -75,8 +74,8 @@ class remoteServerHandler(symmetryConnectServerHandler):
 		self.authPass = False
 
 	def _setConnect(self, sock, address):
-		symmetryConnectServerHandler._setConnect(self, sock, address)
-# 		sockConnect._connectPool.apply_async(self.wrapToSll,sock,address)
+# 		symmetryConnectServerHandler._setConnect(self, sock, address)
+		sockConnect._connectPool.apply_async(self.wrapToSll,sock,address)
 	def onConnected(self):
 		symmetryConnectServerHandler.onConnected(self)
 		self.connectName = "[remote:"+str(self.fileno())+"]	"+self.address[0]
@@ -84,14 +83,13 @@ class remoteServerHandler(symmetryConnectServerHandler):
 		try:
 			createSSLCert()
 			sock = ssl.wrap_socket(sock, certfile=SSLCertPath,keyfile=SSLKeyPath, server_side=True)
-# 			symmetryConnectServerHandler._setConnect(self, sock, address)
 			self.server.addCallback(symmetryConnectServerHandler._setConnect,self, sock, address)
 		except:
 			log.log(3)
 			self.server.addCallback(self.onClose)
 	def getSymmetryConnect(self, symmetryConnectId):
 		symmetryConnect = symmetryConnectServerHandler.getSymmetryConnect(self, symmetryConnectId)
-		if not symmetryConnect:
+		if not symmetryConnect and self.authPass:
 			symmetryConnect = realServerConnect(self.server)
 			self.addSymmetryConnect(symmetryConnect, symmetryConnectId)
 		return symmetryConnect

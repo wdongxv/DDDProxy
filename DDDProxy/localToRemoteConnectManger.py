@@ -86,7 +86,7 @@ class localToRemoteConnectManger():
 						connect = None
 				if not connect:
 					connect = remoteServerConnecter(self.server)
-					connect.connect((remoteServer["host"],port),False)
+					connect.connect((remoteServer["host"],port),True)
 					connect.auth(remoteServer["auth"])
 					connectList[index] = connect
 				return connect
