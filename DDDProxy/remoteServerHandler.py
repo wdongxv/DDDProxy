@@ -59,7 +59,7 @@ class realServerConnect(symmetryConnect):
 			else:
 				if method != "CONNECT":
 					url = urlparse.urlparse(path)
-					dataCache = "%s %s%s %s\r\n"%(method,url[2],("?"+url[3]) if url[3] else "",self.messageParse.httpVersion())
+					dataCache = "%s %s%s %s\r\n"%(method,url[2],("?"+url[4]) if url[4] else "",self.messageParse.httpVersion())
 					dataCache += self.messageParse.HeaderString()+"\r\n"
 					dataCache += self.messageParse.getBody()
 					self.send(dataCache)
