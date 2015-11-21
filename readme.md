@@ -23,7 +23,7 @@ E-Mail：wdongxv@gmail.com
 <pre>python localServer.py</pre>
 用浏览器打开：
 <pre>http://127.0.0.1:8080/</pre>
-这样你就会看到完整的帮助
+这样你就会看到完整的帮助，以及所有的设置
 
 <h3>当然，做为新的开源项目，还有很多事要做的：</h3>
 *	pac文件还没有做缓存
