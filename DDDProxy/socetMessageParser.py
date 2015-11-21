@@ -1,62 +1,3 @@
-# import re
-# class socetMessageParser():
-# 	def __init__(self):
-# 		self.message = ""
-# 		self.lastMessage = ""
-# 	def clear(self):
-# 		self.lastMessage = self.message
-# 		self.message = ""
-# 		
-# 	def putMessage(self, data):
-# 		self.message += data
-# 	
-# 	def messageStatus(self):
-# 		method, path, protocol = self.httpMessage()
-# 		if protocol:
-# 			headers = self.httpHeaders()
-# 			if not headers is None:
-# 				if method == "POST":
-# 					if "content-length" in headers and (int(headers["content-length"]) <= len(self.httpBodyStr())):
-# 						return 1
-# 				else:
-# 					return 1
-# 		return 0
-# 
-# 	def messageData(self):
-# 		return self.message
-# 		
-# 	def httpMessage(self):
-# 		if self.message.find("\r\n") > 0:
-# 			firstLine = self.message.split('\r\n', 1)[0]
-# 			try:
-# 				method, path, protocol = firstLine.split()
-# 				if re.match("HTTP/\d.\d", protocol):
-# 					return method, path, protocol
-# 			except:
-# 				pass
-# 		return "", "", ""
-# 	def httpHeadersStr(self):
-# 		method, path, protocol = self.httpMessage()
-# 		if not protocol:
-# 			return ""
-# 		return self.message.split("\r\n\r\n", 1)[0]
-# 	def httpBodyStr(self):
-# 		method, path, protocol = self.httpMessage()
-# 		if not protocol:
-# 			return ""
-# 		return self.message.split("\r\n\r\n", 1)[1]
-# 	def httpHeaders(self):
-# 		header = self.httpHeadersStr()
-# 		if not header:
-# 			return None
-# 		headers = {}
-# 		for item in header.lower().split("\r\n")[1:]:
-# 			k, v = item.split(": ")
-# 			headers[k] = v
-# 		return headers
-
-
-
 
 import re
 import json
@@ -74,10 +15,18 @@ class httpMessageParser():
 		return self.protocol[0]
 	def path(self):
 		return self.protocol[1]
+	def httpVersion(self):
+		return self.protocol[2]
+	
+	def HeaderString(self):
+		message = ""
+		for line in self.headers:
+			message += "%s: %s\r\n"%(line[0],line[1])
+		return message
 	def getHeader(self,key):
 		k = key.lower()
 		for h in self.headers:
-			if h[0] == k:
+			if h[0].lower() == k:
 				return int(h[1]) if key in ["content-length"] else h[1]
 		return None
 	def getBody(self):
@@ -113,7 +62,7 @@ class httpMessageParser():
 					return True
 				header = line.split(": ",1)
 				if(len(header)==2):
-					self.headers.append((header[0].lower(),header[1]))
+					self.headers.append((header[0],header[1]))
 				else:
 					self.clear()
 					self.status = "error"

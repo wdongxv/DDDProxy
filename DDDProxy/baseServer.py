@@ -53,6 +53,7 @@ class sockConnect(object):
 		
 		self._requsetClose = False
 		
+		self._connecting = False
 	def fileno(self):
 		return self._fileno
 	def onConnected(self):
@@ -64,6 +65,17 @@ class sockConnect(object):
 	def onClose(self):
 		pass
 
+	def connectStatus(self):
+		"""
+		0:none
+		1:connected
+		2:connecting"""
+		if self._sock:
+			return 1
+		else:
+			if self._connecting:
+				return 2
+		return 0
 # 	connect to host
 
 	_createCertLock = threading.RLock()
@@ -83,10 +95,13 @@ class sockConnect(object):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 	_connectPool = ThreadPool(maxThread=100)
 	def _doConnectSock(self, address, useSsl=False, cb=None, setThreadName=None):
+		self._connecting = True
 		ok = True
 		try:
 			sock = None
-			setThreadName("connect %s:%s" % (address[0], address[1]))
+			threadName = "connect %s:%s" % (address[0], address[1])
+			log.log(1,threadName)
+			setThreadName(threadName)
 			addr = (socket.gethostbyname(address[0]), address[1])
 			if useSsl:
 				if self.fetchRemoteCert(address[0], address[1]):
@@ -107,6 +122,7 @@ class sockConnect(object):
 		if ok:
 			self.server.addCallback(self._setConnect, sock, address)
 		else:
+			self._connecting = False
 			self.server.addCallback(self.onClose)
 		
 		if cb:
@@ -118,6 +134,7 @@ class sockConnect(object):
 		self._sock = sock
 		self.address = address
 		self.server.addSockConnect(self)
+		self._connecting = False
 		self.onConnected()
 
 # 	send method
@@ -134,6 +151,9 @@ class sockConnect(object):
 # 	client operating
 	
 	def connect(self, address, useSsl=False, cb=None):
+		if self.connectStatus():
+			raise Exception(self,"connect status is",self.connectStatus())
+		self._connecting = True
 		address = address
 		sockConnect._connectPool.apply_async(self._doConnectSock, address, useSsl, cb)
 	def send(self, data):
@@ -149,7 +169,7 @@ class sockConnect(object):
 # 			self._sock.shutdown()
 		except:
 			pass
-		
+		log.log(2,self,"<<< close")
 		self.server.removeSocketConnect(self)
 		self._sock = None
 		self.server.addCallback(self.onClose)
@@ -182,7 +202,7 @@ class sockConnect(object):
 			self.info["recv"] += len(data)
 			self.onRecv(data)
 		else:
-			self.close()
+			self.shutdown()
 	def _onReadySend(self):
 		data = self.getSendData(socketBufferMaxLenght)
 		if data:

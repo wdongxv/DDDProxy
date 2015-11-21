@@ -14,6 +14,7 @@ from DDDProxy import log
 from DDDProxy.symmetryConnectServerHandler import symmetryConnectServerHandler,\
 	symmetryConnect
 import json
+import urlparse
 
 remoteAuth = ""
 
@@ -21,33 +22,25 @@ class realServerConnect(symmetryConnect):
 	def __init__(self, server):
 		symmetryConnect.__init__(self, server)
 		self.messageParse = httpMessageParser()
-		self.dataCache = ""
+		self.proxyMode = False
+# 	def onConnected(self):
+# 		sockConnect.onConnected(self)
 
-	def onConnected(self):
-		sockConnect.onConnected(self)
-		if self.messageParse.method() == "CONNECT":
-			self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
-		self.connectName =  "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()
-		if self.dataCache:
-			self.onSymmetryConnectData("")
 		
 	def onHTTP(self,  method):
 		try:
 			if method == "POST":
-				self.requestSendToLocalDataCache.append(self.makeReseponse(self.server.dumpConnects(),
+				self.sendDataToSymmetryConnect(self.makeReseponse(self.server.dumpConnects(),
 									connection=self.messageParse.connection(),
 									header={"Access-Control-Allow-Origin":self.messageParse.getHeader("origin")}))
 				return
 		except:
 			log.log(3)
-		self.requestSendToLocalDataCache.append(self.makeReseponse("1", code=405))
+		self.sendDataToSymmetryConnect(self.makeReseponse("1", code=405))
 
 	def onSymmetryConnectData(self, data):
-		self.dataCache += data
-		if self._sock:
-			if self.dataCache:
-				self.send(self.dataCache)
-				self.dataCache = ""
+		if self.proxyMode:
+			self.send(data)
 			return
 		if self.messageParse.appendData(data):
 			method = self.messageParse.method()
@@ -55,7 +48,8 @@ class realServerConnect(symmetryConnect):
 			
 			if method == "CONNECT":
 				path = "https://"+path
-				self.dataCache = ""
+				self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
+				self.proxyMode = True
 			addr,port = parserUrlAddrPort(path)
 			if addr.find("status.dddproxy.com")>0:
 				path = path.split("?")
@@ -63,8 +57,18 @@ class realServerConnect(symmetryConnect):
 			elif addr in ["127.0.0.1","localhost"]:
 				self.server.addCallback(self.onClose)
 			else:
-				self.connect((addr,port))
-
+				if method != "CONNECT":
+					url = urlparse.urlparse(path)
+					dataCache = "%s %s%s %s\r\n"%(method,url[2],("?"+url[3]) if url[3] else "",self.messageParse.httpVersion())
+					dataCache += self.messageParse.HeaderString()+"\r\n"
+					dataCache += self.messageParse.getBody()
+					self.send(dataCache)
+					
+					self.connectName =  "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()					
+					self.messageParse.clear()
+# 					print addr,port,dataCache
+				if self.connectStatus() == 0:
+					self.connect((addr,port))
 
 	
 class remoteServerHandler(symmetryConnectServerHandler):
