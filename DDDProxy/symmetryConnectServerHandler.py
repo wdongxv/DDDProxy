@@ -29,6 +29,9 @@ class symmetryConnect(sockConnect):
 		self._requestRemove = False
 		self.symmetryConnectManager = None
 		self.waitSymmetryPingResponse = False
+		
+		self._symmetryPingLenght = 0
+		
 #--------
 
 
@@ -37,9 +40,13 @@ class symmetryConnect(sockConnect):
 
 	def onRecv(self, data):
 		sockConnect.onRecv(self, data)
-		self.waitSymmetryPingResponse = True
 		self.sendDataToSymmetryConnect(data)
-		self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
+		
+		self._symmetryPingLenght += len(data)
+		if(self._symmetryPingLenght>1024*100):
+			self._symmetryPingLenght = 0
+			self.waitSymmetryPingResponse = True
+			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
 		
 	def onClose(self):
 		self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
