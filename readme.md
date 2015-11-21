@@ -1,5 +1,8 @@
-<h2>DDDProxy 2.1.0</h2>
-私有安全的代理软件，翻墙用的，用Python写的 - by dx.wang
+<h2>DDDProxy 3.0.0</h2>
+私有安全的代理软件
+
+
+3.0.0 更改了传输协议与2.x 远程服务不兼容
 
 E-Mail：wdongxv@gmail.com
 
@@ -18,13 +21,10 @@ E-Mail：wdongxv@gmail.com
 <pre>python remoteServer.py -a [passWord]</pre>
 本地服务器运行: 
 <pre>python localServer.py</pre>
-假装你也在ip为192.168.2.4搭建了local server，然后用你要翻墙的机器上用浏览器打开：
-<pre>http://192.168.2.4:8080/</pre>
+用浏览器打开：
+<pre>http://127.0.0.1:8080/</pre>
 这样你就会看到完整的帮助
 
 <h3>当然，做为新的开源项目，还有很多事要做的：</h3>
 *	pac文件还没有做缓存
 *	现在作者是用supervisor来做开机启动，当然也是需要傻瓜一键安装无烦恼自启动功能的
-
-
-
