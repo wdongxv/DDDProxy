@@ -82,7 +82,7 @@ class localToRemoteConnectManger():
 				connect = None
 				if index in connectList:
 					connect = connectList[index]
-					if not connect._sock:
+					if not connect.connectStatus():
 						connect = None
 				if not connect:
 					connect = remoteServerConnecter(self.server)
