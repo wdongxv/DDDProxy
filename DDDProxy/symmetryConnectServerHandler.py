@@ -158,8 +158,11 @@ class symmetryConnectServerHandler(sockConnect):
 	def _onRecvData(self,symmetryConnectId,data):
 # 		print "<_onRecvData ",symmetryConnectId," ----------\n",data,"\n------------->"
 		if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
-			serverMessage = json.loads(data)
-			self.onServerToServerMessage(serverMessage)
+			try:
+				serverMessage = json.loads(data)
+				self.onServerToServerMessage(serverMessage)
+			except:
+				pass
 		else:
 			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:

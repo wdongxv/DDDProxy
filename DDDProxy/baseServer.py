@@ -293,7 +293,7 @@ class baseServer():
 		log.log(1, "run in ", host, ":", port)
 		server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
-		
+		print "start server on: "+host+":"+str(port)
 		server.bind((host, port))
 		server.listen(1024)
 		self.addSockListen(server)
