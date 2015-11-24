@@ -28,7 +28,6 @@ class localConnectHandler(localSymmetryConnect):
 		self.preConnectRecvCache += data
 		if self.mode == "proxy":
 			if self.serverAuthPass and self.preConnectRecvCache:
-
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 					

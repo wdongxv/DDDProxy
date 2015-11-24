@@ -9,6 +9,7 @@ import struct
 from DDDProxy.baseServer import sockConnect, socketBufferMaxLenght
 import json
 import hashlib
+from DDDProxy import log
 
 
 
@@ -68,11 +69,20 @@ class symmetryConnect(sockConnect):
 	def sendOptToSymmetryConnect(self,opt):
 		if self._requestRemove:
 			return
-		self._symmetryConnectSendPendingCache.append(symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt))
+		optData = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt)
+		if type(optData) != str:
+			log.log(3,"data not is str")
+		self._symmetryConnectSendPendingCache.append(optData)
 	def sendDataToSymmetryConnect(self,data):
 		if self._requestRemove:
 			return
+		
+			
+		if type(data) != str:
+			log.log(3,"data not is str")
 		for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
+			if type(part) != str:
+				log.log(3,"part not is str")
 			self._symmetryConnectSendPendingCache.append(part)
 
 #--------------- for symmetryConnectServerHandler
