@@ -15,6 +15,7 @@ from DDDProxy.symmetryConnectServerHandler import symmetryConnectServerHandler,\
 	symmetryConnect
 import json
 import urlparse
+import re
 
 remoteAuth = ""
 
@@ -58,12 +59,15 @@ class realServerConnect(symmetryConnect):
 				self.server.addCallback(self.onClose)
 			else:
 				if method != "CONNECT":
-					url = urlparse.urlparse(path)
-					dataCache = "%s %s%s %s\r\n"%(method,url[2],("?"+url[4]) if url[4] else "",self.messageParse.httpVersion())
-					dataCache += self.messageParse.HeaderString()+"\r\n"
-					dataCache += self.messageParse.getBody()
-					self.send(dataCache)
-					
+					m = re.search("^(?:(?:http)://[^/]+)(.*)$", path)
+					if m:
+						dataCache = "%s %s%s %s\r\n"%(method,m.group(1),self.messageParse.httpVersion())
+						dataCache += self.messageParse.HeaderString()+"\r\n"
+						dataCache += self.messageParse.getBody()
+						self.send(dataCache)
+					else:
+						self.close()
+						
 					self.connectName =  "	<	" + self.filenoStr()+" "+self.messageParse.method()+" "+self.messageParse.path()					
 					self.messageParse.clear()
 # 					print addr,port,dataCache
