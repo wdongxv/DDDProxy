@@ -11,6 +11,7 @@ from localToRemoteConnectManger import localToRemoteConnectManger
 from mime import get_mime_type
 from settingConfig import settingConfig
 from socetMessageParser import httpMessageParser
+from DDDProxy.symmetryConnectServerHandler import symmetryConnect
 
 
 class localConnectHandler(localSymmetryConnect):
@@ -82,6 +83,9 @@ class localConnectHandler(localSymmetryConnect):
 		"""
 		self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.connectName
 		self.onRecv("");
+	def onClose(self):
+		self.sendOptToSymmetryConnect(symmetryConnect.optCloseForceSymmetryConnect)
+		localSymmetryConnect.onClose(self)
 		
 	def onSend(self, data):
 		if self.connectHost:
