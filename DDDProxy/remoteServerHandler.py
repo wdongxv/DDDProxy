@@ -61,7 +61,7 @@ class realServerConnect(symmetryConnect):
 				if method != "CONNECT":
 					m = re.search("^(?:(?:http)://[^/]+)(.*)$", path)
 					if m:
-						dataCache = "%s %s%s %s\r\n"%(method,m.group(1),self.messageParse.httpVersion())
+						dataCache = "%s %s %s\r\n"%(method,m.group(1),self.messageParse.httpVersion())
 						dataCache += self.messageParse.HeaderString()+"\r\n"
 						dataCache += self.messageParse.getBody()
 						self.send(dataCache)
