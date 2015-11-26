@@ -22,6 +22,9 @@ class symmetryConnect(sockConnect):
 
 	optSymmetryPing = -2
 	optSymmetryPingResponse = -3
+
+	optCloseForceSymmetryConnect = -4
+
 	
 	def __init__(self,server):
 		sockConnect.__init__(self, server)
@@ -60,11 +63,13 @@ class symmetryConnect(sockConnect):
 		pass
 	def onSymmetryConnectOpt(self,opt):
 		if opt == symmetryConnect.optCloseSymmetryConnect:
-			self.shutdown()
+			self.close()
 		elif opt == symmetryConnect.optSymmetryPing:
 			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPingResponse)
 		elif opt == symmetryConnect.optSymmetryPingResponse:
 			self.waitSymmetryPingResponse = False
+		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
+			self.shutdown()
 		
 	def sendOptToSymmetryConnect(self,opt):
 		if self._requestRemove:
@@ -178,7 +183,7 @@ class symmetryConnectServerHandler(sockConnect):
 			if connect:
 				connect.onSymmetryConnectData(data)
 			else:
-				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseSymmetryConnect)
+				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseForceSymmetryConnect)
 
 	def _onRecvOpt(self,symmetryConnectId,opt):
 # 		print "<_onRecvOpt ",symmetryConnectId," ------",opt,"--------->"
@@ -188,6 +193,8 @@ class symmetryConnectServerHandler(sockConnect):
 			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectOpt(opt)
+			else:
+				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseForceSymmetryConnect)
 	def getSymmetryConnect(self,symmetryConnectId):
 		return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
 		
