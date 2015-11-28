@@ -169,9 +169,9 @@ class sockConnect(object):
 # 			self._sock.shutdown()
 		except:
 			pass
-		self.server.removeSocketConnect(self)
-		self._sock = None
-		self.server.addCallback(self.onClose)
+		if self.server.removeSocketConnect(self):
+			self._sock = None
+			self.server.addCallback(self.onClose)
 		
 # 		self.close()
 # 	for server
@@ -337,8 +337,8 @@ class baseServer():
 		for k, v in self._socketConnectList.items():
 			if v == handler:
 				del self._socketConnectList[k]
-				break
-	
+				return True
+		return False
 
 	def start(self):
 		
