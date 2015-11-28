@@ -45,8 +45,8 @@ class sockConnect(object):
 		self.makeAlive()
 		self._sock = None
 		self.address = (None, None)
-		self._fileno = -1
-		
+		sockConnect._filenoLoop += 1
+		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
 
 		self._sendPendingCache = ""
@@ -133,10 +133,6 @@ class sockConnect(object):
 		"""
 		self._sock = sock
 		self.address = address
-		
-		sockConnect._filenoLoop += 1
-		self._fileno = sockConnect._filenoLoop
-		
 		self.server.addSockConnect(self)
 		self._connecting = False
 		self.onConnected()
