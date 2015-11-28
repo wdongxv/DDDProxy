@@ -83,9 +83,6 @@ class localConnectHandler(localSymmetryConnect):
 		"""
 		self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.connectName
 		self.onRecv("");
-	def onClose(self):
-		self.sendOptToSymmetryConnect(symmetryConnect.optCloseForceSymmetryConnect)
-		localSymmetryConnect.onClose(self)
 		
 	def onSend(self, data):
 		if self.connectHost:

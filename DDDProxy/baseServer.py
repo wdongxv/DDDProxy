@@ -45,8 +45,8 @@ class sockConnect(object):
 		self.makeAlive()
 		self._sock = None
 		self.address = (None, None)
-		sockConnect._filenoLoop += 1
-		self._fileno = sockConnect._filenoLoop
+		self._fileno = -1
+		
 		self.connectName = ""
 
 		self._sendPendingCache = ""
@@ -133,6 +133,10 @@ class sockConnect(object):
 		"""
 		self._sock = sock
 		self.address = address
+		
+		sockConnect._filenoLoop += 1
+		self._fileno = sockConnect._filenoLoop
+		
 		self.server.addSockConnect(self)
 		self._connecting = False
 		self.onConnected()
@@ -169,7 +173,6 @@ class sockConnect(object):
 # 			self._sock.shutdown()
 		except:
 			pass
-		log.log(2,self,"<<< close")
 		self.server.removeSocketConnect(self)
 		self._sock = None
 		self.server.addCallback(self.onClose)
@@ -202,6 +205,7 @@ class sockConnect(object):
 			self.info["recv"] += len(data)
 			self.onRecv(data)
 		else:
+			log.log(2,self,"<<< data is pool,close")
 			self.shutdown()
 	def _onReadySend(self):
 		data = self.getSendData(socketBufferMaxLenght)
@@ -213,6 +217,7 @@ class sockConnect(object):
 				return
 			except:
 				log.log(3)
+		log.log(2,self,"<<< request close")
 		self.shutdown()
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
@@ -221,6 +226,7 @@ class sockConnect(object):
 			self._onReadySend()
 		elif event == sockConnect.socketEventExcept:
 			self.shutdown()
+			log.log(2,self,"<<< socketEventExcept, close")
 
 		self.makeAlive()
 			

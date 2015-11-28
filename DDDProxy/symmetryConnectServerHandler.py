@@ -70,6 +70,7 @@ class symmetryConnect(sockConnect):
 			self.waitSymmetryPingResponse = False
 		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
 			self.shutdown()
+			log.log(2,self,"<<< optCloseForceSymmetryConnect, close")
 		
 	def sendOptToSymmetryConnect(self,opt):
 		if self._requestRemove:
@@ -107,14 +108,17 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectList = {}
 		self._socketMessageBuffer = ""
 		self.symmetryConnectIdLoop = 0
-
+		self.symmetryConnectCloseList = []
+	
 	def getSendPending(self):
 		if sockConnect.getSendPending(self) < socketBufferMaxLenght:
-			for k,v in self.symmetryConnectList.items():
+			for symmetryConnectId,v in self.symmetryConnectList.items():
 				if v.symmetryConnectSendPending():
 					self.send(v.getSymmetryConnectSendData())
 				elif v.requestRemove():
-					del self.symmetryConnectList[k]
+					self.sendOpt(symmetryConnectId, symmetryConnect.optCloseForceSymmetryConnect)
+					self.symmetryConnectCloseList.append(symmetryConnectId)
+					del self.symmetryConnectList[symmetryConnectId]
 					
 		return sockConnect.getSendPending(self)
 	def onSend(self, data):
@@ -182,8 +186,6 @@ class symmetryConnectServerHandler(sockConnect):
 			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectData(data)
-			else:
-				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseForceSymmetryConnect)
 
 	def _onRecvOpt(self,symmetryConnectId,opt):
 # 		print "<_onRecvOpt ",symmetryConnectId," ------",opt,"--------->"
@@ -193,11 +195,10 @@ class symmetryConnectServerHandler(sockConnect):
 			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectOpt(opt)
-			else:
-				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseForceSymmetryConnect)
 	def getSymmetryConnect(self,symmetryConnectId):
-		return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
-		
+		if not symmetryConnectId in self.symmetryConnectCloseList:
+			return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
+		return None
 # -----------
 	def sendOpt(self,symmetryConnectId,opt):
 		self.send(self.optChunk(symmetryConnectId, opt))
