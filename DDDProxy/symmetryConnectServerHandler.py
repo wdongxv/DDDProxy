@@ -70,6 +70,7 @@ class symmetryConnect(sockConnect):
 			self.waitSymmetryPingResponse = False
 		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
 			self.shutdown()
+			self.onClose()
 			log.log(2,self,"<<< optCloseForceSymmetryConnect, close")
 		
 	def sendOptToSymmetryConnect(self,opt):
@@ -108,7 +109,6 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectList = {}
 		self._socketMessageBuffer = ""
 		self.symmetryConnectIdLoop = 0
-		self.symmetryConnectCloseList = []
 	
 	def getSendPending(self):
 		if sockConnect.getSendPending(self) < socketBufferMaxLenght:
@@ -116,8 +116,6 @@ class symmetryConnectServerHandler(sockConnect):
 				if v.symmetryConnectSendPending():
 					self.send(v.getSymmetryConnectSendData())
 				elif v.requestRemove():
-					self.sendOpt(symmetryConnectId, symmetryConnect.optCloseForceSymmetryConnect)
-					self.symmetryConnectCloseList.append(symmetryConnectId)
 					del self.symmetryConnectList[symmetryConnectId]
 					
 		return sockConnect.getSendPending(self)
@@ -196,9 +194,7 @@ class symmetryConnectServerHandler(sockConnect):
 			if connect:
 				connect.onSymmetryConnectOpt(opt)
 	def getSymmetryConnect(self,symmetryConnectId):
-		if not symmetryConnectId in self.symmetryConnectCloseList:
-			return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
-		return None
+		return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
 # -----------
 	def sendOpt(self,symmetryConnectId,opt):
 		self.send(self.optChunk(symmetryConnectId, opt))
