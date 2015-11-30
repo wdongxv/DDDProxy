@@ -65,6 +65,8 @@ class localToRemoteConnectManger():
 		"""
 		self.remoteConnectListLoop += 1;
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
+		if remoteServerList == None:
+			return None
 		if self.remoteConnectListLoop >= len(remoteServerList)*maxConnectByOnServer:
 			self.remoteConnectListLoop = 0
 		i = 0
