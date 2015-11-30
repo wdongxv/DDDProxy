@@ -169,10 +169,9 @@ class sockConnect(object):
 # 			self._sock.shutdown()
 		except:
 			pass
-		log.log(2,self,"<<< close")
-		self.server.removeSocketConnect(self)
-		self._sock = None
-		self.server.addCallback(self.onClose)
+		if self.server.removeSocketConnect(self):
+			self._sock = None
+			self.server.addCallback(self.onClose)
 		
 # 		self.close()
 # 	for server
@@ -202,6 +201,7 @@ class sockConnect(object):
 			self.info["recv"] += len(data)
 			self.onRecv(data)
 		else:
+			log.log(2,self,"<<< data is pool,close")
 			self.shutdown()
 	def _onReadySend(self):
 		data = self.getSendData(socketBufferMaxLenght)
@@ -213,6 +213,7 @@ class sockConnect(object):
 				return
 			except:
 				log.log(3)
+		log.log(2,self,"<<< request close")
 		self.shutdown()
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
@@ -221,6 +222,7 @@ class sockConnect(object):
 			self._onReadySend()
 		elif event == sockConnect.socketEventExcept:
 			self.shutdown()
+			log.log(2,self,"<<< socketEventExcept, close")
 
 		self.makeAlive()
 			
@@ -335,8 +337,8 @@ class baseServer():
 		for k, v in self._socketConnectList.items():
 			if v == handler:
 				del self._socketConnectList[k]
-				break
-	
+				return True
+		return False
 
 	def start(self):
 		
