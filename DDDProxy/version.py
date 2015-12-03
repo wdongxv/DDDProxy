@@ -1,2 +1,2 @@
 
-version = "3.0.1_test"
+version = "3.0.1"
