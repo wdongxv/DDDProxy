@@ -6,8 +6,11 @@ Created on 2015年1月11日
 @author: dx.wang
 '''
 from optparse import OptionParser
-import os
 
+from DDDProxy import baseServer, version
+from DDDProxy.domainAnalysis import domainAnalysis
+from DDDProxy.localProxyServerHandler import localConnectHandler
+from DDDProxy import localToRemoteConnectManger
 
 if __name__ == "__main__":
 	
@@ -20,13 +23,7 @@ if __name__ == "__main__":
 	parser.add_option("-u", "--update",help="auto update on start" , default=True)
 	
 	startUpArgs = parser.parse_args()[0]
-	if startUpArgs.update:
-		os.system("git pull")
 
-	from DDDProxy import baseServer
-	from DDDProxy.domainAnalysis import domainAnalysis
-	from DDDProxy.localProxyServerHandler import localConnectHandler
-	from DDDProxy import localToRemoteConnectManger
 	
 	baseServer.debuglevel = int(startUpArgs.loglevel)
 	
@@ -37,7 +34,10 @@ if __name__ == "__main__":
 
 	domainAnalysis.startAnalysis(server)
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
-	
+		
+	if startUpArgs.update:
+		server.addDelay(10, version.update,server)
+		
 	server.addListen(port=int(startUpArgs.port))
 	server.start()
 	
