@@ -12,6 +12,7 @@ from mime import get_mime_type
 from settingConfig import settingConfig
 from socetMessageParser import httpMessageParser
 from DDDProxy.symmetryConnectServerHandler import symmetryConnect
+from DDDProxy import version
 
 
 class localConnectHandler(localSymmetryConnect):
@@ -109,6 +110,7 @@ class localConnectHandler(localSymmetryConnect):
 			elif(opt == "serverList"):
 				respons["pac"] = "http://" + self.httpMessageParse.getHeader("host") + "/pac"
 				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
+				respons["version"] = version.version
 			elif opt == "setServerList":
 				settingConfig.setting(settingConfig.remoteServerList, postJson["data"])
 				respons["status"] = "ok"

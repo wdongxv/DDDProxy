@@ -47,7 +47,7 @@
 		</div>
 		<div class="help" style="font-style: italic;">
 			<div>
-				- 版本：3.0.0<br />
+				- 版本：<span id="version"> - </span><br />
 				- 作者：dx.wang<br />
 				- E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a><br />
 				- 项目首页：<a href="https://github.com/wdongxv/DDDProxy">https://github.com/wdongxv/DDDProxy</a>
@@ -198,7 +198,7 @@
 				proxyapi("serverList", null, function(data) {
 
 					$(".pacAddr").text(data["pac"]).attr("href", data["pac"])
-
+					$("#version").text(data["version"])
 					var domainList = data["list"];
 					var html = "";
 					if (domainList) {
