@@ -379,7 +379,10 @@ class baseServer():
 			currentTime = time.time()
 			for cbobj in cblist:
 				if cbobj[1] <= currentTime:
-					cbobj[0](*cbobj[2], **cbobj[3])
+					try:
+						cbobj[0](*cbobj[2], **cbobj[3])
+					except:
+						log.log(3,cbobj)
 				else:
 					self.callbackList.append(cbobj)
 # 	for  sock event

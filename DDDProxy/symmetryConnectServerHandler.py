@@ -90,14 +90,15 @@ class symmetryConnectServerHandler(sockConnect):
 	def __init__(self, server, *args, **kwargs):
 		sockConnect.__init__(self, server, *args, **kwargs)
 		self.symmetryConnectList = {}
-		self._socketMessageBuffer = ""
+		self._symmetryConnectMessageBuffer = ""
 		self.symmetryConnectIdLoop = 0
 
 	def getSendPending(self):
 		if sockConnect.getSendPending(self) < socketBufferMaxLenght:
 			for k,v in self.symmetryConnectList.items():
 				if v.symmetryConnectSendPending():
-					self.send(v.getSymmetryConnectSendData())
+					data = v.getSymmetryConnectSendData()
+					self.send(data)
 				elif v.requestRemove():
 					del self.symmetryConnectList[k]
 					
@@ -135,22 +136,22 @@ class symmetryConnectServerHandler(sockConnect):
 	_headSize = struct.calcsize("ih")
 	def onRecv(self,data):
 		sockConnect.onRecv(self, data)
-		self._socketMessageBuffer += data
+		self._symmetryConnectMessageBuffer += data
 		while True:
-			bufferLen = len(self._socketMessageBuffer)
+			bufferLen = len(self._symmetryConnectMessageBuffer)
 			_headSize = symmetryConnectServerHandler._headSize
 			if bufferLen >= _headSize:
-				symmetryConnectId,dataSize = struct.unpack("ih",self._socketMessageBuffer[:_headSize])
+				symmetryConnectId,dataSize = struct.unpack("ih",self._symmetryConnectMessageBuffer[:_headSize])
 				if dataSize>=0:
 					endIndex = dataSize+_headSize
 					if bufferLen > endIndex:
-						dataMessage = self._socketMessageBuffer[_headSize:endIndex]
-						self._socketMessageBuffer = self._socketMessageBuffer[endIndex+1:]
+						dataMessage = self._symmetryConnectMessageBuffer[_headSize:endIndex]
+						self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[endIndex+1:]
 						self._onRecvData(symmetryConnectId, dataMessage)
 					else:
 						break
 				else:
-					self._socketMessageBuffer = self._socketMessageBuffer[_headSize+1:]
+					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[_headSize+1:]
 					self._onRecvOpt(symmetryConnectId, dataSize)
 			else:
 				break
