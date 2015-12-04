@@ -11,6 +11,8 @@ from localToRemoteConnectManger import localToRemoteConnectManger
 from mime import get_mime_type
 from settingConfig import settingConfig
 from socetMessageParser import httpMessageParser
+from DDDProxy.symmetryConnectServerHandler import symmetryConnect
+from DDDProxy import version
 
 
 class localConnectHandler(localSymmetryConnect):
@@ -28,7 +30,6 @@ class localConnectHandler(localSymmetryConnect):
 		self.preConnectRecvCache += data
 		if self.mode == "proxy":
 			if self.serverAuthPass and self.preConnectRecvCache:
-
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 					
@@ -83,6 +84,9 @@ class localConnectHandler(localSymmetryConnect):
 		"""
 		self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.connectName
 		self.onRecv("");
+	def onClose(self):
+		self.sendOptToSymmetryConnect(symmetryConnect.optCloseForceSymmetryConnect)
+		localSymmetryConnect.onClose(self)
 		
 	def onSend(self, data):
 		if self.connectHost:
@@ -106,6 +110,7 @@ class localConnectHandler(localSymmetryConnect):
 			elif(opt == "serverList"):
 				respons["pac"] = "http://" + self.httpMessageParse.getHeader("host") + "/pac"
 				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
+				respons["version"] = version.version
 			elif opt == "setServerList":
 				settingConfig.setting(settingConfig.remoteServerList, postJson["data"])
 				respons["status"] = "ok"

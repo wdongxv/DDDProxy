@@ -9,6 +9,7 @@ import struct
 from DDDProxy.baseServer import sockConnect, socketBufferMaxLenght
 import json
 import hashlib
+from DDDProxy import log
 
 
 
@@ -21,6 +22,9 @@ class symmetryConnect(sockConnect):
 
 	optSymmetryPing = -2
 	optSymmetryPingResponse = -3
+
+	optCloseForceSymmetryConnect = -4
+
 	
 	def __init__(self,server):
 		sockConnect.__init__(self, server)
@@ -59,20 +63,33 @@ class symmetryConnect(sockConnect):
 		pass
 	def onSymmetryConnectOpt(self,opt):
 		if opt == symmetryConnect.optCloseSymmetryConnect:
-			self.shutdown()
+			self.close()
 		elif opt == symmetryConnect.optSymmetryPing:
 			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPingResponse)
 		elif opt == symmetryConnect.optSymmetryPingResponse:
 			self.waitSymmetryPingResponse = False
+		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
+			self.shutdown()
+			self.onClose()
+			log.log(2,self,"<<< optCloseForceSymmetryConnect, close")
 		
 	def sendOptToSymmetryConnect(self,opt):
 		if self._requestRemove:
 			return
-		self._symmetryConnectSendPendingCache.append(symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt))
+		optData = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt)
+		if type(optData) != str:
+			log.log(3,"data not is str")
+		self._symmetryConnectSendPendingCache.append(optData)
 	def sendDataToSymmetryConnect(self,data):
 		if self._requestRemove:
 			return
+		
+			
+		if type(data) != str:
+			log.log(3,"data not is str")
 		for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
+			if type(part) != str:
+				log.log(3,"part not is str")
 			self._symmetryConnectSendPendingCache.append(part)
 
 #--------------- for symmetryConnectServerHandler
@@ -92,15 +109,15 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectList = {}
 		self._symmetryConnectMessageBuffer = ""
 		self.symmetryConnectIdLoop = 0
-
+	
 	def getSendPending(self):
 		if sockConnect.getSendPending(self) < socketBufferMaxLenght:
-			for k,v in self.symmetryConnectList.items():
+			for symmetryConnectId,v in self.symmetryConnectList.items():
 				if v.symmetryConnectSendPending():
 					data = v.getSymmetryConnectSendData()
 					self.send(data)
 				elif v.requestRemove():
-					del self.symmetryConnectList[k]
+					del self.symmetryConnectList[symmetryConnectId]
 					
 		return sockConnect.getSendPending(self)
 	def onSend(self, data):
@@ -168,8 +185,6 @@ class symmetryConnectServerHandler(sockConnect):
 			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectData(data)
-			else:
-				self.sendOpt(symmetryConnectId, symmetryConnect.optCloseSymmetryConnect)
 
 	def _onRecvOpt(self,symmetryConnectId,opt):
 # 		print "<_onRecvOpt ",symmetryConnectId," ------",opt,"--------->"
@@ -181,7 +196,6 @@ class symmetryConnectServerHandler(sockConnect):
 				connect.onSymmetryConnectOpt(opt)
 	def getSymmetryConnect(self,symmetryConnectId):
 		return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
-		
 # -----------
 	def sendOpt(self,symmetryConnectId,opt):
 		self.send(self.optChunk(symmetryConnectId, opt))

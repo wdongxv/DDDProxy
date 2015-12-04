@@ -12,7 +12,7 @@ import json
 from DDDProxy.symmetryConnectServerHandler import symmetryConnect
 
 maxConnectByOnServer = 2
-
+remoteConnectMaxTime = 0
 class localSymmetryConnect(symmetryConnect):
 	def __init__(self, server):
 		symmetryConnect.__init__(self, server)
@@ -65,6 +65,8 @@ class localToRemoteConnectManger():
 		"""
 		self.remoteConnectListLoop += 1;
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
+		if remoteServerList == None:
+			return None
 		if self.remoteConnectListLoop >= len(remoteServerList)*maxConnectByOnServer:
 			self.remoteConnectListLoop = 0
 		i = 0
@@ -82,7 +84,7 @@ class localToRemoteConnectManger():
 				connect = None
 				if index in connectList:
 					connect = connectList[index]
-					if not connect.connectStatus():
+					if not connect.connectStatus() or ( remoteConnectMaxTime > 600 and connect.info["startTime"] + remoteConnectMaxTime < time.time()):
 						connect = None
 				if not connect:
 					connect = remoteServerConnecter(self.server)
