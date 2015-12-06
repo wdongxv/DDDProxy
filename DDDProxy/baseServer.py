@@ -351,7 +351,7 @@ class baseServer():
 			for _,connect in self._socketConnectList.items():
 				allList.append(connect._sock)
 				if connect.info["lastAlive"] < currentTime - 3600:
-					connect.close()
+					connect.shutdown()
 					continue
 				if connect.pauseSendAndRecv():
 					continue
@@ -381,7 +381,10 @@ class baseServer():
 			currentTime = time.time()
 			for cbobj in cblist:
 				if cbobj[1] <= currentTime:
-					cbobj[0](*cbobj[2], **cbobj[3])
+					try:
+						cbobj[0](*cbobj[2], **cbobj[3])
+					except:
+						log.log(3,cbobj)
 				else:
 					self.callbackList.append(cbobj)
 # 	for  sock event
