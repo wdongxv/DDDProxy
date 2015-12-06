@@ -144,11 +144,8 @@ class localConnectHandler(localSymmetryConnect):
 			self.reseponse(respons,connection=self.httpMessageParse.connection())
 		elif path == "/pac":
 			content = self.getFileContent(dirname(__file__) + "/template/pac.js")
-			domainList = domainConfig.config.getDomainOpenedList()
-			domainListJs = ""
-			for domain in domainList:
-				domainListJs += "A(\"" + domain + "\")||"
-			content = content.replace("{{domainList}}", domainListJs)
+			content = content.replace("{{domainWhiteListJson}}", json.dumps(domainConfig.config.getDomainList(0)))
+			content = content.replace("{{domainListJson}}", json.dumps(domainConfig.config.getDomainList(0)))
 			content = content.replace("{{proxy_ddr}}", self.httpMessageParse.getHeader("host"))
 			self.reseponse(content,connection=self.httpMessageParse.connection())
 		else:

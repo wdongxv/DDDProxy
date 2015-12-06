@@ -22,13 +22,19 @@ class domainConfig(configFile):
 	def getConfigfileFilePath(self):
 		return configFile.makeConfigFilePathName("pacDomainConfig.json")
 
-	def getDomainOpenedList(self):
+	def getDomainList(self,opend=1):
+		"""
+		0 close
+		1 open 
+		2 all
+		"""
 		pacList = []
 		domainList = self.getDomainListWithAnalysis()
 		for domain in domainList:
-			if domain["open"]:
+			if opend==2 or domain["open"] == opend:
 				pacList.append(domain["domain"])
 		return pacList
+	
 	def getDomainListWithAnalysis(self):
 		data = [{"domain":key,"open":value["open"],"connectTimes":value["connectTimes"]} for (key,value) in self.setting.items()]
 		data.sort(cmp=lambda x,y : cmp(y["connectTimes"],x["connectTimes"]))
