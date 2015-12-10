@@ -79,7 +79,7 @@ function dumpdataParse(data) {
 
 		connectCount += remoteConnectList.length
 
-		html += "<div class='clientAddr'>" + i + " count("
+		html += "<div class='clientAddr'>" + allKey[i] + " count("
 				+ remoteConnectList.length + ")</div>"
 		html += "<div class='client'>";
 		html += clientConectHtml
