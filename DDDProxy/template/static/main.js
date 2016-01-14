@@ -57,9 +57,14 @@ function dumpdataParse(data) {
 		}
 		html += "</div>"
 	}
-
+	var allKey = []
 	for ( var i in connectList) {
-		var remoteConnectList = connectList[i];
+		allKey.push(i)
+	}
+	allKey.sort()
+	
+	for ( var i = 0;i<allKey.length;i++) {
+		var remoteConnectList = connectList[allKey[i]];
 		var clientConectHtml = ""
 		for (var j = 0; j < remoteConnectList.length; j++) {
 			var connect = remoteConnectList[j]
@@ -74,7 +79,7 @@ function dumpdataParse(data) {
 
 		connectCount += remoteConnectList.length
 
-		html += "<div class='clientAddr'>" + i + " count("
+		html += "<div class='clientAddr'>" + allKey[i] + " count("
 				+ remoteConnectList.length + ")</div>"
 		html += "<div class='client'>";
 		html += clientConectHtml
