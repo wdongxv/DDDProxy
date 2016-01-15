@@ -41,7 +41,10 @@
 			<div id="domainAnalysis"></div>
 			<div id="dataAnalysis" style="height: 200px;"></div>
 		</div>
-		<p style="">代理地址列表：</p>
+		<p style="">
+			代理地址列表<span id="backupBox" style="display: none"> <a id="backup" href="javascript:">备份</a> <a id="restore"
+				href="javascript:">恢复</a> <a id="replaceRestore" href="javascript:">恢复(覆盖)</a> </span> <span id="backupStatus"></span>：
+		</p>
 		<div id="proxyDomainList"></div>
 		<div style="display: block; margin: 12px 0;">
 			<input id="newUrl" style="width: 300px;" name="url"
@@ -76,6 +79,9 @@
 	<script src="/pac"></script>
 	<script src="/static/main.js"></script>
 	<script src="/static/admin.js"></script>
+	<script src="/static/backup.js"></script>
+	<script
+		src="https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback"></script>
 	<script type="text/javascript">
 		(function() {
 			function dnsDomainIs(a, b) {
@@ -158,6 +164,12 @@
 							var line = getInputLineData(lineDom)
 							if (!line)
 								return
+
+							
+
+														
+
+							
 
 							var status = $(lineDom).find(".status")
 							var linejs = JSON.stringify(line);

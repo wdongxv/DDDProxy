@@ -138,6 +138,13 @@ class localConnectHandler(localSymmetryConnect):
 																startTime=postJson["startTime"],
 																todayStartTime=postJson["todayStartTime"]
 																)
+			elif opt == "restore":
+				if postJson["clearAll"]:
+					domainConfig.config.setting = {}
+				domainList = postJson["domainList"]
+				for domain in domainList:
+					domainConfig.config.addDomain(domain[0],Open=domain[1])
+				respons["status"] = "ok"
 			elif opt == "addDomain":
 				url = postJson["url"]
 				host = parserUrlAddrPort(url)[0]
@@ -153,6 +160,7 @@ class localConnectHandler(localSymmetryConnect):
 			content = content.replace("{{domainListJson}}", json.dumps(domainConfig.config.getDomainList(1)))
 			content = content.replace("{{proxy_ddr}}", self.httpMessageParse.getHeader("host"))
 			self.reseponse(content,connection=self.httpMessageParse.connection())
+			
 		else:
 			if path == "/":
 				path = "/index.html"

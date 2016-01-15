@@ -57,10 +57,10 @@ class domainConfig(configFile):
 			self.save()
 			return True
 		return False
-	def addDomain(self,domain,formGwflist = False):
+	def addDomain(self,domain,formGwflist = False,Open=True):
 		if domain:
 			if not domain in self.setting:
-				self.setting[domain] = {"connectTimes":0,"open":True,"formGwflist":formGwflist,"createTime":time.time()}
+				self.setting[domain] = {"connectTimes":0,"open":Open,"formGwflist":formGwflist,"createTime":time.time()}
 				self.save()
 				return True
 			else:
@@ -71,7 +71,7 @@ class domainConfig(configFile):
 						self.save()
 						return True
 				else:
-					currentDomain["open"] = True
+					currentDomain["open"] = Open
 					self.save()
 					return True
 		return False

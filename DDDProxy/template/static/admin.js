@@ -120,13 +120,13 @@ $(document).ready(function(){
 				'<div class="content"><div class="times"><p>'+(times<1000?times:IntToDataCount(times,1000))+'</p></div>'+
 				'<div class="domain"><a class="domain_link" target="_blank" href="//'+ domain +'">'+domain+'</a></div></div>' +
 				'<div class="optbox">'+
-				'<a href="#" class="'+statusStr+'" >'+(status == 1 ? '⌧' : '⇄︎')+'</a>' +
-				'<a href="#" class="delete">del</a>' +
+				'<a href="javascript:" class="'+statusStr+'" >'+(status == 1 ? '⌧' : '⇄︎')+'</a>' +
+				'<a href="javascript:" class="delete">del</a>' +
 				'</div>'+
 				'</div>';
 		return f;
 	}
-	var refreshDomainList = function(){
+	window.refreshDomainList = function(){
 		proxyapi("domainList",null,function(data){
 			var html = "";
 			var domainList = data.domainList
@@ -143,6 +143,7 @@ $(document).ready(function(){
 			})
 		})
 	}
+	
 	refreshDomainList();
 	
 	$("#newUrlSubmit").click(function(){
