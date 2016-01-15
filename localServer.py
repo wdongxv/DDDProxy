@@ -35,8 +35,8 @@ if __name__ == "__main__":
 	domainAnalysis.startAnalysis(server)
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
 		
-	if startUpArgs.update:
-		server.addDelay(10, version.update,server)
+# 	if startUpArgs.update:
+# 		server.addDelay(10, version.update,server)
 		
 	server.addListen(port=int(startUpArgs.port))
 	server.start()

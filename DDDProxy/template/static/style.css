@@ -81,3 +81,122 @@ div.domainLine {
 		width: 95%;
 	}
 }
+
+
+
+<!--
+
+.line {
+	display: inline-block;
+	position: relative;
+	background: #00a0ff;
+	margin: 10px 20px 0 0;
+	padding: 1px;
+}
+
+.line[status="open"] {
+	background: #aaa;
+}
+
+.line .content {
+	height: 14px;
+}
+
+.line .optbox {
+	display: inline-block;
+	padding-top: 24px;
+	height: 0px;
+	width: 20px;
+	overflow: hidden;
+	position: absolute;
+	top: -5px;
+	right: -20px;
+	z-index: 0;
+	text-align: left;
+}
+
+[status="open"] .optbox,.line .optbox:HOVER {
+	height: 24px;
+	padding-top: 0px;
+}
+
+.optbox a {
+	height: 12px;
+	text-decoration: none;
+	display: block;
+	color: #888;
+}
+
+.optbox a.close {
+	
+}
+
+.optbox a:HOVER {
+	color: #f00;
+}
+
+.button,.domain,.times {
+	display: inline-block;
+	margin-left: 5px;
+}
+
+.times {
+	color: #fff;
+	padding-right: 3px;
+	font-size: 12px;
+	text-align: right;
+}
+
+.times p {
+	padding: 0 2px;
+	margin: 0px;
+	display: inline-block;
+}
+
+.domain {
+	font-size: 12px;
+	line-height: 14px;
+	text-align: left;
+	padding: 0 5px;
+	background: #fff;
+}
+
+.domain_link {
+	color: #111;
+	text-decoration: none;
+}
+
+.domain_link:HOVER {
+	text-decoration: underline;
+}
+
+.reusetDomainList {
+	display: inline-block;
+	margin: 5px 5px 0 0;
+	color: #fff;
+	padding: 1px;
+	background: #ccc;
+	cursor: pointer;
+}
+
+.reusetTimes {
+	display: inline-block;
+	padding: 0px 5px;
+}
+
+.reusetDomainList a {
+	display: inline-block;
+	padding: 0px 5px;
+	color: #000;
+	background: #fff;
+}
+
+.dataCount {
+	color: #000;
+	margin-top: 10px;
+}
+
+.dataCount span {
+	color: #aaa;
+}
+-->

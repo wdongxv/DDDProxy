@@ -1,47 +1,26 @@
 $(document).ready(function(){
-	function areaSetting(){
-		return {
-			animation:false,
-			fillColor : {
-				linearGradient : {
-					x1 : 0,
-					y1 : 0,
-					x2 : 0,
-					y2 : 1
-				},
-				stops : [[ 0, "#9DBFFF" ],
-						[1,Highcharts.Color("#9DBFFF").setOpacity(0).get('rgba')]]
-			},
-			lineWidth : 1,
-			lineColor : "#003066",
-			marker : {
-				enabled : false
-			},
-			shadow : false,
-			states : {
-				hover : {
-					lineWidth : 1
-				}
-			},
-			allowPointSelect : true,
-			threshold : null
-		};
-	}
-
 	var show = function(start,incoming,outgoing){
 		var obj = $("#dataAnalysis");
 		var chart = obj.highcharts();
 		var incomingSeriesData = {
 			pointInterval : 3600 * 1000,
 			pointStart : start,
-			name : 'incoming',
-			data : incoming
+			name : '↾',
+			data : incoming,
+			lineWidth: 1,
+			marker: {
+                radius: 2
+            }
 		};
 		var outgoingSeriesData = {
 				pointInterval : 3600 * 1000,
 				pointStart : start,
-				name : 'outgoing',
-				data : outgoing
+				name : '⇃',
+				data : outgoing,
+				lineWidth: 1,
+				marker: {
+                    radius: 2
+                }
 			};
 		
 		if (chart !== undefined) {
@@ -75,26 +54,31 @@ $(document).ready(function(){
 				text : "",
 			},
 			xAxis : {
+				tickWidth: 0,
 				type : 'datetime',
-				plotBands : plotBands
-			// gridLineWidth:1,
-			// gridLineColor:"#f0f0f0",
+				plotBands : plotBands,
+				 labels: {
+	                    align: 'left',
+	                    x: 3,
+	                    y: -3
+	                }
 			},
 			yAxis : {
 				title : {
 					enabled : false,
 				},
 				lineWidth : 1,
+                labels: {
+                    align: 'left',
+                    x: 3,
+                    y: 16,
+                },
 			},
 			tooltip:{
-				animation : false,
 				shared : true,
-				style : {
-					fontSize : '14px',
-				},
 				formatter:function(){
 					var d = new Date(this.x)
-					var tmp = d.toLocaleDateString()+" "+d.getHours()+"点"+d.getMinutes()+"分<br/>";
+					var tmp = ""+(d.getMonth()+1) +"月"+ d.getDay()+"日 "+d.getHours()+"点<br/>";
 					for ( var i in this.points) {
 						var point = this.points[i];
 						tmp += point.series.name+":"+IntToDataCount(point.y)+"<br/>"
@@ -106,11 +90,20 @@ $(document).ready(function(){
 				enabled : false
 			},
 			plotOptions : {
-				area : areaSetting()
+				area : {
+		            marker: {
+		                enabled: false,
+		                symbol: 'circle',
+		                radius: 2,
+		                states: {
+		                    hover: {
+		                        enabled: true
+		                    }
+		                }
+		            }}
 			},
 			chart : {
-				backgroundColor : "",
-				type: 'spline'
+				type: 'areaspline'
 			},
 			credits : {
 				enabled : false
@@ -119,7 +112,7 @@ $(document).ready(function(){
 		});
 	}
 	
-	/***************************/
+	/** ************************ */
 
 	function echoName(domain,  status, times,index) {
 		var statusStr = (status == 1 ? 'close' : 'open')
@@ -166,7 +159,9 @@ $(document).ready(function(){
 		});
 	})
 	
-	/***************************/
+	
+	
+	/** ************************ */
 	
 	
 	var analysisDomain = null;

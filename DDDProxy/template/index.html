@@ -3,16 +3,13 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>DDDProxy</title>
-<link rel="stylesheet" href="/static/style.css" type="text/css" media="all">
+<link rel="stylesheet" href="/static/style.css" type="text/css"
+	media="all">
 </head>
 <body>
 	<div id="mainContent">
 		<div>
 			<h1>DDDProxy 安全代理服务</h1>
-			<p>
-				<a href="/admin.html">哪些地址需要翻墙？[管理网址]</a>
-			</p>
-
 		</div>
 		<div class="help">
 			<h3>远程服务地址设置:</h3>
@@ -38,6 +35,25 @@
 					class="pacAddr"></span> ”
 			</div>
 		</div>
+
+		<div class="help"
+			style="text-align: center; padding-top: 10px; margin-top: 100px;">
+			<div id="domainAnalysis"></div>
+			<div id="dataAnalysis" style="height: 200px;"></div>
+		</div>
+		<p style="">代理地址列表：</p>
+		<div id="proxyDomainList"></div>
+		<div style="display: block; margin: 12px 0;">
+			<input id="newUrl" style="width: 300px;" name="url"
+				placeholder="https://www.google.com/" /> <input id="newUrlSubmit"
+				value="添加" type="submit" />
+			<p id="newUrlInfo"></p>
+		</div>
+		<p style="color: #888; font-style: italic;">
+			在网址管理页面添加网站后：chrome请地址栏输入 <a href="chrome://net-internals/#proxy"
+				style="color: #888;">chrome://net-internals/#proxy</a> ，然后点击
+			re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
+		</p>
 		<div class="help">
 			<div>
 				<p>
@@ -48,17 +64,18 @@
 		</div>
 		<div class="help" style="font-style: italic;">
 			<div>
-				- 版本：<span id="version"> - </span><br />
-				- 作者：dx.wang<br />
-				- E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a><br />
+				- 版本：<span id="version"> - </span><br /> - 作者：dx.wang<br /> -
+				E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a><br />
 				- 项目首页：<a href="https://github.com/wdongxv/DDDProxy">https://github.com/wdongxv/DDDProxy</a>
 			</div>
 		</div>
 	</div>
-	<script src="/static/main.js"></script>
 	<script src="/static/jquery.min.js"></script>
+	<script src="/static/highcharts.js"></script>
 	<script src="/static/URI.js"></script>
 	<script src="/pac"></script>
+	<script src="/static/main.js"></script>
+	<script src="/static/admin.js"></script>
 	<script type="text/javascript">
 		(function() {
 			function dnsDomainIs(a, b) {
@@ -147,8 +164,8 @@
 							if (linejs != status.attr("linejs")) {
 								status.text("testting")
 								status.attr("linejs", linejs)
-								getRemoteStatus(line.host,line.port,function(data) {
-									status.html(data?"<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>":"")
+								getRemoteStatus(line.host, line.port, function(data) {
+									status.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>" : "")
 								})
 							}
 						})(domainLineList[i]);
@@ -183,8 +200,7 @@
 						(errorLine.length > 0) ? d.hide() : d.show()
 					}
 				}
-				(errorLine.length > 0) ? saveServerButton.hide()
-						: saveServerButton.show()
+				(errorLine.length > 0) ? saveServerButton.hide() : saveServerButton.show()
 				if (!newLine.length && !errorLine.length) {
 					serverList.append(makeDomainHtml("", "", ""))
 					bindInputKey();
@@ -192,8 +208,7 @@
 				connectCheck();
 			}
 			function bindInputKey() {
-				var inputList = serverList
-						.find("[name='host'],[name='auth'],[name='port']");
+				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
 				inputList.keyup(domainListChangedHandler)
 			}
 			function getServerList() {
@@ -206,8 +221,7 @@
 					if (domainList) {
 						for (var i = 0; i < domainList.length; i++) {
 							var domain = domainList[i]
-							html += makeDomainHtml(domain.host, domain.port,
-									domain.auth);
+							html += makeDomainHtml(domain.host, domain.port, domain.auth);
 						}
 					}
 					html += makeDomainHtml("", "", "");
@@ -219,7 +233,7 @@
 			$(document).ready(function() {
 				var status = $("#status");
 				var getStatus = function() {
-					proxyapi("status",null,function(data) {
+					proxyapi("status", null, function(data) {
 						var parser = dumpdataParse(data)
 						status.text("count(" + parser[1] + ")");
 						$("#connectList").html(parser[0]);
