@@ -97,8 +97,6 @@
 	<script src="/static/main.js"></script>
 	<script src="/static/admin.js"></script>
 	<script src="/static/backup.js"></script>
-	<script
-		src="https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback"></script>
 	<script type="text/javascript">
 		(function() {
 
@@ -280,6 +278,9 @@
 					}, 100)
 
 				})
+				var s = document.createElement("script")
+				s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
+				document.body.appendChild(s)
 			});
 		})();
 	</script>
