@@ -42,30 +42,47 @@
 			<div id="dataAnalysis" style="height: 200px;"></div>
 		</div>
 		<p style="">
-			代理地址列表<span id="backupBox" style="display: none"> <a id="backup" href="javascript:">备份</a> <a id="restore"
-				href="javascript:">恢复</a> <a id="replaceRestore" href="javascript:">恢复(覆盖)</a> </span> <span id="backupStatus"></span>：
+			代理地址列表<span id="backupBox" style="display: none"> {<a
+				id="replaceRestore" href="javascript:">抹掉并恢复</a><a class='helplink'
+				href="#help5">?</a> <a id="restore" href="javascript:">从备份合并恢复</a><a
+				class='helplink' href="#help4">?</a> <a id="backup"
+				href="javascript:">备份至Google Drive</a><a class='helplink'
+				href="#help3">?</a>}<a class='helplink' href="#help2">无法登陆Google?</a></span>
+			<span id="backupStatus"> </span>：
 		</p>
-		<div id="proxyDomainList"></div>
-		<div style="display: block; margin: 12px 0;">
-			<input id="newUrl" style="width: 300px;" name="url"
-				placeholder="https://www.google.com/" /> <input id="newUrlSubmit"
-				value="添加" type="submit" />
+		<p style="color: #888; font-style: italic;"></p>
+		<div id="proxyDomainList" style="text-align: center;"></div>
+		<div style="display: block; margin: 12px 0; text-align: center;">
+			<input id="newUrl" style="width: 320px;" name="url"
+				placeholder="https://www.apple.com/  || iosapps.itunes.apple.com" />
+			<input id="newUrlSubmit" value="添加" type="submit" /><a
+				class='helplink' href="#help1">?</a>
 			<p id="newUrlInfo"></p>
 		</div>
-		<p style="color: #888; font-style: italic;">
-			在网址管理页面添加网站后：chrome请地址栏输入 <a href="chrome://net-internals/#proxy"
-				style="color: #888;">chrome://net-internals/#proxy</a> ，然后点击
-			re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
-		</p>
+
 		<div class="help">
 			<div>
 				<p>
-					> 连接池：<span id="status">loading...</span>
+					> 当前连接池<span id="status">loading...</span>：
 				</p>
 				<div id="connectList"></div>
 			</div>
 		</div>
-		<div class="help" style="font-style: italic;">
+		<div class="help" style="color: #888; font-style: italic;">
+			<p>
+				<span id="help1">1.</span> 在网址管理页面添加网站后：chrome请地址栏输入 <a
+					href="chrome://net-internals/#proxy" style="color: #888;">chrome://net-internals/#proxy</a>
+				，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成<br />
+				<br /> <span id="help2">2.</span> 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br />
+				如果代理服务搭建在本机，那么请访问 http://127.0.0.1:8080 或 http://localhost:8080 来备份。<br />
+				如果不在本机，那么请在本机hosts文件加入<span>代理服务ip dddproxy</span>,例如：<span>192.168.1.2
+					dddproxy</span>,然后访问 http://dddproxy:8080 来备份<br /> <br /> <span
+					id="help3">3.</span>备份至Google Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件<br />
+				<br /> <span id="help4">4.</span>从备份合并恢复是指，从 Google Drive
+				拉取的备份合并到本地代理地址列表,但优先使用备份的开关设置<br /> <br /> <span id="help5">5.</span>抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份<br />
+				<br /> <span id="help6">6.</span>代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
+				Store下载应用时不占用带宽
+			</p>
 			<div>
 				- 版本：<span id="version"> - </span><br /> - 作者：dx.wang<br /> -
 				E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a><br />
@@ -84,6 +101,7 @@
 		src="https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback"></script>
 	<script type="text/javascript">
 		(function() {
+
 			function dnsDomainIs(a, b) {
 				a = "." + a;
 				var search = a.search(b);
@@ -161,16 +179,10 @@
 					var domainLineList = serverList.find(".domainLine")
 					for (var i = 0; i < domainLineList.length; i++) {
 						(function(lineDom) {
-							var line = getInputLineData(lineDom)
-							if (!line)
-								return
-
-							
-
-														
-
-							
-
+							var line = getInputLineData(lineDom);
+							if (!line) {
+								return;
+							}
 							var status = $(lineDom).find(".status")
 							var linejs = JSON.stringify(line);
 							if (linejs != status.attr("linejs")) {
@@ -254,6 +266,20 @@
 				setInterval(getStatus, 2000)
 				getStatus();
 				getServerList();
+
+				$(".helplink").click(function() {
+					var help = $($(this).attr("href"))
+
+					var index = 0
+					var timer = setInterval(function() {
+						help.css("background", index % 2 == 0 ? "#f00" : "none");
+						index++
+						if (index > 9) {
+							clearInterval(timer)
+						}
+					}, 100)
+
+				})
 			});
 		})();
 	</script>

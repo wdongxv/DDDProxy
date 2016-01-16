@@ -162,7 +162,6 @@
 		})
 
 	})
-
 	window.onGoogleClientLoadCallback = function() {
 		$("#backupBox").show()
 		gapi.client.setApiKey("AIzaSyC1aZR9-6Dhm0jszLOWWU1ZdZH53zfQF9A");

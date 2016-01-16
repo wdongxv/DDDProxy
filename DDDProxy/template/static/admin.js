@@ -179,16 +179,16 @@ $(document).ready(function(){
 			
 			var html = "";
 			html += '<div class="dataCount"><span>24小时数据流量:</span>'+IntToDataCount(analysisData.countData)+'</div>';
-			var list = analysisData.domainDataList;
-			
-			for(var i = 0; i < list.length;i++){
-				var domain = list[i];
-				html += '<div class="reusetDomainList">'+
-					'<span class="reusetTimes">'+IntToDataCount(domain.dataCount)+'</span>'+
-					'<a>'+domain.domain+'</a>'+
-					'</div>';
-			}
-			html += '<div class="reusetDomainList" id="showall">显示全部</div>';
+//			var list = analysisData.domainDataList;
+//			
+//			for(var i = 0; i < list.length;i++){
+//				var domain = list[i];
+//				html += '<div class="reusetDomainList">'+
+//					'<span class="reusetTimes">'+IntToDataCount(domain.dataCount)+'</span>'+
+//					'<a>'+domain.domain+'</a>'+
+//					'</div>';
+//			}
+//			html += '<div class="reusetDomainList" id="showall">显示全部</div>';
 			
 			$("#domainAnalysis").html(html);
 			function showallbutton(){

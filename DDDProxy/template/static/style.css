@@ -2,7 +2,17 @@ body {
 	font-size: 12px;
 	font-family: monospace;
 }
-
+body a{
+	color: #22a;
+	text-decoration: none;
+}
+body a:HOVER{
+	text-decoration: underline;
+}
+body a.helplink{
+	margin: 0 2px;
+	color: #5aa;
+}
 .info_block {
 	display: inline-block;
 	vertical-align: top;
