@@ -18,9 +18,9 @@ body a.helplink{
 	vertical-align: top;
 }
 
-.help {
+.part {
 	color: #333;
-	margin-top: 50px;
+	margin-top: 20px;
 	line-height: 20px;
 	font-size: 13px;
 }
@@ -201,12 +201,4 @@ div.domainLine {
 	background: #fff;
 }
 
-.dataCount {
-	color: #000;
-	margin-top: 10px;
-}
-
-.dataCount span {
-	color: #aaa;
-}
 -->

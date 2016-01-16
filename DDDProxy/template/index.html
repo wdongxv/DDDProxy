@@ -11,82 +11,92 @@
 		<div>
 			<h1>DDDProxy 安全代理服务</h1>
 		</div>
-		<div class="help">
+		<div class="part">
+			<h3>
+				自动代理地址：<a href="" class="pacAddr"></a><a class='helplink'
+					href="#setttingHelp">?</a>
+			</h3>
+		</div>
+
+		<div class="part" style="">
+			<h3 style="display: inline-block; margin-right: 10px;"
+				id="domainAnalysisTitle"></h3>
+			<a id="domainAnalysisShow" href="javascript:"></a>
+			<div id="domainAnalysis"></div>
+			<div id="dataAnalysis" style="height: 200px;"></div>
+		</div>
+		<div class="part">
 			<h3>远程服务地址设置:</h3>
 			<div id="serverList"></div>
 			<button id="saveServerButton">保存</button>
 		</div>
-		<div class="help">
-			<div class="part">
-				自动代理地址：<a href="" class="pacAddr"></a><a class='helplink' href="#setttingHelp">?</a>
-			</div>
-		</div>
 
-		<div class="help"
-			style="text-align: center; padding-top: 10px; margin-top: 100px;">
-			<div id="domainAnalysis"></div>
-			<div id="dataAnalysis" style="height: 200px;"></div>
-		</div>
-		<p style="">
-			代理地址列表<span id="backupBox" style="display: none"> {<a
-				id="replaceRestore" href="javascript:">抹掉并恢复</a><a class='helplink'
-				href="#help5">?</a> <a id="restore" href="javascript:">从备份合并恢复</a><a
-				class='helplink' href="#help4">?</a> <a id="backup"
-				href="javascript:">备份至Google Drive</a><a class='helplink'
-				href="#help3">?</a>}<a class='helplink' href="#help2">无法登陆Google?</a></span>
-			<span id="backupStatus"> </span>：
-		</p>
-		<p style="color: #888; font-style: italic;"></p>
-		<div id="proxyDomainList" style="text-align: center;"></div>
-		<div style="display: block; margin: 12px 0; text-align: center;">
+		<div style="display: block; margin: 12px 0;">
+			<h3 style="display: inline-block;">代理地址列表：</h3>
 			<input id="newUrl" style="width: 320px;" name="url"
 				placeholder="https://www.apple.com/  || iosapps.itunes.apple.com" />
 			<input id="newUrlSubmit" value="添加" type="submit" /><a
 				class='helplink' href="#help1">?</a>
 			<p id="newUrlInfo"></p>
 		</div>
-
-		<div class="help">
-			<div>
-				<p>
-					> 当前连接池<span id="status">loading...</span>：
-				</p>
-				<div id="connectList"></div>
-			</div>
+		<p style="color: #888; font-style: italic;"></p>
+		<div id="proxyDomainList" style="text-align: center;"></div>
+		<div id="backupBox" class="part"
+			style="display: none; text-align: center;">
+			<a id="replaceRestore" href="javascript:">抹掉并恢复</a><a
+				class='helplink' href="#help5">?</a> <a id="restore"
+				href="javascript:">从备份合并恢复</a><a class='helplink' href="#help4">?</a>
+			<a id="backup" href="javascript:">备份至Google Drive</a><a
+				class='helplink' href="#help3">?</a> <a class='helplink'
+				href="#help2">无法登陆Google?</a></span> <span id="backupStatus"> </span>
 		</div>
-		<div class="help" style="color: #888; font-style: italic;">
+		<div class="part">
 			<div id="setttingHelp">
-			<div>
-				> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
-				<span class="pacAddr"></span> ”
+				<h3>设置方法</h3>
+				<div>
+					> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
+					<span class="pacAddr"></span> ”
+				</div>
+				<div>
+					> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
+						style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span
+						class="pacAddr"></span> ”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
+				</div>
+				<div>
+					> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
+					选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“ <span
+						class="pacAddr"></span> ”
+				</div>
 			</div>
-			<div>
-				> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
-					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span
-					class="pacAddr"></span> ”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
+			<h3>其他帮助</h3>
+			<div class="part" id="help1">
+				1. 在网址管理页面添加网站后：chrome请地址栏输入 <a href="chrome://net-internals/#proxy"
+					style="color: #888;">chrome://net-internals/#proxy</a> ，然后点击
+				re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
 			</div>
-			<div>
-				> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
-				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“ <span
-					class="pacAddr"></span> ”
-			</div>
-			</div>
-			<p>
-				<div class="helpItem" id="help1">1. 在网址管理页面添加网站后：chrome请地址栏输入 <a
-					href="chrome://net-internals/#proxy" style="color: #888;">chrome://net-internals/#proxy</a>
-				，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成</div>
-				<div class="helpItem" id="help2">2. 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br />
-				如果代理服务搭建在本机，那么请访问 http://127.0.0.1:8080 或 http://localhost:8080 来备份。<br />
+			<div class="part" id="help2">
+				2. 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br /> 如果代理服务搭建在本机，那么请访问
+				http://127.0.0.1:8080 或 http://localhost:8080 来备份。<br />
 				如果不在本机，那么请在本机hosts文件加入<span>代理服务ip dddproxy</span>,例如：<span>192.168.1.2
-					dddproxy</span>,然后访问 http://dddproxy:8080 来备份</div> 
-				<div class="helpItem" id="help3">3. 备份至Google Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件</div>
-				<div class="helpItem" id="help4">4. 从备份合并恢复是指，从 Google Drive
+					dddproxy</span>,然后访问 http://dddproxy:8080 来备份
+			</div>
+			<div class="part" id="help3">3. 备份至Google
+				Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件</div>
+			<div class="part" id="help4">4. 从备份合并恢复是指，从 Google Drive
 				拉取的备份合并到本地代理地址列表,但优先使用备份的开关设置</div>
-				<div class="helpItem" id="help5">5. 抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份</div>
-				<div class="helpItem" id="help6">6. 代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
+			<div class="part" id="help5">5. 抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份</div>
+			<div class="part" id="help6">6.
+				代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
 				Store下载应用时不占用带宽</div>
-			</p>
-			<div>
+		</div>
+		<div class="part">
+			<h3>
+				当前连接池<span id="status">loading...</span>
+			</h3>
+			<div id="connectList"></div>
+		</div>
+		<div>
+			<div class="part">
 				- 版本：<span id="version"> - </span><br /> - 作者：dx.wang<br /> -
 				E-Mail：<a href="mailto:wdongxv@gmail.com">wdongxv@gmail.com</a><br />
 				- 项目首页：<a href="https://github.com/wdongxv/DDDProxy">https://github.com/wdongxv/DDDProxy</a>
@@ -169,8 +179,10 @@
 				}, function(data) {
 					saveServerButton.removeClass("saving")
 					saveServerButton.text("保存");
-					if (data.status == "ok")
+					if (data.status == "ok") {
 						saveServerButton.hide();
+						connectCheck();
+					}
 				});
 			})
 
@@ -189,9 +201,14 @@
 							if (linejs != status.attr("linejs")) {
 								status.text("testting")
 								status.attr("linejs", linejs)
-								getRemoteStatus(line.host, line.port, function(data) {
-									status.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>" : "")
-								})
+								getRemoteStatus(
+										line.host,
+										line.port,
+										function(data) {
+											status
+													.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>"
+															: "")
+										})
 							}
 						})(domainLineList[i]);
 					}
@@ -225,15 +242,16 @@
 						(errorLine.length > 0) ? d.hide() : d.show()
 					}
 				}
-				(errorLine.length > 0) ? saveServerButton.hide() : saveServerButton.show()
+				(errorLine.length > 0) ? saveServerButton.hide()
+						: saveServerButton.show()
 				if (!newLine.length && !errorLine.length) {
 					serverList.append(makeDomainHtml("", "", ""))
 					bindInputKey();
 				}
-				connectCheck();
 			}
 			function bindInputKey() {
-				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
+				var inputList = serverList
+						.find("[name='host'],[name='auth'],[name='port']");
 				inputList.keyup(domainListChangedHandler)
 			}
 			function getServerList() {
@@ -246,7 +264,8 @@
 					if (domainList) {
 						for (var i = 0; i < domainList.length; i++) {
 							var domain = domainList[i]
-							html += makeDomainHtml(domain.host, domain.port, domain.auth);
+							html += makeDomainHtml(domain.host, domain.port,
+									domain.auth);
 						}
 					}
 					html += makeDomainHtml("", "", "");
@@ -255,36 +274,46 @@
 					connectCheck()
 				})
 			}
-			$(document).ready(function() {
-				var status = $("#status");
-				var getStatus = function() {
-					proxyapi("status", null, function(data) {
-						var parser = dumpdataParse(data)
-						status.text("count(" + parser[1] + ")");
-						$("#connectList").html(parser[0]);
-					})
-				}
-				setInterval(getStatus, 2000)
-				getStatus();
-				getServerList();
+			$(document)
+					.ready(
+							function() {
+								var status = $("#status");
+								var getStatus = function() {
+									proxyapi(
+											"status",
+											null,
+											function(data) {
+												var parser = dumpdataParse(data)
+												status.text("count("
+														+ parser[1] + ")");
+												$("#connectList").html(
+														parser[0]);
+											})
+								}
+								setInterval(getStatus, 2000)
+								getStatus();
+								getServerList();
 
-				$(".helplink").click(function() {
-					var help = $($(this).attr("href"))
+								$(".helplink").click(
+										function() {
+											var help = $($(this).attr("href"))
 
-					var index = 0
-					var timer = setInterval(function() {
-						help.css("background", index % 2 == 0 ? "#f00" : "none");
-						index++
-						if (index > 9) {
-							clearInterval(timer)
-						}
-					}, 100)
+											var index = 0
+											var timer = setInterval(function() {
+												help.css("background",
+														index % 3 > 0 ? "#aaa"
+																: "none");
+												index++
+												if (index > 6) {
+													clearInterval(timer)
+												}
+											}, 100)
 
-				})
-				var s = document.createElement("script")
-				s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
-				document.body.appendChild(s)
-			});
+										})
+								var s = document.createElement("script")
+								s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
+								document.body.appendChild(s)
+							});
 		})();
 	</script>
 </body>
