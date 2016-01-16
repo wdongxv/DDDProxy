@@ -18,21 +18,7 @@
 		</div>
 		<div class="help">
 			<div class="part">
-				自动代理地址：<a href="" class="pacAddr"></a>
-			</div>
-			<div>
-				> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
-				<span class="pacAddr"></span> ”
-			</div>
-			<div>
-				> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
-					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span
-					class="pacAddr"></span> ”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
-			</div>
-			<div>
-				> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
-				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“ <span
-					class="pacAddr"></span> ”
+				自动代理地址：<a href="" class="pacAddr"></a><a class='helplink' href="#setttingHelp">?</a>
 			</div>
 		</div>
 
@@ -69,19 +55,36 @@
 			</div>
 		</div>
 		<div class="help" style="color: #888; font-style: italic;">
+			<div id="setttingHelp">
+			<div>
+				> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
+				<span class="pacAddr"></span> ”
+			</div>
+			<div>
+				> iPhone设置方法<br />在“设置”时找到“Wi-Fi”，点击当前连接的网络后面的<span
+					style="color: #0077ff">ⓘ</span>，找到http代理，选择自动，URL填入“ <span
+					class="pacAddr"></span> ”。 <br /> <i>注意：在连接不同的无线网络时，都需要为当前无线重新填写。</i>
+			</div>
+			<div>
+				> windows设置方法<br /> 打开IE，在菜单找到并打开“Internet
+				选项”，切换至“连接”标签后，点击“局域网设置(L)”，在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入“ <span
+					class="pacAddr"></span> ”
+			</div>
+			</div>
 			<p>
-				<span id="help1">1.</span> 在网址管理页面添加网站后：chrome请地址栏输入 <a
+				<div class="helpItem" id="help1">1. 在网址管理页面添加网站后：chrome请地址栏输入 <a
 					href="chrome://net-internals/#proxy" style="color: #888;">chrome://net-internals/#proxy</a>
-				，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成<br />
-				<br /> <span id="help2">2.</span> 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br />
+				，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成</div>
+				<div class="helpItem" id="help2">2. 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br />
 				如果代理服务搭建在本机，那么请访问 http://127.0.0.1:8080 或 http://localhost:8080 来备份。<br />
 				如果不在本机，那么请在本机hosts文件加入<span>代理服务ip dddproxy</span>,例如：<span>192.168.1.2
-					dddproxy</span>,然后访问 http://dddproxy:8080 来备份<br /> <br /> <span
-					id="help3">3.</span>备份至Google Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件<br />
-				<br /> <span id="help4">4.</span>从备份合并恢复是指，从 Google Drive
-				拉取的备份合并到本地代理地址列表,但优先使用备份的开关设置<br /> <br /> <span id="help5">5.</span>抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份<br />
-				<br /> <span id="help6">6.</span>代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
-				Store下载应用时不占用带宽
+					dddproxy</span>,然后访问 http://dddproxy:8080 来备份</div> 
+				<div class="helpItem" id="help3">3. 备份至Google Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件</div>
+				<div class="helpItem" id="help4">4. 从备份合并恢复是指，从 Google Drive
+				拉取的备份合并到本地代理地址列表,但优先使用备份的开关设置</div>
+				<div class="helpItem" id="help5">5. 抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份</div>
+				<div class="helpItem" id="help6">6. 代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
+				Store下载应用时不占用带宽</div>
 			</p>
 			<div>
 				- 版本：<span id="version"> - </span><br /> - 作者：dx.wang<br /> -
