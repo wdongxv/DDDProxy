@@ -201,14 +201,9 @@
 							if (linejs != status.attr("linejs")) {
 								status.text("testting")
 								status.attr("linejs", linejs)
-								getRemoteStatus(
-										line.host,
-										line.port,
-										function(data) {
-											status
-													.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>"
-															: "")
-										})
+								getRemoteStatus(line.host, line.port, function(data) {
+									status.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>" : "")
+								})
 							}
 						})(domainLineList[i]);
 					}
@@ -242,16 +237,14 @@
 						(errorLine.length > 0) ? d.hide() : d.show()
 					}
 				}
-				(errorLine.length > 0) ? saveServerButton.hide()
-						: saveServerButton.show()
+				(errorLine.length > 0) ? saveServerButton.hide() : saveServerButton.show()
 				if (!newLine.length && !errorLine.length) {
 					serverList.append(makeDomainHtml("", "", ""))
 					bindInputKey();
 				}
 			}
 			function bindInputKey() {
-				var inputList = serverList
-						.find("[name='host'],[name='auth'],[name='port']");
+				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
 				inputList.keyup(domainListChangedHandler)
 			}
 			function getServerList() {
@@ -264,8 +257,7 @@
 					if (domainList) {
 						for (var i = 0; i < domainList.length; i++) {
 							var domain = domainList[i]
-							html += makeDomainHtml(domain.host, domain.port,
-									domain.auth);
+							html += makeDomainHtml(domain.host, domain.port, domain.auth);
 						}
 					}
 					html += makeDomainHtml("", "", "");
@@ -274,46 +266,38 @@
 					connectCheck()
 				})
 			}
-			$(document)
-					.ready(
-							function() {
-								var status = $("#status");
-								var getStatus = function() {
-									proxyapi(
-											"status",
-											null,
-											function(data) {
-												var parser = dumpdataParse(data)
-												status.text("count("
-														+ parser[1] + ")");
-												$("#connectList").html(
-														parser[0]);
-											})
-								}
-								setInterval(getStatus, 2000)
-								getStatus();
-								getServerList();
+			$(document).ready(function() {
+				var status = $("#status");
+				var getStatus = function() {
+					proxyapi("status", null, function(data) {
+						var parser = dumpdataParse(data)
+						status.text("count(" + parser[1] + ")");
+						$("#connectList").html(parser[0]);
+					})
+				}
+				setInterval(getStatus, 2000)
+				getStatus();
+				getServerList();
 
-								$(".helplink").click(
-										function() {
-											var help = $($(this).attr("href"))
+				$(".helplink").click(function() {
+					var help = $($(this).attr("href"))
 
-											var index = 0
-											var timer = setInterval(function() {
-												help.css("background",
-														index % 3 > 0 ? "#aaa"
-																: "none");
-												index++
-												if (index > 6) {
-													clearInterval(timer)
-												}
-											}, 100)
+					var index = 0
+					var timer = setInterval(function() {
+						help.css("background", index % 3 > 0 ? "#aaa" : "none");
+						index++
+						if (index > 6) {
+							clearInterval(timer)
+						}
+					}, 100)
 
-										})
-								var s = document.createElement("script")
-								s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
-								document.body.appendChild(s)
-							});
+				})
+				setTimeout(function() {
+					var s = document.createElement("script")
+					s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
+					document.body.appendChild(s)
+				}, 2000)
+			});
 		})();
 	</script>
 </body>
