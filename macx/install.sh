@@ -12,7 +12,7 @@ echo $plist > $plistPath
 
 echo "Starting ..."
 launchctl load $plistPath
-
+sleep 1
 url="http://127.0.0.1:8080"
 echo "open $url"
 open $url
