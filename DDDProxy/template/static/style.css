@@ -54,7 +54,12 @@ div.domainLine {
 .domainLine [name="port"] {
 	width: 40px;
 }
-
+#replaceRestore,#restore,#backup{
+	color:#aaa;
+}
+#sync{
+	font-weight: bolder;
+}
 #connectList .client{
 	overflow: hidden;
 	margin:0 1em;

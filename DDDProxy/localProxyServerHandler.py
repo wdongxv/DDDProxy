@@ -54,14 +54,14 @@ class localConnectHandler(localSymmetryConnect):
 				
 				connect = localToRemoteConnectManger.getConnect()
 				
-				if path.find("status.dddproxy.com")>0:
+				if path.find("status.dddproxy.com") > 0:
 					try:
 						connect = None
 						jsonMessage = self.httpMessageParse.getBody()
 						jsonBody = json.loads(jsonMessage)
-						connectList = localToRemoteConnectManger.getConnectHost(jsonBody["host"],jsonBody["port"])
+						connectList = localToRemoteConnectManger.getConnectHost(jsonBody["host"], jsonBody["port"])
 						if connectList:
-							for _,v in connectList.items():
+							for _, v in connectList.items():
 								connect = v
 					except:
 						pass
@@ -75,7 +75,7 @@ class localConnectHandler(localSymmetryConnect):
 				analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 		else:
 			pass
-	def onSymmetryConnectData(self,data):
+	def onSymmetryConnectData(self, data):
 		self.send(data)
 	def onServerAuthPass(self):
 		localSymmetryConnect.onServerAuthPass(self)
@@ -121,7 +121,7 @@ class localConnectHandler(localSymmetryConnect):
 				if "action" in postJson:
 					action = postJson["action"]
 					domain = postJson["domain"]
-					respons={"status":"ok"}
+					respons = {"status":"ok"}
 					if action == "delete":
 						domainConfig.config.removeDomain(domain)
 					elif action == "open":
@@ -129,7 +129,7 @@ class localConnectHandler(localSymmetryConnect):
 					elif action == "close":
 						domainConfig.config.closeDomain(domain)
 					else:
-						respons={"status":"no found action"}
+						respons = {"status":"no found action"}
 				else:
 					respons["domainList"] = domainConfig.config.getDomainListWithAnalysis()
 			elif opt == "analysisData":
@@ -143,7 +143,8 @@ class localConnectHandler(localSymmetryConnect):
 					domainConfig.config.setting = {}
 				domainList = postJson["domainList"]
 				for domain in domainList:
-					domainConfig.config.addDomain(domain[0],Open=domain[1])
+					domainConfig.config.addDomain(domain[0], Open=domain[1],
+												updateTime=domain[2] if len(domain) > 2 else 0)
 				respons["status"] = "ok"
 			elif opt == "addDomain":
 				url = postJson["url"]
@@ -153,22 +154,22 @@ class localConnectHandler(localSymmetryConnect):
 				else:
 					host = url if getDomainName(url) else ""
 				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
-			self.reseponse(respons,connection=self.httpMessageParse.connection())
+			self.reseponse(respons, connection=self.httpMessageParse.connection())
 		elif path == "/pac":
 			content = self.getFileContent(dirname(__file__) + "/template/pac.js")
 			content = content.replace("{{domainWhiteListJson}}", json.dumps(domainConfig.config.getDomainList(0)))
 			content = content.replace("{{domainListJson}}", json.dumps(domainConfig.config.getDomainList(1)))
 			content = content.replace("{{proxy_ddr}}", self.httpMessageParse.getHeader("host"))
-			self.reseponse(content,connection=self.httpMessageParse.connection())
+			self.reseponse(content, connection=self.httpMessageParse.connection())
 			
 		else:
 			if path == "/":
 				path = "/index.html"
-			content = self.getFileContent(dirname(__file__) + "/template" +path)
+			content = self.getFileContent(dirname(__file__) + "/template" + path)
 			if content:
 				
-				self.reseponse(content,ContentType=get_mime_type(path),connection=self.httpMessageParse.connection())
+				self.reseponse(content, ContentType=get_mime_type(path), connection=self.httpMessageParse.connection())
 			else:
-				self.reseponse("\"" + path + "\" not found", code=404,connection=self.httpMessageParse.connection())
+				self.reseponse("\"" + path + "\" not found", code=404, connection=self.httpMessageParse.connection())
 		
 

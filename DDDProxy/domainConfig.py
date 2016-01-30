@@ -8,11 +8,11 @@ from configFile import configFile
 import time
 from DDDProxy.hostParser import getDomainName
 class domainConfig(configFile):
-	defaultDomainList = ["google.com","gstatic.com","googleusercontent.com","googleapis.com","googleusercontent.com",
-						"googlevideo.com","facebook.com","youtube.com","akamaihd.net","ytimg.com","twitter.com",
-						"feedly.com","github.com","wikipedia.org","fbcdn.net","blogspot.com","t.co","ggpht.com",
-						"twimg.com","facebook.net","blogger.com","flickr.com","gmail.com","stackoverflow.com",
-						"gravatar.com","gmail.com","wikimedia.org","v2ex.com","blogspot.jp","blogspot.com"]
+	defaultDomainList = ["google.com", "gstatic.com", "googleusercontent.com", "googleapis.com", "googleusercontent.com",
+						"googlevideo.com", "facebook.com", "youtube.com", "akamaihd.net", "ytimg.com", "twitter.com",
+						"feedly.com", "github.com", "wikipedia.org", "fbcdn.net", "blogspot.com", "t.co", "ggpht.com",
+						"twimg.com", "facebook.net", "blogger.com", "flickr.com", "gmail.com", "stackoverflow.com",
+						"gravatar.com", "gmail.com", "wikimedia.org", "v2ex.com", "blogspot.jp", "blogspot.com"]
 	def __init__(self):
 		configFile.__init__(self)
 		if not self.setting:
@@ -22,7 +22,7 @@ class domainConfig(configFile):
 	def getConfigfileFilePath(self):
 		return configFile.makeConfigFilePathName("pacDomainConfig.json")
 
-	def getDomainList(self,opend=1):
+	def getDomainList(self, opend=1):
 		"""
 		0 close
 		1 open 
@@ -31,51 +31,41 @@ class domainConfig(configFile):
 		pacList = []
 		domainList = self.getDomainListWithAnalysis()
 		for domain in domainList:
-			if opend==2 or domain["open"] == opend:
+			if opend == 2 or domain["open"] == opend:
 				pacList.append(domain["domain"])
 		return pacList
 	
 	def getDomainListWithAnalysis(self):
-		data = [{"domain":key,"open":value["open"],"connectTimes":value["connectTimes"]} for (key,value) in self.setting.items()]
-		data.sort(cmp=lambda x,y : cmp(y["connectTimes"],x["connectTimes"]))
+		data = [{"domain":key, "open":value["open"], "connectTimes":value["connectTimes"]} for (key, value) in self.setting.items()]
+		data.sort(cmp=lambda x, y : cmp(y["connectTimes"], x["connectTimes"]))
 		return data;
-	def removeDomain(self,domain):
+	def removeDomain(self, domain):
 		if domain in self.setting:
 			del self.setting[domain]
 			self.save()
 			return True
 		return False
-	def closeDomain(self,domain):
-		if domain in self.setting:
-			self.setting[domain]["open"] = False
-			self.save()
-			return True
-		return False
-	def openDomain(self,domain):
-		if domain in self.setting:
-			self.setting[domain]["open"] = True
-			self.save()
-			return True
-		return False
-	def addDomain(self,domain,formGwflist = False,Open=True):
+	def closeDomain(self, domain):
+		return self.addDomain(domain, False)
+	def openDomain(self, domain):
+		return self.addDomain(domain, True)
+	def addDomain(self, domain, Open=True, updateTime=0):
 		if domain:
 			if not domain in self.setting:
-				self.setting[domain] = {"connectTimes":0,"open":Open,"formGwflist":formGwflist,"createTime":time.time()}
-				self.save()
-				return True
+				self.setting[domain] = {"connectTimes":0, "open":Open,
+									"update":time.time(), "createTime":time.time()}
 			else:
 				currentDomain = self.setting[domain];
-				if formGwflist:
-					if currentDomain["connectTimes"]==0 and currentDomain["formGwflist"] and time.time()-currentDomain["createTime"] > 3600*24*30:
-						currentDomain["open"] = False
-						self.save()
-						return True
-				else:
-					currentDomain["open"] = Open
-					self.save()
-					return True
-		return False
-	def domainConnectTimes(self,domain,times):
+				if updateTime and "update" in currentDomain:
+					if updateTime <= currentDomain["update"]:
+						return False
+				currentDomain["open"] = Open
+				currentDomain["update"] = time.time()
+		else:
+			return False
+		self.save()
+		return True
+	def domainConnectTimes(self, domain, times):
 		if domain in self.setting:
 			data = self.setting[domain]
 			data["connectTimes"] += times

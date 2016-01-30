@@ -42,13 +42,14 @@
 		<p style="color: #888; font-style: italic;"></p>
 		<div id="proxyDomainList" style="text-align: center;"></div>
 		<div id="backupBox" class="part"
-			style="display: none; text-align: center;">
+			style="display: none; text-align: right;">
 			<a id="replaceRestore" href="javascript:">抹掉并恢复</a><a
 				class='helplink' href="#help5">?</a> <a id="restore"
-				href="javascript:">从备份合并恢复</a><a class='helplink' href="#help4">?</a>
-			<a id="backup" href="javascript:">备份至Google Drive</a><a
-				class='helplink' href="#help3">?</a> <a class='helplink'
-				href="#help2">无法登陆Google?</a></span> <span id="backupStatus"> </span>
+				href="javascript:">合并恢复</a><a class='helplink' href="#help4">?</a> <a
+				id="backup" href="javascript:">备份</a><a class='helplink'
+				href="#help3">?</a> <a id="sync" href="javascript:">与Google Drive同步</a> <a
+				class='helplink' href="#help2">[无法登陆Google?]</a> <br />
+			<span id="backupStatus"> </span>
 		</div>
 		<div class="part">
 			<div id="setttingHelp">
@@ -111,194 +112,194 @@
 	<script src="/static/admin.js"></script>
 	<script src="/static/backup.js"></script>
 	<script type="text/javascript">
-		(function() {
+	(function() {
 
-			function dnsDomainIs(a, b) {
-				a = "." + a;
-				var search = a.search(b);
-				if (search >= 0) {
-					return true;
-				} else {
+	    function dnsDomainIs(a, b) {
+		a = "." + a;
+		var search = a.search(b);
+		if (search >= 0) {
+		    return true;
+		} else {
 
-				}
-			}
-			function shExpMatch(a, b) {
-				var search = a.search(b);
-				if (search >= 0) {
-					return true;
-				} else {
+		}
+	    }
+	    function shExpMatch(a, b) {
+		var search = a.search(b);
+		if (search >= 0) {
+		    return true;
+		} else {
 
-				}
-			}
-			function makeDomainHtml(host, port, auth, id) {
-				if (!id)
-					id = ""
-				var h = "";
-				h += "<input value='"+host+"' name='host' placeholder='host'/>"
-				h += "<input value='"+port+"' name='port' placeholder='port'/>"
-				h += "<input value='"+auth+"' name='auth' placeholder='auth'/>"
-				h += "<span class='status'></span>"
-				return "<div class='domainLine "+id+"'>" + h + "</div>"
-			}
+		}
+	    }
+	    function makeDomainHtml(host, port, auth, id) {
+		if (!id)
+		    id = ""
+		var h = "";
+		h += "<input value='"+host+"' name='host' placeholder='host'/>"
+		h += "<input value='"+port+"' name='port' placeholder='port'/>"
+		h += "<input value='"+auth+"' name='auth' placeholder='auth'/>"
+		h += "<span class='status'></span>"
+		return "<div class='domainLine "+id+"'>" + h + "</div>"
+	    }
 
-			var saveServerButton = $("#saveServerButton");
+	    var saveServerButton = $("#saveServerButton");
+	    saveServerButton.hide();
+	    var serverList = $("#serverList")
+	    function getInputLineData(lineDom) {
+		var input = $(lineDom).find("input")
+		var line = {}
+		var isOk = false;
+		for (var j = 0; j < input.length; j++) {
+		    var v = input[j]
+		    line[v.name] = v.value
+		    if (v.value)
+			isOk = true;
+		}
+		if (isOk)
+		    return line;
+		return null;
+	    }
+	    function getInputDataList() {
+		var list = []
+		var domainLineList = serverList.find(".domainLine")
+		for (var i = 0; i < domainLineList.length; i++) {
+		    var line = getInputLineData(domainLineList[i])
+		    if (line)
+			list.push(line)
+		}
+		return list;
+	    }
+	    saveServerButton.click(function() {
+		if (saveServerButton.hasClass("saving"))
+		    return;
+		var list = getInputDataList()
+		saveServerButton.text("保存中...")
+		saveServerButton.addClass("saving")
+		proxyapi("setServerList", {
+		    "data" : list
+		}, function(data) {
+		    saveServerButton.removeClass("saving")
+		    saveServerButton.text("保存");
+		    if (data.status == "ok") {
 			saveServerButton.hide();
-			var serverList = $("#serverList")
-			function getInputLineData(lineDom) {
-				var input = $(lineDom).find("input")
-				var line = {}
-				var isOk = false;
-				for (var j = 0; j < input.length; j++) {
-					var v = input[j]
-					line[v.name] = v.value
-					if (v.value)
-						isOk = true;
-				}
-				if (isOk)
-					return line;
-				return null;
-			}
-			function getInputDataList() {
-				var list = []
-				var domainLineList = serverList.find(".domainLine")
-				for (var i = 0; i < domainLineList.length; i++) {
-					var line = getInputLineData(domainLineList[i])
-					if (line)
-						list.push(line)
-				}
-				return list;
-			}
-			saveServerButton.click(function() {
-				if (saveServerButton.hasClass("saving"))
-					return;
-				var list = getInputDataList()
-				saveServerButton.text("保存中...")
-				saveServerButton.addClass("saving")
-				proxyapi("setServerList", {
-					"data" : list
-				}, function(data) {
-					saveServerButton.removeClass("saving")
-					saveServerButton.text("保存");
-					if (data.status == "ok") {
-						saveServerButton.hide();
-						connectCheck();
-					}
-				});
-			})
+			connectCheck();
+		    }
+		});
+	    })
 
-			var doCheckTimer = null
-			function connectCheck() {
-				function doCheck() {
-					var domainLineList = serverList.find(".domainLine")
-					for (var i = 0; i < domainLineList.length; i++) {
-						(function(lineDom) {
-							var line = getInputLineData(lineDom);
-							if (!line) {
-								return;
-							}
-							var status = $(lineDom).find(".status")
-							var linejs = JSON.stringify(line);
-							if (linejs != status.attr("linejs")) {
-								status.text("testting")
-								status.attr("linejs", linejs)
-								getRemoteStatus(line.host, line.port, function(data) {
-									status.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>" : "")
-								})
-							}
-						})(domainLineList[i]);
-					}
-				}
-				if (doCheckTimer)
-					clearTimeout(doCheckTimer)
-				doCheckTimer = setTimeout(doCheck, 2000);
-			}
-
-			function domainListChangedHandler() {
-				var domainLineList = serverList.find(".domainLine")
-				var newLine = [], errorLine = [];
-				var allLineOk = true
-				for (var i = 0; i < domainLineList.length; i++) {
-					var line = $(domainLineList[i])
-					var data = line.find("[name='host'],[name='auth']")
-					var host = data[0].value, auth = data[1].value;
-					if (!host && !auth)
-						newLine.push(line)
-					else if (!host || !auth) {
-						errorLine.push(auth)
-					}
-				}
-				for (var i = 0;; i++) {
-					if (i >= newLine.length) {
-						break;
-					} else if (i < newLine.length - 1) {
-						newLine[i].remove();
-					} else {
-						var d = newLine[i];
-						(errorLine.length > 0) ? d.hide() : d.show()
-					}
-				}
-				(errorLine.length > 0) ? saveServerButton.hide() : saveServerButton.show()
-				if (!newLine.length && !errorLine.length) {
-					serverList.append(makeDomainHtml("", "", ""))
-					bindInputKey();
-				}
-			}
-			function bindInputKey() {
-				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
-				inputList.keyup(domainListChangedHandler)
-			}
-			function getServerList() {
-				proxyapi("serverList", null, function(data) {
-
-					$(".pacAddr").text(data["pac"]).attr("href", data["pac"])
-					$("#version").text(data["version"])
-					var domainList = data["list"];
-					var html = "";
-					if (domainList) {
-						for (var i = 0; i < domainList.length; i++) {
-							var domain = domainList[i]
-							html += makeDomainHtml(domain.host, domain.port, domain.auth);
-						}
-					}
-					html += makeDomainHtml("", "", "");
-					serverList.html(html)
-					bindInputKey();
-					connectCheck()
+	    var doCheckTimer = null
+	    function connectCheck() {
+		function doCheck() {
+		    var domainLineList = serverList.find(".domainLine")
+		    for (var i = 0; i < domainLineList.length; i++) {
+			(function(lineDom) {
+			    var line = getInputLineData(lineDom);
+			    if (!line) {
+				return;
+			    }
+			    var status = $(lineDom).find(".status")
+			    var linejs = JSON.stringify(line);
+			    if (linejs != status.attr("linejs")) {
+				status.text("testting")
+				status.attr("linejs", linejs)
+				getRemoteStatus(line.host, line.port, function(data) {
+				    status.html(data ? "<a href='/remote.html#"+line.host+":"+line.port+"'>connected</a>" : "")
 				})
+			    }
+			})(domainLineList[i]);
+		    }
+		}
+		if (doCheckTimer)
+		    clearTimeout(doCheckTimer)
+		doCheckTimer = setTimeout(doCheck, 2000);
+	    }
+
+	    function domainListChangedHandler() {
+		var domainLineList = serverList.find(".domainLine")
+		var newLine = [], errorLine = [];
+		var allLineOk = true
+		for (var i = 0; i < domainLineList.length; i++) {
+		    var line = $(domainLineList[i])
+		    var data = line.find("[name='host'],[name='auth']")
+		    var host = data[0].value, auth = data[1].value;
+		    if (!host && !auth)
+			newLine.push(line)
+		    else if (!host || !auth) {
+			errorLine.push(auth)
+		    }
+		}
+		for (var i = 0;; i++) {
+		    if (i >= newLine.length) {
+			break;
+		    } else if (i < newLine.length - 1) {
+			newLine[i].remove();
+		    } else {
+			var d = newLine[i];
+			(errorLine.length > 0) ? d.hide() : d.show()
+		    }
+		}
+		(errorLine.length > 0) ? saveServerButton.hide() : saveServerButton.show()
+		if (!newLine.length && !errorLine.length) {
+		    serverList.append(makeDomainHtml("", "", ""))
+		    bindInputKey();
+		}
+	    }
+	    function bindInputKey() {
+		var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
+		inputList.keyup(domainListChangedHandler)
+	    }
+	    function getServerList() {
+		proxyapi("serverList", null, function(data) {
+
+		    $(".pacAddr").text(data["pac"]).attr("href", data["pac"])
+		    $("#version").text(data["version"])
+		    var domainList = data["list"];
+		    var html = "";
+		    if (domainList) {
+			for (var i = 0; i < domainList.length; i++) {
+			    var domain = domainList[i]
+			    html += makeDomainHtml(domain.host, domain.port, domain.auth);
 			}
-			$(document).ready(function() {
-				var status = $("#status");
-				var getStatus = function() {
-					proxyapi("status", null, function(data) {
-						var parser = dumpdataParse(data)
-						status.text("count(" + parser[1] + ")");
-						$("#connectList").html(parser[0]);
-					})
-				}
-				setInterval(getStatus, 2000)
-				getStatus();
-				getServerList();
+		    }
+		    html += makeDomainHtml("", "", "");
+		    serverList.html(html)
+		    bindInputKey();
+		    connectCheck()
+		})
+	    }
+	    $(document).ready(function() {
+		var status = $("#status");
+		var getStatus = function() {
+		    proxyapi("status", null, function(data) {
+			var parser = dumpdataParse(data)
+			status.text("count(" + parser[1] + ")");
+			$("#connectList").html(parser[0]);
+		    })
+		}
+		setInterval(getStatus, 2000)
+		getStatus();
+		getServerList();
 
-				$(".helplink").click(function() {
-					var help = $($(this).attr("href"))
+		$(".helplink").click(function() {
+		    var help = $($(this).attr("href"))
 
-					var index = 0
-					var timer = setInterval(function() {
-						help.css("background", index % 3 > 0 ? "#aaa" : "none");
-						index++
-						if (index > 6) {
-							clearInterval(timer)
-						}
-					}, 100)
+		    var index = 0
+		    var timer = setInterval(function() {
+			help.css("background", index % 3 > 0 ? "#aaa" : "none");
+			index++
+			if (index > 6) {
+			    clearInterval(timer)
+			}
+		    }, 100)
 
-				})
-				setTimeout(function() {
-					var s = document.createElement("script")
-					s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
-					document.body.appendChild(s)
-				}, 2000)
-			});
-		})();
-	</script>
+		})
+		setTimeout(function() {
+		    var s = document.createElement("script")
+		    s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
+		    document.body.appendChild(s)
+		}, 2000)
+	    });
+	})();
+    </script>
 </body>
 </html>
