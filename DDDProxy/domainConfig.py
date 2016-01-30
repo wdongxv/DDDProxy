@@ -37,7 +37,10 @@ class domainConfig(configFile):
 	
 	def getDomainListWithAnalysis(self):
 		data = [{"domain":key, "open":value["open"], "connectTimes":value["connectTimes"]} for (key, value) in self.setting.items()]
-		data.sort(cmp=lambda x, y : cmp(y["connectTimes"], x["connectTimes"]))
+		def sort(x, y):
+			o = cmp(y["open"], x["open"])
+			return cmp(y["connectTimes"], x["connectTimes"]) if o == 0 else o
+		data.sort(cmp=sort)
 		return data;
 	def removeDomain(self, domain):
 		if domain in self.setting:
