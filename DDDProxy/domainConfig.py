@@ -72,6 +72,6 @@ class domainConfig(configFile):
 			self.save()
 		else:
 			_domain = getDomainName(domain)
-			if not _domain == domain:
+			if _domain and not _domain == domain:
 				self.domainConnectTimes(_domain, times)
 config = domainConfig()
