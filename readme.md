@@ -18,7 +18,7 @@ E-Mail：wdongxv@gmail.com
 *	代理列表可备份到Google Drive
 
 <h3>如何运行？</h3>
-在远程服务器(当然就是境外服务器了)运行: 
+在远程服务器运行: 
 <pre>python remoteServer.py -a [passWord]</pre>
 本地服务器运行: 
 <pre>python localServer.py</pre>
