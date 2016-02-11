@@ -8,14 +8,14 @@ E-Mail：wdongxv@gmail.com
 
 <h3>主要有以下功能或特点</h3>
 *	异步I/O
-*   多远程服务器支持(2015.8.8新增)
+* 多远程服务器支持(2015.8.8新增)
 *	私有的代理软件
-*	自动把被墙的网站走梯子（原理见：https://en.wikipedia.org/wiki/Proxy_auto-config ）
+*	自动代理配置（原理见：https://en.wikipedia.org/wiki/Proxy_auto-config ）
 *	对每个域名下的网站访问次数的统计
 *	在一定时间内，每个客户端每小时分别访问哪些网站所用流量的统计
 *	pac列表会以统计为标准，将访问次数较多的网站放到最前面来减少客户端的运算
 *	远程服务器与本地服务器之间采用SSL加密
-*	代理列表可备份到Google Drive
+*	代理域名列表可备份到Google Drive
 
 <h3>如何运行？</h3>
 在远程服务器运行: 
