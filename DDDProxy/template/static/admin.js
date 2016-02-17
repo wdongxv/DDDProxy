@@ -78,7 +78,7 @@ $(document).ready(function(){
 				shared : true,
 				formatter:function(){
 					var d = new Date(this.x)
-					var tmp = ""+(d.getMonth()+1) +"月"+ d.getDay()+"日 "+d.getHours()+"点<br/>";
+					var tmp = ""+(d.getMonth()+1) +"月"+ d.getDate()+"日 "+d.getHours()+"点<br/>";
 					for ( var i in this.points) {
 						var point = this.points[i];
 						tmp += point.series.name+":"+IntToDataCount(point.y)+"<br/>"
