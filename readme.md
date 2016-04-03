@@ -1,4 +1,4 @@
-<h2>DDDProxy 3.1.0</h2>
+<h2>DDDProxy 3.2.0</h2>
 私有安全的代理软件
 
 
@@ -7,8 +7,9 @@
 E-Mail：wdongxv@gmail.com
 
 <h3>主要有以下功能或特点</h3>
+*	增加对SOCKS5代理协议的兼容（3.2.0版本新增）
 *	异步I/O
-* 多远程服务器支持(2015.8.8新增)
+*	多远程服务器支持(2015年8月8日新增)
 *	私有的代理软件
 *	自动代理配置（原理见：https://en.wikipedia.org/wiki/Proxy_auto-config ）
 *	对每个域名下的网站访问次数的统计

@@ -73,11 +73,8 @@ class localConnectHandler(localSymmetryConnect):
 				if path.find("status.dddproxy.com") > 0:
 					jsonMessage = self.httpMessageParse.getBody()
 					jsonBody = json.loads(jsonMessage)
-					try:
-						host = jsonBody["host"]
-						port = jsonBody["port"]
-					except:
-						pass
+					host = jsonBody["host"]
+					port = jsonBody["port"]
 				if self.setToProxyMode(host=host, port=port):
 					self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
 					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
@@ -135,6 +132,7 @@ class localConnectHandler(localSymmetryConnect):
 				respons = self.server.dumpConnects()
 			elif(opt == "serverList"):
 				respons["pac"] = "http://" + self.httpMessageParse.getHeader("host") + "/pac"
+				respons["proxyAddr"] = parserUrlAddrPort(respons["pac"])
 				respons["list"] = settingConfig.setting(settingConfig.remoteServerList)
 				respons["version"] = version.version
 			elif opt == "setServerList":
