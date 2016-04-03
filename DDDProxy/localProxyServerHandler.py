@@ -13,6 +13,7 @@ from settingConfig import settingConfig
 from socetMessageParser import httpMessageParser
 from DDDProxy.symmetryConnectServerHandler import symmetryConnect
 from DDDProxy import version
+import binascii
 
 
 class localConnectHandler(localSymmetryConnect):
@@ -25,10 +26,18 @@ class localConnectHandler(localSymmetryConnect):
 
 		self.httpMessageParse = httpMessageParser()
 		
+		self.socks5Mode = False
 	def onRecv(self, data):
 
 		self.preConnectRecvCache += data
 		if self.mode == "proxy":
+			if not self.connectHost and self.socks5Mode and len(data) > 4:
+				if data[3] == '\x01':
+					self.connectHost = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
+				elif data[3] == "\x03":
+					hostendindex = 5 + ord(data[4])
+					self.connectHost = data[5:hostendindex]
+			
 			if self.serverAuthPass and self.preConnectRecvCache:
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
@@ -36,7 +45,13 @@ class localConnectHandler(localSymmetryConnect):
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
 				self.preConnectRecvCache = ""
 			return
-		if self.httpMessageParse.appendData(data):
+		if data[0] == '\x05':  # socks5
+# 			print "local >> ",len(data),binascii.b2a_hex(data)
+			if data[1] == '\x02' or data[1] == '\x01':
+				self.setToProxyMode()
+				self.socks5Mode = True
+			pass
+		elif self.httpMessageParse.appendData(data):
 			method = self.httpMessageParse.method()
 			path = self.httpMessageParse.path()
 			self.connectName = self.filenoStr() + "	" + method + "	" + path
@@ -49,32 +64,36 @@ class localConnectHandler(localSymmetryConnect):
 						self.httpMessageParse.getBody() if method == "POST" else "")
 				self.mode = "http"
 			else:
-				
-				self.mode = "proxy"
-				
-				connect = localToRemoteConnectManger.getConnect()
-				
+				host = None
+				port = None
 				if path.find("status.dddproxy.com") > 0:
-					try:
-						connect = None
-						jsonMessage = self.httpMessageParse.getBody()
-						jsonBody = json.loads(jsonMessage)
-						connectList = localToRemoteConnectManger.getConnectHost(jsonBody["host"], jsonBody["port"])
-						if connectList:
-							for _, v in connectList.items():
-								connect = v
-					except:
-						pass
-				
-				if connect:
-					connect.addLocalRealConnect(self)
-				else:
-					self.close()
-				
-				self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
-				analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
+					jsonMessage = self.httpMessageParse.getBody()
+					jsonBody = json.loads(jsonMessage)
+					host = jsonBody["host"], port = jsonBody["port"]
+					
+				if self.setToProxyMode(host=host, port=port):
+					self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
+					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
+	def setToProxyMode(self, host=None, port=None):
+		if self.mode == "proxy":
+			return
+		self.mode = "proxy"
+		connect = localToRemoteConnectManger.getConnect()
+		if host:
+			try:
+				connect = None
+				connectList = localToRemoteConnectManger.getConnectHost(host, port)
+				if connectList:
+					for _, v in connectList.items():
+						connect = v
+			except:
+				pass
+		if connect:
+			connect.addLocalRealConnect(self)
+			return True
 		else:
-			pass
+			self.close()
+		return False
 	def onSymmetryConnectData(self, data):
 		self.send(data)
 	def onServerAuthPass(self):
