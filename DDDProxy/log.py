@@ -16,20 +16,18 @@ def log(level, *args, **kwargs):
 		return
 	
 	data = "	".join(str(i) for i in args)
-	data += "	".join("%s=%s"%(str(k),str(v)) for k,v in kwargs.items())
-	if level==3:
-		data += "	"+str(sys.exc_info())
-		data += "	"+str(traceback.format_exc())
+	data += "	".join("%s=%s" % (str(k), str(v)) for k, v in kwargs.items())
+	if level == 3:
+		data += "	" + str(sys.exc_info())
+		data += "	" + str(traceback.format_exc())
 	
-	data = time.strftime("%y-%B-%d %H:%M:%S:	")+ data
-	if level<2:
-		print data
-	logging.log([logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][level], data)
+	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
+	sys.stderr.write(["DEBUG", "INFO", "WARNING", "ERROR"][level] + data + "\n")
 if __name__ == "__main__":
-	log(3,"123")
-	log(2,"123")
-	log(1,"123")
-	log(0,"123")
+	log(3, "123")
+	log(2, "123")
+	log(1, "123")
+	log(0, "123")
 	
 	
 	
