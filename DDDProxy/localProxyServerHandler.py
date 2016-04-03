@@ -32,12 +32,16 @@ class localConnectHandler(localSymmetryConnect):
 		self.preConnectRecvCache += data
 		if self.mode == "proxy":
 			if not self.connectHost and self.socks5Mode and len(data) > 4:
+				port = 0
 				if data[3] == '\x01':
 					self.connectHost = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
+					port = ord(data[8]) * 0x100 + ord(data[9])
 				elif data[3] == "\x03":
 					hostendindex = 5 + ord(data[4])
 					self.connectHost = data[5:hostendindex]
-			
+					port = ord(data[hostendindex]) * 0x100 + ord(data[hostendindex + 1])
+				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + " Socks5 " + self.connectHost + ":%d" % (port) 
+				
 			if self.serverAuthPass and self.preConnectRecvCache:
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
@@ -69,8 +73,11 @@ class localConnectHandler(localSymmetryConnect):
 				if path.find("status.dddproxy.com") > 0:
 					jsonMessage = self.httpMessageParse.getBody()
 					jsonBody = json.loads(jsonMessage)
-					host = jsonBody["host"], port = jsonBody["port"]
-					
+					try:
+						host = jsonBody["host"]
+						port = jsonBody["port"]
+					except:
+						pass
 				if self.setToProxyMode(host=host, port=port):
 					self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
 					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)

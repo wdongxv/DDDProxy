@@ -61,6 +61,7 @@ class realServerConnect(symmetryConnect):
 # 					print "local << ", len(send), binascii.b2a_hex(send)
 					self.sendDataToSymmetryConnect(send)
 					self.proxyMode = True
+				host = "<None>"
 				if data[3] == '\x01':
 					host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
 					port = ord(data[8]) * 0x100 + ord(data[9])
@@ -72,6 +73,8 @@ class realServerConnect(symmetryConnect):
 					return self.connect((host, port), cb=connectOk)
 				else:
 					reply = b"\x05\x07\x00\x01\x00\x00\x00\x00\x00\x00"
+
+				self.connectName = "	<	" + self.filenoStr() + " Socks5 " + host					
 				self.sendDataToSymmetryConnect(reply)
 			else:
 				self.close()

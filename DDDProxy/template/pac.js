@@ -15,12 +15,14 @@ function FindProxyForURL(url, host) {
 	}
 	var domainWhiteList = {{domainWhiteListJson}};
 	var domainList = {{domainListJson}};
-	domainList.push("status.dddproxy.com");
 	if(matchList(domainWhiteList)){
 		return "DIRECT";
 	}
 	if(matchList(domainList)){
-		return "PROXY {{proxy_ddr}}; DIRECT";
+		return "SOCKS5 {{proxy_ddr}};PROXY {{proxy_ddr}};";
+	}
+	if(matchList(["status.dddproxy.com"])){
+		return "PROXY {{proxy_ddr}};";
 	}
 	return "DIRECT";
 }
