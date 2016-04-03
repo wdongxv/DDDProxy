@@ -48,7 +48,7 @@ class realServerConnect(symmetryConnect):
 		
 		if data[0] == '\x05':  # socks5
 # 			print "local >> ", len(data), binascii.b2a_hex(data)
-			if (data[1] == '\x02' or data[1] == '\x01') and len(data) < 4:
+			if (data[1] == '\x02' or data[1] == '\x01') and len(data) <= 4:
 				self.sendDataToSymmetryConnect(b"\x05\x00")
 			elif data[1] == '\x01':
 				def connectOk(ok):
