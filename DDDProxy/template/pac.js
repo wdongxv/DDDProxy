@@ -19,7 +19,7 @@ function FindProxyForURL(url, host) {
 		return "DIRECT";
 	}
 	if(matchList(domainList)){
-		return "SOCKS5 {{proxy_ddr}};PROXY {{proxy_ddr}};";
+		return "SOCKS5 {{proxy_ddr}};SOCKS {{proxy_ddr}};PROXY {{proxy_ddr}};";
 	}
 	if(matchList(["status.dddproxy.com"])){
 		return "PROXY {{proxy_ddr}};";
