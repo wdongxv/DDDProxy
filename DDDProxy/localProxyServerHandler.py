@@ -31,6 +31,7 @@ class localConnectHandler(localSymmetryConnect):
 
 		self.preConnectRecvCache += data
 		if self.mode == "proxy":
+			
 			if not self.connectHost and self.socksMode and len(self.preConnectRecvCache) > 4:
 				_d = self.preConnectRecvCache
 				port = 0
@@ -52,7 +53,6 @@ class localConnectHandler(localSymmetryConnect):
 							self.connectHost = splits[-2]
 							version = "Socks4a"
 						port = ord(_d[2]) * 0x100 + ord(_d[3])
-
 				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + " " + version + " " + self.connectHost + ":%d" % (port) 
 				
 			if self.serverAuthPass and self.preConnectRecvCache:

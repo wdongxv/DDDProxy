@@ -84,10 +84,10 @@ class realServerConnect(symmetryConnect):
 					send = b"\x00\x5A"+data[2:8]
 				else:
 					send = b"\x00\x5B"
-				print "local << ", len(send), binascii.b2a_hex(send)
+# 				print "local << ", len(send), binascii.b2a_hex(send)
 				self.sendDataToSymmetryConnect(send)
 				self.proxyMode = True
-			print "local >> ", len(data), binascii.b2a_hex(data)
+# 			print "local >> ", len(data), binascii.b2a_hex(data)
 			if data[1] == '\x01' or data[1] == '\x02':
 				host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
 				version = "Socks4"
