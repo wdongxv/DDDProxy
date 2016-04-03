@@ -26,21 +26,34 @@ class localConnectHandler(localSymmetryConnect):
 
 		self.httpMessageParse = httpMessageParser()
 		
-		self.socks5Mode = False
+		self.socksMode = False
 	def onRecv(self, data):
 
 		self.preConnectRecvCache += data
 		if self.mode == "proxy":
-			if not self.connectHost and self.socks5Mode and len(data) > 4:
+			if not self.connectHost and self.socksMode and len(self.preConnectRecvCache) > 4:
+				_d = self.preConnectRecvCache
 				port = 0
-				if data[3] == '\x01':
-					self.connectHost = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
-					port = ord(data[8]) * 0x100 + ord(data[9])
-				elif data[3] == "\x03":
-					hostendindex = 5 + ord(data[4])
-					self.connectHost = data[5:hostendindex]
-					port = ord(data[hostendindex]) * 0x100 + ord(data[hostendindex + 1])
-				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + " Socks5 " + self.connectHost + ":%d" % (port) 
+				version = "Socks5"
+				if(_d[0] == "\x05"):
+					if _d[3] == '\x01':
+						self.connectHost = "%d.%d.%d.%d" % (ord(_d[4]), ord(_d[5]), ord(_d[6]), ord(_d[7]))
+						port = ord(_d[8]) * 0x100 + ord(_d[9])
+					elif _d[3] == "\x03":
+						hostendindex = 5 + ord(_d[4])
+						self.connectHost = _d[5:hostendindex]
+						port = ord(_d[hostendindex]) * 0x100 + ord(_d[hostendindex + 1])
+				elif _d[0] == "\x04":
+					if _d[1] == '\x01' or _d[1] == '\x02':
+						self.connectHost = "%d.%d.%d.%d" % (ord(_d[4]), ord(_d[5]), ord(_d[6]), ord(_d[7]))
+						version = "Socks4"
+						if self.connectHost.startswith("0.0.0.") and ord(_d[7]) != 0:  # socks4a
+							splits = _d[8:].split("\x00")
+							self.connectHost = splits[-2]
+							version = "Socks4a"
+						port = ord(_d[2]) * 0x100 + ord(_d[3])
+
+				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + " " + version + " " + self.connectHost + ":%d" % (port) 
 				
 			if self.serverAuthPass and self.preConnectRecvCache:
 				if self.connectHost:
@@ -49,11 +62,11 @@ class localConnectHandler(localSymmetryConnect):
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
 				self.preConnectRecvCache = ""
 			return
-		if data[0] == '\x05':  # socks5
-# 			print "local >> ",len(data),binascii.b2a_hex(data)
+		print "local >> ", len(data), binascii.b2a_hex(data)
+		if data[0] == '\x05' or data[0] == '\x04':  # socks5
 			if data[1] == '\x02' or data[1] == '\x01':
 				self.setToProxyMode()
-				self.socks5Mode = True
+				self.socksMode = True
 			pass
 		elif self.httpMessageParse.appendData(data):
 			method = self.httpMessageParse.method()

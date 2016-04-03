@@ -78,7 +78,29 @@ class realServerConnect(symmetryConnect):
 				self.sendDataToSymmetryConnect(reply)
 			else:
 				self.close()
-			
+		elif data[0] == '\x04':#socks4/socks4a
+			def connectOk(ok):
+				if ok:
+					send = b"\x00\x5A"+data[2:8]
+				else:
+					send = b"\x00\x5B"
+				print "local << ", len(send), binascii.b2a_hex(send)
+				self.sendDataToSymmetryConnect(send)
+				self.proxyMode = True
+			print "local >> ", len(data), binascii.b2a_hex(data)
+			if data[1] == '\x01' or data[1] == '\x02':
+				host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
+				version = "Socks4"
+				if host.startswith("0.0.0.") and ord(data[7])!=0: #socks4a
+					splits = data[8:].split("\x00")
+					host = splits[-2]
+					version = "Socks4a"
+				port = ord(data[2]) * 0x100 + ord(data[3])
+				self.connectName = "	<	" + self.filenoStr() + " "+version+" " + host
+				return self.connect((host, port), cb=connectOk)
+			else:
+				self.sendDataToSymmetryConnect(b'\x04\x91')
+				self.close()
 		elif self.messageParse.appendData(data):
 			method = self.messageParse.method()
 			path = self.messageParse.path()
