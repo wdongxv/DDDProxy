@@ -22,7 +22,7 @@ def log(level, *args, **kwargs):
 		data += "	" + str(traceback.format_exc())
 	
 	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
-	sys.stderr.write(["DEBUG", "INFO", "WARNING", "ERROR"][level] + data + "\n")
+	sys.stderr.write(["DEBUG", "INFO", "WARNING", "ERROR"][level] +":	" + data + "\n")
 if __name__ == "__main__":
 	log(3, "123")
 	log(2, "123")
