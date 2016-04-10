@@ -47,7 +47,7 @@ class symmetryConnect(sockConnect):
 		self.sendDataToSymmetryConnect(data)
 		
 		self._symmetryPingLenght += len(data)
-		if(self._symmetryPingLenght>1024*1024):
+		if(self._symmetryPingLenght>1024*1024*10):
 			self._symmetryPingLenght = 0
 			self.waitSymmetryPingResponse = True
 			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
