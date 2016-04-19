@@ -350,7 +350,7 @@ class baseServer():
 			
 			for _,connect in self._socketConnectList.items():
 				allList.append(connect._sock)
-				if connect.info["lastAlive"] < currentTime - 3600:
+				if connect.info["lastAlive"] < currentTime - 1800:
 					connect.shutdown()
 					continue
 				if connect.pauseSendAndRecv():
