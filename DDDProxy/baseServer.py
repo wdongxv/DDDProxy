@@ -186,9 +186,9 @@ class sockConnect(object):
 		except ssl.SSLError as e:
 			if e.errno == 2:
 				return
-			log.log(3)
+			log.log(3,self)
 		except:
-			log.log(3)
+			log.log(3,self)
 		
 		if data:
 			if isinstance(self._sock, ssl.SSLSocket):
@@ -359,7 +359,7 @@ class baseServer():
 				if connect.getSendPending():
 					wlist.append(connect._sock)
 			try:
-				s_readable, s_writable, s_exceptional = select.select(rlist, wlist, rlist, 1)
+				s_readable, s_writable, s_exceptional = select.select(rlist, wlist, allList, 1)
 			except KeyboardInterrupt:
 				break
 			except:
