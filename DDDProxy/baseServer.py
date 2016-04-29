@@ -345,7 +345,7 @@ class baseServer():
 		def pollProxy(rlist, wlist, xlist, timeout):
 			for s in xlist:
 				if not s in socketList:
-					socketList[s] = select.kevent(s.fileno(), filter=select.KQ_FILTER_READ | select.KQ_FILTER_WRITE,
+					socketList[s] = select.kevent(s.fileno(), filter=select.KQ_FILTER_READ,
 												flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE)
 			s_readable = []
 			s_writable = []
@@ -357,13 +357,18 @@ class baseServer():
 					if e.ident == event.ident:
 						sock = s
 						break
-				if event.filter == select.KQ_FILTER_READ:
-					s_readable.append(sock)
-					if sock in s_writable:
-						s_writable.remove(sock)
-				else:
-					s_exceptional.append(sock)
-					del socketList[sock]
+				if event.filter == select.KQ_FILTER_READ and event.flags & select.KQ_EV_ENABLE:
+					if event.flags == select.KQ_EV_ENABLE | select.KQ_EV_ADD:
+						s_readable.append(sock)
+					elif event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
+						s_exceptional.append(sock)
+						del socketList[sock]
+					else:
+						print "flags",bin(event.flags)
+				if sock in s_writable:
+					s_writable.remove(sock)
+
+						
 			return s_readable, s_writable, s_exceptional
 		self.start(poll=pollProxy)
 		
