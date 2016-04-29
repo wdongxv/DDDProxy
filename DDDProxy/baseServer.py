@@ -351,7 +351,7 @@ class baseServer():
 			s_writable = []
 			s_writable.extend(x for x in wlist)
 			s_exceptional = []
-			for event in kq.control(socketList.values(), 100, 1 if len(s_writable) == 0 else 0.0000001):
+			for event in kq.control(socketList.values(), 100, 1 if len(s_writable) == 0 else 0.00001):
 				sock = None
 				for s, e in socketList.items():
 					if e.ident == event.ident:
@@ -393,7 +393,7 @@ class baseServer():
 				if connect.getSendPending():
 					wlist.append(connect._sock)
 			try:
-				s_readable, s_writable, s_exceptional = poll(rlist, wlist, rlist, 1)
+				s_readable, s_writable, s_exceptional = poll(rlist, wlist, rlist, 0.1)
 			except KeyboardInterrupt:
 				break
 			except:
