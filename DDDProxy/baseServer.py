@@ -357,14 +357,17 @@ class baseServer():
 					if e.ident == event.ident:
 						sock = s
 						break
-				if event.filter == select.KQ_FILTER_READ and event.flags & select.KQ_EV_ENABLE:
-					if event.flags == select.KQ_EV_ENABLE | select.KQ_EV_ADD:
-						s_readable.append(sock)
-					elif event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
+				if event.filter == select.KQ_FILTER_READ:
+					
+					if event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
 						s_exceptional.append(sock)
 						del socketList[sock]
 					else:
-						print "flags",bin(event.flags)
+						s_readable.append(sock)
+						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
+							print "flags",bin(event.flags)
+				else:
+					print "flags",bin(event.flags)
 				if sock in s_writable:
 					s_writable.remove(sock)
 
