@@ -37,6 +37,6 @@ if __name__ == "__main__":
 		
 		
 	server.addListen(port=int(startUpArgs.port))
-	server.start()
+	server.startWithEpoll()
 	
 	
