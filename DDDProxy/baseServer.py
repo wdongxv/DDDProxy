@@ -340,7 +340,10 @@ class baseServer():
 				return True
 		return False
 	def startWithEpoll(self):
-		kq = select.kqueue()
+		try:
+			kq = select.kqueue()
+		except:
+			return self.start()
 		socketList = {}
 		def pollProxy(rlist, wlist, xlist, timeout):
 			for s in xlist:
