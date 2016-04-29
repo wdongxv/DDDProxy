@@ -341,11 +341,48 @@ class baseServer():
 		return False
 	def startWithEpoll(self):
 		try:
+			epoll = select.epoll()
+		except:
+			return self.startWithKQueue()
+		socketList = {}
+		
+		def epollProxy(rlist, wlist, xlist, timeout):
+			for sock in xlist:
+				if not sock in socketList:
+					socketList[sock] = sock.fileno()
+					epoll.register(sock.fileno(),select.EPOLLIN)
+			s_readable = []
+			s_writable = []
+			s_writable.extend(x for x in wlist)
+			s_exceptional = []
+			for fd,event in epoll.poll(timeout):
+				sock = None
+				for _sock, _fd in socketList.items():
+					if fd == _fd:
+						sock = _sock
+						break
+				if sock in s_writable:
+					s_writable.remove(sock)
+
+				if select.EPOLLIN & event:
+					s_readable.append(sock)
+				elif select.EPOLLOUT & event:
+					s_writable.append(sock)
+				elif select.EPOLLERR & event or select.EPOLLHUP & event:
+					epoll.unregister(fd)
+					del socketList[sock]
+					s_exceptional.append(sock)
+				else:
+					log.log(3,"unknow event",event) 
+			return s_readable, s_writable, s_exceptional
+		return self.start(poll=epollProxy)
+	def startWithKQueue(self):
+		try:
 			kq = select.kqueue()
 		except:
 			return self.start()
 		socketList = {}
-		def pollProxy(rlist, wlist, xlist, timeout):
+		def kqueueProxy(rlist, wlist, xlist, timeout):
 			for s in xlist:
 				if not s in socketList:
 					socketList[s] = select.kevent(s.fileno(), filter=select.KQ_FILTER_READ,
@@ -368,15 +405,13 @@ class baseServer():
 					else:
 						s_readable.append(sock)
 						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
-							print "flags", bin(event.flags)
+							log.log(3, "unknow flags", bin(event.flags))
 				else:
-					print "flags", bin(event.flags)
+					log.log(3,"unknow filter",event.filter)
 				if sock in s_writable:
 					s_writable.remove(sock)
-
-						
 			return s_readable, s_writable, s_exceptional
-		self.start(poll=pollProxy)
+		self.start(poll=kqueueProxy)
 		
 	def start(self, poll=select.select):
 		while True:
