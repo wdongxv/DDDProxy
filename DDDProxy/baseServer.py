@@ -351,7 +351,7 @@ class baseServer():
 			s_writable = []
 			s_writable.extend(x for x in wlist)
 			s_exceptional = []
-			for event in kq.control(socketList.values(), 100, 1 if len(s_writable) == 0 else 0.00001):
+			for event in kq.control(socketList.values(), 100, timeout):
 				sock = None
 				for s, e in socketList.items():
 					if e.ident == event.ident:
@@ -365,9 +365,9 @@ class baseServer():
 					else:
 						s_readable.append(sock)
 						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
-							print "flags",bin(event.flags)
+							print "flags", bin(event.flags)
 				else:
-					print "flags",bin(event.flags)
+					print "flags", bin(event.flags)
 				if sock in s_writable:
 					s_writable.remove(sock)
 
@@ -393,7 +393,7 @@ class baseServer():
 				if connect.getSendPending():
 					wlist.append(connect._sock)
 			try:
-				s_readable, s_writable, s_exceptional = poll(rlist, wlist, rlist, 0.1)
+				s_readable, s_writable, s_exceptional = poll(rlist, wlist, rlist, 1 if len(wlist) == 0 else 0.00001)
 			except KeyboardInterrupt:
 				break
 			except:
