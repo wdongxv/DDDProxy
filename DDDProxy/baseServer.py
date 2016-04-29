@@ -361,8 +361,8 @@ class baseServer():
 					if fd == _fd:
 						sock = _sock
 						break
-				if sock in s_writable:
-					s_writable.remove(sock)
+# 				if sock in s_writable:
+# 					s_writable.remove(sock)
 
 				if select.EPOLLIN & event:
 					s_readable.append(sock)
@@ -408,8 +408,8 @@ class baseServer():
 							log.log(3, "unknow flags", bin(event.flags))
 				else:
 					log.log(3,"unknow filter",event.filter)
-				if sock in s_writable:
-					s_writable.remove(sock)
+# 				if sock in s_writable:
+# 					s_writable.remove(sock)
 			return s_readable, s_writable, s_exceptional
 		self.start(poll=kqueueProxy)
 		
