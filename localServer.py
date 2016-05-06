@@ -7,7 +7,7 @@ Created on 2015年1月11日
 '''
 from optparse import OptionParser
 
-from DDDProxy import baseServer, version
+from DDDProxy import baseServer,  log
 from DDDProxy.domainAnalysis import domainAnalysis
 from DDDProxy.localProxyServerHandler import localConnectHandler
 from DDDProxy import localToRemoteConnectManger
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	startUpArgs = parser.parse_args()[0]
 
 	
-	baseServer.debuglevel = int(startUpArgs.loglevel)
+	log.debuglevel = int(startUpArgs.loglevel)
 	
 	localToRemoteConnectManger.maxConnectByOnServer = max(1,int(startUpArgs.RemoteConnectLimit))
 	localToRemoteConnectManger.remoteConnectMaxTime = int(startUpArgs.remoteConnectMaxTime)
@@ -35,8 +35,7 @@ if __name__ == "__main__":
 	domainAnalysis.startAnalysis(server)
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
 		
-		
 	server.addListen(port=int(startUpArgs.port))
-	server.start()
+	server.startWithEpoll()
 	
 	
