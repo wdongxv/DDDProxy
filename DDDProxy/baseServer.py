@@ -431,7 +431,7 @@ class baseServer():
 				if connect.getSendPending():
 					wlist.append(connect._sock)
 			try:
-				s_readable, s_writable, s_exceptional = poll(rlist, wlist, rlist, 1 if len(wlist) == 0 else 0.00001)
+				s_readable, s_writable, s_exceptional = poll(rlist, wlist, allList, 1 if len(wlist) == 0 else 0.00001)
 			except KeyboardInterrupt:
 				break
 			except:
