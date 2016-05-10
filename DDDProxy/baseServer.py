@@ -211,9 +211,13 @@ class sockConnect(object):
 				try:
 					self._sock.send(data)
 					self.onSend(data)
+					continue
 				except:
-					log.log(3,self)
-					self.shutdown()
+					log.log(3)
+			else:
+				break
+		log.log(2, self, "<<< request close")
+		self.shutdown()
 					
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
