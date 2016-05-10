@@ -204,17 +204,17 @@ class sockConnect(object):
 			log.log(2, self, "<<< data is pool,close")
 			self.shutdown()
 	def _onReadySend(self):
-		data = self.getSendData(socketBufferMaxLenght)
-		if data:
-			self.info["send"] += len(data)
-			try:
-				self._sock.send(data)
-				self.onSend(data)
-				return
-			except:
-				log.log(3)
-		log.log(2, self, "<<< request close")
-		self.shutdown()
+		while self.getSendPending():
+			data = self.getSendData(socketBufferMaxLenght)
+			if data:
+				self.info["send"] += len(data)
+				try:
+					self._sock.send(data)
+					self.onSend(data)
+				except:
+					log.log(3,self)
+					self.shutdown()
+					
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
 			self._onReadyRecv()
