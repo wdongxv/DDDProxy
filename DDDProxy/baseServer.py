@@ -214,10 +214,9 @@ class sockConnect(object):
 					continue
 				except:
 					log.log(3)
-			else:
-				log.log(2, self, "<<< request close")
-				self.shutdown()
-				break
+			log.log(2, self, "<<< request close")
+			self.shutdown()
+			break
 
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
