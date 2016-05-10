@@ -214,7 +214,7 @@ class sockConnect(object):
 					continue
 				except:
 					log.log(3)
-			log.log(2, self, "<<< request close")
+			log.log(2, self, "<<< request close",self._requsetClose)
 			self.shutdown()
 			break
 
