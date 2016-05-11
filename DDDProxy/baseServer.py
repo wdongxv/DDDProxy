@@ -351,6 +351,16 @@ class baseServer():
 				if not sock in socketList:
 					socketList[sock] = sock.fileno()
 					epoll.register(sock.fileno(),select.EPOLLIN)
+			
+			for sock in  socketList:
+				if sock not in xlist:
+					try:
+						epoll.unregister(sock.fileno())
+					except:
+						pass
+					del socketList[sock]
+					break
+				
 			s_readable = []
 			s_writable = []
 			s_writable.extend(x for x in wlist)
@@ -361,6 +371,9 @@ class baseServer():
 					if fd == _fd:
 						sock = _sock
 						break
+				if not sock:
+					epoll.unregister(fd)
+					continue
 # 				if sock in s_writable:
 # 					s_writable.remove(sock)
 
@@ -369,9 +382,9 @@ class baseServer():
 				elif select.EPOLLOUT & event:
 					s_writable.append(sock)
 				elif select.EPOLLERR & event or select.EPOLLHUP & event:
+					s_exceptional.append(sock)
 					epoll.unregister(fd)
 					del socketList[sock]
-					s_exceptional.append(sock)
 				else:
 					log.log(3,"unknow event",event) 
 			return s_readable, s_writable, s_exceptional
@@ -387,6 +400,10 @@ class baseServer():
 				if not s in socketList:
 					socketList[s] = select.kevent(s.fileno(), filter=select.KQ_FILTER_READ,
 												flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE)
+			for sock in  socketList:
+				if sock not in xlist:
+					del socketList[sock]
+					
 			s_readable = []
 			s_writable = []
 			s_writable.extend(x for x in wlist)
@@ -470,6 +487,8 @@ class baseServer():
 		if sock in self._socketConnectList:
 			connect = self._socketConnectList[sock]
 			connect.onSocketEvent(event)
+		else:
+			log.log(3,"sock not in self._socketConnectList:");
 # other
 	def dumpConnects(self):
 		connects = {}
