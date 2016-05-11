@@ -488,6 +488,7 @@ class baseServer():
 			connect = self._socketConnectList[sock]
 			connect.onSocketEvent(event)
 		else:
+			sock.close()
 			log.log(3,"sock not in self._socketConnectList:");
 # other
 	def dumpConnects(self):
