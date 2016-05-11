@@ -1,4 +1,4 @@
-(function() {
+$(document).ready(function() {
     var clientId = '617529453372-t2ngei0uk2fqh8rh8hvlak9qh9bkla6q.apps.googleusercontent.com';
     var scopes = 'https://www.googleapis.com/auth/drive.appdata';
 
@@ -172,4 +172,4 @@
 	gapi.client.setApiKey("AIzaSyC1aZR9-6Dhm0jszLOWWU1ZdZH53zfQF9A");
     }
 
-})()
+})
