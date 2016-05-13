@@ -421,7 +421,8 @@ class baseServer():
 					
 					if event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
 						s_exceptional.append(sock)
-						del socketList[sock]
+						if sock in socketList:
+							del socketList[sock]
 					else:
 						s_readable.append(sock)
 						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
