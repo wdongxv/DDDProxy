@@ -355,14 +355,13 @@ class baseServer():
 					socketList[sock] = sock.fileno()
 					epoll.register(sock.fileno(),select.EPOLLIN)
 			
-			for sock in  socketList:
+			for sock in  sorted(socketList):
 				if sock not in xlist:
 					try:
 						epoll.unregister(sock.fileno())
 					except:
 						pass
 					del socketList[sock]
-					break
 				
 			s_readable = []
 			s_writable = []
@@ -403,10 +402,10 @@ class baseServer():
 				if not s in socketList:
 					socketList[s] = select.kevent(s.fileno(), filter=select.KQ_FILTER_READ,
 												flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE)
-			for sock in  socketList:
+			for sock in sorted(socketList):
 				if sock not in xlist:
 					del socketList[sock]
-					
+				
 			s_readable = []
 			s_writable = []
 			s_writable.extend(x for x in wlist)
