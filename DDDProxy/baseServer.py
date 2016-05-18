@@ -359,9 +359,10 @@ class _baseServer():
 		
 		currentTime = time.time()
 		for _, connect in self._socketConnectList.items():
+			if isinstance(connect, sockServerConnect):
+				continue
 			if connect.info["lastAlive"] < currentTime - 1800:
 				connect.shutdown()
-				continue
 			
 # 	for  sock event
 	def onSocketEvent(self, sockfileno, event):
