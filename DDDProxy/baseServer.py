@@ -419,6 +419,8 @@ class baseServer():
 					if e.ident == event.ident:
 						sock = s
 						break
+				if not sock:
+					continue
 				if event.filter == select.KQ_FILTER_READ:
 					
 					if event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
@@ -430,7 +432,7 @@ class baseServer():
 						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
 							log.log(3, "unknow flags", bin(event.flags))
 				else:
-					log.log(3,"unknow filter",event.filter)
+					log.log(2,"unknow filter",event.filter)
 # 				if sock in s_writable:
 # 					s_writable.remove(sock)
 			return s_readable, s_writable, s_exceptional
@@ -495,8 +497,8 @@ class baseServer():
 			connect.onSocketEvent(event)
 		else:
 			if sock:
-				sock.close()
-			log.log(3,"sock not in self._socketConnectList:");
+				sock.shut_down()
+			log.log(2,"sock not in self._socketConnectList:");
 # other
 	def dumpConnects(self):
 		connects = {}
