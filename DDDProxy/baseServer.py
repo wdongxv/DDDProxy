@@ -342,23 +342,26 @@ class baseServer():
 				del self._socketConnectList[k]
 				return True
 		return False
-	def startWithEpoll(self):
+	
+	def startUseEpoll(self):
+		epollor = None
 		try:
-			epoll = select.epoll()
+			epollor = select.epoll()
 		except:
-			return self.startWithKQueue()
+			self.startWithKQueue()
+			return
 		socketList = {}
 		
 		def epollProxy(rlist, wlist, xlist, timeout):
 			for sock in xlist:
 				if not sock in socketList:
 					socketList[sock] = sock.fileno()
-					epoll.register(sock.fileno(),select.EPOLLIN)
+					epollor.register(sock.fileno(),select.EPOLLIN)
 			
 			for sock in  sorted(socketList):
 				if sock not in xlist:
 					try:
-						epoll.unregister(sock.fileno())
+						epollor.unregister(sock.fileno())
 					except:
 						pass
 					del socketList[sock]
@@ -367,14 +370,14 @@ class baseServer():
 			s_writable = []
 			s_writable.extend(x for x in wlist)
 			s_exceptional = []
-			for fd,event in epoll.poll(timeout):
+			for fd,event in epollor.poll(timeout):
 				sock = None
 				for _sock, _fd in socketList.items():
 					if fd == _fd:
 						sock = _sock
 						break
 				if not sock:
-					epoll.unregister(fd)
+					epollor.unregister(fd)
 					continue
 # 				if sock in s_writable:
 # 					s_writable.remove(sock)
@@ -385,7 +388,7 @@ class baseServer():
 					s_writable.append(sock)
 				elif select.EPOLLERR & event or select.EPOLLHUP & event:
 					s_exceptional.append(sock)
-					epoll.unregister(fd)
+					epollor.unregister(fd)
 					del socketList[sock]
 				else:
 					log.log(3,"unknow event",event) 
