@@ -464,7 +464,7 @@ class kqueueBaseServer(_baseServer):
 	def start(self):
 		while True:
 			for event in self.kq.control(None, 1024, 1):
-				if event.flags & select.KQ_EV_ERROR:
+				if event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
 					self.onSocketEvent(event.ident, sockConnect.socketEventExcept)
 				elif event.filter == select.KQ_FILTER_WRITE:
 					self.onSocketEvent(event.ident, sockConnect.socketEventCanSend)
