@@ -88,8 +88,10 @@ class localToRemoteConnectManger():
 						connect = None
 				if not connect:
 					connect = remoteServerConnecter(self.server)
-					connect.connect((remoteServer["host"], port), True)
-					connect.auth(remoteServer["auth"])
+					def connectDone(ok):
+						if ok:
+							connect.auth(remoteServer["auth"])
+					connect.connect((remoteServer["host"], port), True, connectDone)
 					connectList[index] = connect
 				return connect
 			i += maxConnectByOnServer
