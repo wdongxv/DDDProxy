@@ -30,12 +30,12 @@ if __name__ == "__main__":
 	localToRemoteConnectManger.maxConnectByOnServer = max(1,int(startUpArgs.RemoteConnectLimit))
 	localToRemoteConnectManger.remoteConnectMaxTime = int(startUpArgs.remoteConnectMaxTime)
 	
-	server = baseServer.baseServer(handler=localConnectHandler)
+	server = baseServer.baseServer()
 
 	domainAnalysis.startAnalysis(server)
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
 		
-	server.addListen(port=int(startUpArgs.port))
+	server.addListen(handler=localConnectHandler,port=int(startUpArgs.port))
 	server.start()
 	
 	

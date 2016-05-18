@@ -32,15 +32,9 @@ class symmetryConnect(sockConnect):
 		self._symmetryConnectSendPendingCache = []
 		self._requestRemove = False
 		self.symmetryConnectManager = None
-		self.waitSymmetryPingResponse = False
-		
 		self._symmetryPingLenght = 0
 		
 #--------
-
-
-	def pauseSendAndRecv(self):
-		return self.waitSymmetryPingResponse
 
 	def onRecv(self, data):
 		sockConnect.onRecv(self, data)
@@ -49,7 +43,7 @@ class symmetryConnect(sockConnect):
 		self._symmetryPingLenght += len(data)
 		if(self._symmetryPingLenght>1024*1024*4):
 			self._symmetryPingLenght = 0
-			self.waitSymmetryPingResponse = True
+			self.setIOEventFlags(sockConnect.socketIOEventFlagsNone)
 			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
 		
 	def onClose(self):
@@ -67,7 +61,10 @@ class symmetryConnect(sockConnect):
 		elif opt == symmetryConnect.optSymmetryPing:
 			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPingResponse)
 		elif opt == symmetryConnect.optSymmetryPingResponse:
-			self.waitSymmetryPingResponse = False
+			flags = sockConnect.socketIOEventFlagsRead
+			if self.getSendPending():
+				flags |= sockConnect.socketIOEventFlagsWrite
+			self.setIOEventFlags(flags)
 		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
 			self.shutdown()
 			self.onClose()
@@ -86,10 +83,10 @@ class symmetryConnect(sockConnect):
 		
 			
 		if type(data) != str:
-			log.log(3,"data not is str")
+			log.log(2,"data not is str")
 		for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
 			if type(part) != str:
-				log.log(3,"part not is str")
+				log.log(2,"part not is str")
 			self._symmetryConnectSendPendingCache.append(part)
 
 #--------------- for symmetryConnectServerHandler

@@ -31,9 +31,14 @@ class sockConnect(object):
 	
 	_filenoLoop = 0
 
-	socketEventCanRecv = "r"
-	socketEventCanSend = "s"
-	socketEventExcept = "e"
+	
+	socketEventCanRecv = 1
+	socketEventCanSend = 2
+	socketEventExcept = 4
+
+	socketIOEventFlagsNone = 0
+	socketIOEventFlagsRead = 1
+	socketIOEventFlagsWrite = 2
 
 	def __init__(self, server):
 		self.server = server
@@ -48,23 +53,26 @@ class sockConnect(object):
 		sockConnect._filenoLoop += 1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
-
 		self._sendPendingCache = ""
-		
 		self._requsetClose = False
-		
 		self._connecting = False
+		
+		self._ioEventFlags = sockConnect.socketIOEventFlagsNone
 	def fileno(self):
 		return self._fileno
 	def onConnected(self):
-		pass
+		self.setIOEventFlags(sockConnect.socketIOEventFlagsRead)
+		
 	def onRecv(self, data):
 		pass
 	def onSend(self, data):
 		pass
 	def onClose(self):
 		pass
-
+	def setIOEventFlags(self, flags):
+		if self._ioEventFlags != flags:
+			self._ioEventFlags = flags
+			self.server.onIOEventFlagsChanged(self)
 	def connectStatus(self):
 		"""
 		0:none
@@ -143,9 +151,12 @@ class sockConnect(object):
 		if self._requsetClose:
 			return True
 		return len(self._sendPendingCache)
+	
 	def getSendData(self, length):
 		data = self._sendPendingCache[:length]
 		self._sendPendingCache = self._sendPendingCache[length:]
+		if not self._sendPendingCache:
+			self.setIOEventFlags(sockConnect.socketIOEventFlagsRead)
 		return data
 
 # 	client operating
@@ -160,8 +171,11 @@ class sockConnect(object):
 		if self._requsetClose:
 			return
 		self._sendPendingCache += data
+		self.setIOEventFlags(sockConnect.socketIOEventFlagsRead | sockConnect.socketIOEventFlagsWrite)
+
 	def close(self):
 		self._requsetClose = True
+		self.setIOEventFlags(sockConnect.socketIOEventFlagsRead | sockConnect.socketIOEventFlagsWrite)
 		self.makeAlive()
 	
 	def shutdown(self):
@@ -174,13 +188,11 @@ class sockConnect(object):
 				except:
 					pass
 				self.onClose()
-			self.server.addDelay(5,_shutdown)
+			self.server.addDelay(5, _shutdown)
 		
 # 		self.close()
 # 	for server
 
-	def pauseSendAndRecv(self):
-		return False
 	def _onReadyRecv(self):
 		data = None
 		
@@ -189,9 +201,9 @@ class sockConnect(object):
 		except ssl.SSLError as e:
 			if e.errno == 2:
 				return
-			log.log(3,self)
+			log.log(3, self)
 		except:
-			log.log(3,self)
+			log.log(3, self)
 		
 		if data:
 			if isinstance(self._sock, ssl.SSLSocket):
@@ -277,15 +289,20 @@ class sockConnect(object):
 	def filenoStr(self):
 		return "[" + str(self.fileno()) + "]"
 
-class baseServer():
-	def __init__(self, handler):
+class sockServerConnect(sockConnect):
+	def __init__(self, handler, server):
 		self.handler = handler
-
+		sockConnect.__init__(self, server)
+	def onSocketEvent(self, event):
+		if event == sockConnect.socketEventCanRecv:
+			sock, address = self._sock.accept()
+			connect = self.handler(server=self.server)
+			connect._setConnect(sock, address)
+			log.log(2, connect, "*	connect")
+class _baseServer():
+	def __init__(self):
 		self._socketConnectList = {}
-		self.serverList = []
-
 		self.callbackList = []
-
 		socket.setdefaulttimeout(10)
 
 	def addCallback(self, cb, *args, **kwargs):
@@ -293,188 +310,40 @@ class baseServer():
 	def addDelay(self, delay, cb, *args, **kwargs):
 		self.callbackList.append((cb, delay + time.time(), args, kwargs))
 		
-	def addListen(self, port, host=""):
+	def addListen(self, handler, port, host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
 		log.log(1, "run in ", host, ":", port)
-		server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
-		server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
 		print "start server on: " + host + ":" + str(port)
-		server.bind((host, port))
-		server.listen(1024)
-		self.addSockListen(server)
-	def addSockListen(self, sock):
+		sock.bind((host, port))
+		sock.listen(socketBufferMaxLenght)
+		self.addSockListen(sock, handler)
+	def addSockListen(self, sock, handler):
 		"""
 		@param sock: _socketobject
 		"""
-		sock.setblocking(False)
-		self.serverList.append(sock)
+		connect = sockServerConnect(handler, self)
+		connect._setConnect(sock, sock.getsockname())
+		
 # manager connect
 
 	def addSockConnect(self, connect):
 		if not connect._sock in self._socketConnectList:
 			connect._sock.setblocking(False)
-			try:
-				connect._sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-			except:
-				pass
-			
-			try:
-				connect._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)
-			except:
-				pass
-			try:
-				connect._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
-			except:
-				pass
-			try:
-				TCP_KEEPALIVE = 0x10
-				connect._sock.setsockopt(socket.IPPROTO_TCP, TCP_KEEPALIVE, 3)
-			except:
-				pass
-			self._socketConnectList[connect._sock] = connect
-	def removeSocketConnectBySocket(self, sock):
-		if sock in self._socketConnectList:
-			del self._socketConnectList[sock]
-			
-	def removeSocketConnect(self, handler):
+			self._socketConnectList[connect._sock.fileno()] = connect
+			return True
+		return False
+	def removeSocketConnect(self, connect):
 		for k, v in self._socketConnectList.items():
-			if v == handler:
+			if v == connect:
 				del self._socketConnectList[k]
 				return True
 		return False
-	
-	def startUseEpoll(self):
-		epollor = None
-		try:
-			epollor = select.epoll()
-		except:
-			self.startWithKQueue()
-			return
-		socketList = {}
-		
-		def epollProxy(rlist, wlist, xlist, timeout):
-			for sock in xlist:
-				if not sock in socketList:
-					socketList[sock] = sock.fileno()
-					epollor.register(sock.fileno(),select.EPOLLIN)
-			
-			for sock in  sorted(socketList):
-				if sock not in xlist:
-					try:
-						epollor.unregister(sock.fileno())
-					except:
-						pass
-					del socketList[sock]
-				
-			s_readable = []
-			s_writable = []
-			s_writable.extend(x for x in wlist)
-			s_exceptional = []
-			for fd,event in epollor.poll(timeout):
-				sock = None
-				for _sock, _fd in socketList.items():
-					if fd == _fd:
-						sock = _sock
-						break
-				if not sock:
-					epollor.unregister(fd)
-					continue
-# 				if sock in s_writable:
-# 					s_writable.remove(sock)
-
-				if select.EPOLLIN & event:
-					s_readable.append(sock)
-				elif select.EPOLLOUT & event:
-					s_writable.append(sock)
-				elif select.EPOLLERR & event or select.EPOLLHUP & event:
-					s_exceptional.append(sock)
-					epollor.unregister(fd)
-					del socketList[sock]
-				else:
-					log.log(3,"unknow event",event) 
-			return s_readable, s_writable, s_exceptional
-		return self.start(poll=epollProxy)
-	def startWithKQueue(self):
-		try:
-			kq = select.kqueue()
-		except:
-			return self.start()
-		socketList = {}
-		
-		keventlist = None
-		def kqueueProxy(rlist, wlist, xlist, timeout):
-			global keventlist
-			for sock in xlist:
-				if not sock.fileno() in socketList:
-					socketList[sock.fileno()] = (sock,select.kevent(sock.fileno(), filter=select.KQ_FILTER_READ,
-												flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE))
-					keventlist = None
-			for fileno,data in sorted(socketList.items()):
-				if data[0] not in xlist:
-					del socketList[fileno]
-					keventlist = None
-			if keventlist is None:
-				keventlist = [v[1] for v in socketList.values()]
-			s_readable = []
-			s_writable = []
-			s_writable.extend(x for x in wlist)
-			s_exceptional = []
-			for event in kq.control(keventlist, 100, timeout):
-				if not event.ident in socketList:
-					continue
-				sock = socketList[event.ident][0]
-				if event.filter == select.KQ_FILTER_READ:
-					if event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
-						s_exceptional.append(sock)
-						if sock in socketList:
-							del socketList[sock]
-					else:
-						s_readable.append(sock)
-						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
-							log.log(3, "unknow flags", bin(event.flags))
-				else:
-					log.log(2,"unknow filter",event.filter)
-# 				if sock in s_writable:
-# 					s_writable.remove(sock)
-			return s_readable, s_writable, s_exceptional
-		self.start(poll=kqueueProxy)
-		
-	def start(self, poll=select.select):
-		while True:
-			rlist = [] + self.serverList
-			wlist = []
-			allList = [] + self.serverList
-			currentTime = time.time()
-			
-			for _, connect in self._socketConnectList.items():
-				allList.append(connect._sock)
-				if connect.info["lastAlive"] < currentTime - 1800:
-					connect.shutdown()
-					continue
-				if connect.pauseSendAndRecv():
-					continue
-				rlist.append(connect._sock)
-				if connect.getSendPending():
-					wlist.append(connect._sock)
-			try:
-				s_readable, s_writable, s_exceptional = poll(rlist, wlist, allList, 1 if len(wlist) == 0 else 0.00001)
-			except KeyboardInterrupt:
-				break
-			except:
-				time.sleep(1)
-				log.log(3)
-				continue;
-			for sock in s_readable:
-				if sock in self.serverList:
-					self.onConnect(sock)
-				else:
-					self.onSocketEvent(sock, sockConnect.socketEventCanRecv)
-			for sock in s_writable:
-				self.onSocketEvent(sock, sockConnect.socketEventCanSend)
-			for sock in s_exceptional:
-				self.onSocketEvent(sock, sockConnect.socketEventExcept)
-				
-			self._handlerCallback()
+	def onIOEventFlagsChanged(self, connect):
+		pass
+	def start(self):
+		raise "error"
 	def _handlerCallback(self):
 		cblist = self.callbackList
 		self.callbackList = []
@@ -487,20 +356,21 @@ class baseServer():
 					log.log(3, cbobj)
 			else:
 				self.callbackList.append(cbobj)
-# 	for  sock event
-	def onConnect(self, sock):
-		sock, address = sock.accept()
-		connect = self.handler(server=self)
-		connect._setConnect(sock, address)
-		log.log(2, connect, "*	connect")
-	def onSocketEvent(self, sock, event):
 		
-		if sock in self._socketConnectList:
-			connect = self._socketConnectList[sock]
+		currentTime = time.time()
+		for _, connect in self._socketConnectList.items():
+			if connect.info["lastAlive"] < currentTime - 1800:
+				connect.shutdown()
+				continue
+			
+# 	for  sock event
+	def onSocketEvent(self, sockfileno, event):
+		
+		if sockfileno in self._socketConnectList:
+			connect = self._socketConnectList[sockfileno]
 			connect.onSocketEvent(event)
-		elif sock:
-				sock.shutdown()
-				log.log(2,"sock not in self._socketConnectList:");
+		else:
+			log.log(2, "sock not in self._socketConnectList:", sockfileno);
 # other
 	def dumpConnects(self):
 		connects = {}
@@ -516,6 +386,140 @@ class baseServer():
 			l.sort(cmp=lambda x, y : cmp(y["send"] + y["recv"], x["send"] + x["recv"]))
 		
 		return {"connect":connects, "threads":sockConnect._connectPool.dump(), "currentTime":int(time.time())}
+
+class selectBaseServer(_baseServer):
+	def __init__(self):
+		_baseServer.__init__(self)
+		self.rlist = []
+		self.wlist = []
+		self.allList = [] 
+		
+	def start(self):
+		while True:
+			try:
+				s_readable, s_writable, s_exceptional = select.select(self.rlist, self.wlist, self.allList, 0.5)
+			except KeyboardInterrupt:
+				break
+			except:
+				time.sleep(1)
+				log.log(3)
+				continue;
+			for sock in s_readable:
+				self.onSocketEvent(sock.fileno(), sockConnect.socketEventCanRecv)
+			for sock in s_writable:
+				self.onSocketEvent(sock.fileno(), sockConnect.socketEventCanSend)
+			for sock in s_exceptional:
+				self.onSocketEvent(sock.fileno(), sockConnect.socketEventExcept)
+			self._handlerCallback()
+	def addSockConnect(self, connect):
+		res = _baseServer.addSockConnect(self, connect)
+		if res:
+			self.allList.append(connect._sock)
+		return res
+	def removeSocketConnect(self, connect):
+		res = _baseServer.removeSocketConnect(self, connect)
+		if res:
+			self.allList.remove(connect._sock)
+			connect.setIOEventFlags(0)
+		return res
+	def onIOEventFlagsChanged(self, connect):
+		if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead:
+			if not connect._sock in self.rlist:
+				self.rlist.append(connect._sock)
+		elif connect._sock in self.rlist:
+			del self.rlist[connect._sock]
+			
+		if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite:
+			if not connect._sock in self.rlist:
+				self.wlist.append(connect._sock)
+		elif connect._sock in self.rlist:
+			del self.wlist[connect._sock]
+
+class kqueueBaseServer(_baseServer):
+	def __init__(self):
+		_baseServer.__init__(self)
+		self.kq = select.kqueue()
+	def addSockConnect(self, connect):
+		res = _baseServer.addSockConnect(self, connect)
+		if res:
+			connect._ioEventFlags_keventSet = 0
+		return res
+	def removeSocketConnect(self, connect):
+		res = _baseServer.removeSocketConnect(self, connect)
+		if res:
+			connect.setIOEventFlags(0)
+		return res
+	def onIOEventFlagsChanged(self, connect):
+		changed = connect._ioEventFlags_keventSet ^ connect._ioEventFlags
+		if changed & sockConnect.socketIOEventFlagsRead:
+			flags = select.KQ_EV_ADD if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead else select.KQ_EV_DELETE
+			self.kq.control([select.kevent(connect._sock.fileno(), filter=select.KQ_FILTER_READ,
+												flags=flags)], 0)
+		if changed & sockConnect.socketIOEventFlagsWrite:
+			flags = select.KQ_EV_ADD if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite else select.KQ_EV_DELETE
+			self.kq.control([select.kevent(connect._sock.fileno(), filter=select.KQ_FILTER_WRITE,
+												flags=flags)], 0)
+		connect._ioEventFlags_keventSet =  connect._ioEventFlags
+		
+	def start(self):
+		while True:
+			for event in self.kq.control(None, 1024, 1):
+				if event.flags & select.KQ_EV_ERROR:
+					self.onSocketEvent(event.ident, sockConnect.socketEventExcept)
+				elif event.filter == select.KQ_FILTER_WRITE:
+					self.onSocketEvent(event.ident, sockConnect.socketEventCanSend)
+				elif event.filter == select.KQ_FILTER_READ:
+					self.onSocketEvent(event.ident, sockConnect.socketEventCanRecv)
+
+			self._handlerCallback()
+class epollBaseServer(_baseServer):
+	def __init__(self):
+		_baseServer.__init__(self)
+		self.epollor = select.epoll()
+	def addSockConnect(self, connect):
+		res = _baseServer.addSockConnect(self, connect)
+		if res:
+			connect.registerEpoll = False
+		return res
+	def removeSocketConnect(self, connect):
+		res = _baseServer.removeSocketConnect(self, connect)
+		if res:
+			connect.setIOEventFlags(0)
+		return res
+	def onIOEventFlagsChanged(self, connect):
+		if connect._ioEventFlags != sockConnect.socketIOEventFlagsNone:
+			eventmask = 0
+			if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead:
+				eventmask |= select.EPOLLIN
+			if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite:
+				eventmask |= select.EPOLLOUT
+			if connect.registerEpoll:
+				self.epollor.register(connect._sock.fileno(),eventmask)
+				connect.registerEpoll = True
+			else:
+				self.epollor.modify(connect._sock.fileno(),eventmask)
+		else:
+			self.epollor.unregister(connect._sock.fileno())
+			connect.registerEpoll = False
+		
+	def start(self):
+		while True:
+			for fd,event in self.epollor.poll():
+				if select.EPOLLIN & event:
+					self.onSocketEvent(fd, sockConnect.socketEventCanRecv)
+				elif select.EPOLLOUT & event:
+					self.onSocketEvent(fd, sockConnect.socketEventCanSend)
+				elif select.EPOLLERR & event or select.EPOLLHUP & event:
+					self.onSocketEvent(fd, sockConnect.socketEventExcept)
+				else:
+					log.log(3,"unknow event",event) 
+
+			self._handlerCallback()
+baseServer = _baseServer
+if "kqueue" in select.__dict__:
+	baseServer = kqueueBaseServer
+if "epoll" in select.__dict__:
+	baseServer = epollBaseServer
 
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)
