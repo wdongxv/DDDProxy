@@ -26,5 +26,5 @@ if __name__ == "__main__":
 	
 	server = baseServer(handler=remoteServerHandler.remoteServerHandler)
 	server.addListen(port=int(startUpArgs.port))
-	server.start()
+	server.startUseEpoll()
 	
