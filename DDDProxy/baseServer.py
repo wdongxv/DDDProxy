@@ -419,7 +419,6 @@ class baseServer():
 			s_writable = []
 			s_writable.extend(x for x in wlist)
 			s_exceptional = []
-			
 			for event in kq.control(keventlist, 100, timeout):
 				if not event.ident in socketList:
 					continue
@@ -434,7 +433,7 @@ class baseServer():
 						if event.flags != select.KQ_EV_ENABLE | select.KQ_EV_ADD:
 							log.log(3, "unknow flags", bin(event.flags))
 				else:
-					log.log(3,"unknow filter",event.filter)
+					log.log(2,"unknow filter",event.filter)
 # 				if sock in s_writable:
 # 					s_writable.remove(sock)
 			return s_readable, s_writable, s_exceptional
@@ -499,10 +498,9 @@ class baseServer():
 		if sock in self._socketConnectList:
 			connect = self._socketConnectList[sock]
 			connect.onSocketEvent(event)
-		else:
-			if sock:
+		elif sock:
 				sock.shut_down()
-			log.log(3,"sock not in self._socketConnectList:");
+				log.log(2,"sock not in self._socketConnectList:");
 # other
 	def dumpConnects(self):
 		connects = {}
