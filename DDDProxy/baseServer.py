@@ -400,27 +400,31 @@ class baseServer():
 		except:
 			return self.start()
 		socketList = {}
+		
+		keventlist = None
 		def kqueueProxy(rlist, wlist, xlist, timeout):
-			for s in xlist:
-				if not s in socketList:
-					socketList[s] = select.kevent(s.fileno(), filter=select.KQ_FILTER_READ,
-												flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE)
-			for sock in sorted(socketList):
-				if sock not in xlist:
-					del socketList[sock]
-				
+			global keventlist
+			for sock in xlist:
+				if not sock.fileno() in socketList:
+					socketList[sock.fileno()] = (sock,select.kevent(sock.fileno(), filter=select.KQ_FILTER_READ,
+												flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE))
+					keventlist = None
+			for fileno,data in sorted(socketList.items()):
+				if data[0] not in xlist:
+					del socketList[fileno]
+					keventlist = None
+			if keventlist is None:
+				keventlist = [v[1] for v in socketList.values()]
 			s_readable = []
 			s_writable = []
 			s_writable.extend(x for x in wlist)
 			s_exceptional = []
-			for event in kq.control(socketList.values(), 100, timeout):
-				sock = None
-				for s, e in socketList.items():
-					if e.ident == event.ident:
-						sock = s
-						break
+			
+			for event in kq.control(keventlist, 100, timeout):
+				if not event.ident in socketList:
+					continue
+				sock = socketList[event.ident][0]
 				if event.filter == select.KQ_FILTER_READ:
-					
 					if event.flags & select.KQ_EV_ERROR or event.flags & select.KQ_EV_EOF:
 						s_exceptional.append(sock)
 						if sock in socketList:
@@ -471,17 +475,19 @@ class baseServer():
 			for sock in s_exceptional:
 				self.onSocketEvent(sock, sockConnect.socketEventExcept)
 				
-			cblist = self.callbackList
-			self.callbackList = []
-			currentTime = time.time()
-			for cbobj in cblist:
-				if cbobj[1] <= currentTime:
-					try:
-						cbobj[0](*cbobj[2], **cbobj[3])
-					except:
-						log.log(3, cbobj)
-				else:
-					self.callbackList.append(cbobj)
+			self._handlerCallback()
+	def _handlerCallback(self):
+		cblist = self.callbackList
+		self.callbackList = []
+		currentTime = time.time()
+		for cbobj in cblist:
+			if cbobj[1] <= currentTime:
+				try:
+					cbobj[0](*cbobj[2], **cbobj[3])
+				except:
+					log.log(3, cbobj)
+			else:
+				self.callbackList.append(cbobj)
 # 	for  sock event
 	def onConnect(self, sock):
 		sock, address = sock.accept()
@@ -495,7 +501,7 @@ class baseServer():
 			connect.onSocketEvent(event)
 		else:
 			if sock:
-				sock.close()
+				sock.shut_down()
 			log.log(3,"sock not in self._socketConnectList:");
 # other
 	def dumpConnects(self):
