@@ -8,9 +8,10 @@ class httpMessageParser():
 		
 	def clear(self):
 		self.messageCache = ""
-		self.protocol = None#(method, path, protocol)
+		self.protocol = None  # (method, path, protocol)
 		self.headers = []
-		self.status	= "readding"
+		self.status	 = "readding"
+		self.readingBodyLength = 0
 	def method(self):
 		return self.protocol[0]
 	def path(self):
@@ -21,9 +22,9 @@ class httpMessageParser():
 	def HeaderString(self):
 		message = ""
 		for line in self.headers:
-			message += "%s: %s\r\n"%(line[0],line[1])
+			message += "%s: %s\r\n" % (line[0], line[1])
 		return message
-	def getHeader(self,key):
+	def getHeader(self, key):
 		k = key.lower()
 		for h in self.headers:
 			if h[0].lower() == k:
@@ -33,12 +34,19 @@ class httpMessageParser():
 		return self.messageCache
 	def connection(self):
 		connection = self.getHeader("connection")
-		return "keep-alive" if (connection and connection.lower() =="keep-alive") else "close"
+		return "keep-alive" if (connection and connection.lower() == "keep-alive") else "close"
+	def headerOk(self):
+		return self.status == "end" or self.status == "bodyReadding" 
+	def readingBody(self):
+		m = self.messageCache
+		self.readingBodyLength += len(m)
+		self.messageCache = ""
+		return m
 	def appendData(self, data):
 		if self.status == "bodyReadding":
 			self.messageCache += data
 			length = self.getHeader("content-length")
-			if  length <= len(self.messageCache):
+			if  length <= len(self.messageCache) + self.readingBodyLength:
 				self.status = "end"
 				return True
 			return False
@@ -48,11 +56,11 @@ class httpMessageParser():
 		self.messageCache += data
 		while True:
 			index = self.messageCache.find("\r\n")
-			if index <0 :
+			if index < 0 :
 				return False
 			
 			line = self.messageCache[:index]
-			self.messageCache = self.messageCache[index+2:]
+			self.messageCache = self.messageCache[index + 2:]
 			if self.protocol:
 				if index == 0:
 					if self.method() == "POST":
@@ -60,9 +68,9 @@ class httpMessageParser():
 						return self.appendData("")
 					self.status = "end"
 					return True
-				header = line.split(": ",1)
-				if(len(header)==2):
-					self.headers.append((header[0],header[1]))
+				header = line.split(": ", 1)
+				if(len(header) == 2):
+					self.headers.append((header[0], header[1]))
 				else:
 					self.clear()
 					self.status = "error"

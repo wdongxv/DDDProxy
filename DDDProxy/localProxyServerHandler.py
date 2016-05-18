@@ -68,29 +68,32 @@ class localConnectHandler(localSymmetryConnect):
 				self.setToProxyMode()
 				self.socksMode = True
 			pass
-		elif self.httpMessageParse.appendData(data):
-			method = self.httpMessageParse.method()
-			path = self.httpMessageParse.path()
-			self.connectName = self.filenoStr() + "	" + method + "	" + path
-			if not path.startswith("http://") and method in ["GET", "POST"]:
-				path = path.split("?")
-				self.onHTTP(self.httpMessageParse.headers,
-						method,
-						path[0],
-						path[1] if len(path) > 1 else "",
-						self.httpMessageParse.getBody() if method == "POST" else "")
-				self.mode = "http"
-			else:
-				host = None
-				port = None
-				if path.find("status.dddproxy.com") > 0:
-					jsonMessage = self.httpMessageParse.getBody()
-					jsonBody = json.loads(jsonMessage)
-					host = jsonBody["host"]
-					port = jsonBody["port"]
-				if self.setToProxyMode(host=host, port=port):
-					self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
-					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
+		else:
+			httpmessagedone = self.httpMessageParse.appendData(data)
+			if self.httpMessageParse.headerOk():
+				method = self.httpMessageParse.method()
+				path = self.httpMessageParse.path()
+				self.connectName = self.filenoStr() + "	" + method + "	" + path
+				if not path.startswith("http://") and method in ["GET", "POST"]:
+					if httpmessagedone:
+						path = path.split("?")
+						self.onHTTP(self.httpMessageParse.headers,
+								method,
+								path[0],
+								path[1] if len(path) > 1 else "",
+								self.httpMessageParse.getBody() if method == "POST" else "")
+						self.mode = "http"
+				else:
+					host = None
+					port = None
+					if path.find("status.dddproxy.com") > 0:
+						jsonMessage = self.httpMessageParse.getBody()
+						jsonBody = json.loads(jsonMessage)
+						host = jsonBody["host"]
+						port = jsonBody["port"]
+					if self.setToProxyMode(host=host, port=port):
+						self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
+						analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 	def setToProxyMode(self, host=None, port=None):
 		if self.mode == "proxy":
 			return

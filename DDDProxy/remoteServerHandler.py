@@ -101,40 +101,46 @@ class realServerConnect(symmetryConnect):
 			else:
 				self.sendDataToSymmetryConnect(b'\x04\x91')
 				self.close()
-		elif self.messageParse.appendData(data):
-			method = self.messageParse.method()
-			path = self.messageParse.path()
-			connectOk = None
-			if method == "CONNECT":
-				path = "https://" + path
-				def _connectOk(ok):
-					self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
-				connectOk = _connectOk
-				self.proxyMode = True
-			addr, port = parserUrlAddrPort(path)
-			if addr.find("status.dddproxy.com") > 0:
-				path = path.split("?")
-				self.onHTTP(method)
-			elif addr in ["127.0.0.1", "localhost"]:
-				self.server.addCallback(self.onClose)
-			else:
-				if method != "CONNECT":
-					m = re.search("^(?:(?:http)://[^/]+)(.*)$", path)
-					if m:
-						dataCache = "%s %s %s\r\n" % (method, m.group(1), self.messageParse.httpVersion())
-						dataCache += self.messageParse.HeaderString() + "\r\n"
-						dataCache += self.messageParse.getBody()
-						self.send(dataCache)
-					else:
-						self.close()
-						
-					self.connectName = "	<	" + self.filenoStr() + " " + self.messageParse.method() + " " + self.messageParse.path()					
-					self.messageParse.clear()
-# 					print addr,port,dataCache
-				if self.connectStatus() == 0:
-					self.connect((addr, port), cb=connectOk)
+		else:
+			httpmessagedone = self.messageParse.appendData(data)
+			if self.messageParse.headerOk():
+				method = self.messageParse.method()
+				path = self.messageParse.path()
+				connectOk = None
+				if method == "CONNECT":
+					path = "https://" + path
+					def _connectOk(ok):
+						self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
+					connectOk = _connectOk
+					self.proxyMode = True
+				addr, port = parserUrlAddrPort(path)
+				if addr.find("status.dddproxy.com") > 0:
+					path = path.split("?")
+					if httpmessagedone:
+						self.onHTTP(method)
+				elif addr in ["127.0.0.1", "localhost"]:
+					self.server.addCallback(self.onClose)
+				else:
+					if self.connectStatus() == 0:
+						if method != "CONNECT":
+							m = re.search("^(?:(?:http)://[^/]+)(.*)$", path)
+							if m:
+								def _connectOk(ok):
+									dataCache = "%s %s %s\r\n" % (method, m.group(1), self.messageParse.httpVersion())
+									dataCache += self.messageParse.HeaderString() + "\r\n"
+									dataCache += self.messageParse.readingBody()
+									self.send(dataCache)
+								connectOk = _connectOk
+							else:
+								self.close()
+								
+							self.connectName = "	<	" + self.filenoStr() + " " + self.messageParse.method() + " " + self.messageParse.path()					
+						self.connect((addr, port), cb=connectOk)
+					elif self.connectStatus() == 1:
+						self.send(self.messageParse.readingBody())
+						if httpmessagedone:
+							self.messageParse.clear()
 
-	
 class remoteServerHandler(symmetryConnectServerHandler):
 	
 	def __init__(self, *args, **kwargs):

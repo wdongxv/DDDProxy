@@ -75,20 +75,24 @@ class symmetryConnect(sockConnect):
 			return
 		optData = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt)
 		if type(optData) != str:
-			log.log(3,"data not is str")
+			raise "data not is str"
 		self._symmetryConnectSendPendingCache.append(optData)
+		self.requestSymmetryConnectManagerWrite()
 	def sendDataToSymmetryConnect(self,data):
 		if self._requestRemove:
 			return
-		
-			
 		if type(data) != str:
-			log.log(2,"data not is str")
+			raise "data not is str"
 		for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
 			if type(part) != str:
-				log.log(2,"part not is str")
+				raise  "part not is str"
 			self._symmetryConnectSendPendingCache.append(part)
-
+		self.requestSymmetryConnectManagerWrite()
+	def requestSymmetryConnectManagerWrite(self):
+		if not self.symmetryConnectManager:
+			pass
+		else:
+			self.symmetryConnectManager.send("")
 #--------------- for symmetryConnectServerHandler
 	def symmetryConnectSendPending(self):
 		return len(self._symmetryConnectSendPendingCache)
@@ -107,18 +111,24 @@ class symmetryConnectServerHandler(sockConnect):
 		self._symmetryConnectMessageBuffer = ""
 		self.symmetryConnectIdLoop = 0
 	
-	def getSendPending(self):
-		if sockConnect.getSendPending(self) < socketBufferMaxLenght:
+	def onSend(self, data):
+		sockConnect.onSend(self, data)
+	def getSendData(self, length):
+		while sockConnect.getSendPending(self) <= socketBufferMaxLenght*2:
+			found = False
 			for symmetryConnectId,v in self.symmetryConnectList.items():
 				if v.symmetryConnectSendPending():
 					data = v.getSymmetryConnectSendData()
-					self.send(data)
+					found = True
+					try:
+						self.send(data)
+					except:
+						raise data,"is generator??"
 				elif v.requestRemove():
 					del self.symmetryConnectList[symmetryConnectId]
-					
-		return sockConnect.getSendPending(self)
-	def onSend(self, data):
-		sockConnect.onSend(self, data)
+			if not found:
+				break
+		return sockConnect.getSendData(self, length)
 # 		print "<onSend  ------\n",data,"\n--------->"
 
 # -------------  
@@ -141,8 +151,10 @@ class symmetryConnectServerHandler(sockConnect):
 	def dataChunk(symmetryConnectId,data):
 		l = len(data)
 		if l > 32767:  #分块
-			yield symmetryConnectServerHandler.dataChunk(symmetryConnectId, data[:32767])
-			yield symmetryConnectServerHandler.dataChunk(symmetryConnectId, data[32767:])
+			for d in symmetryConnectServerHandler.dataChunk(symmetryConnectId, data[:32767]):
+				yield d
+			for d in symmetryConnectServerHandler.dataChunk(symmetryConnectId, data[32767:]):
+				yield d
 		else:
 			yield struct.pack("i", symmetryConnectId)+struct.pack("h", l) +data+"\n"
 	

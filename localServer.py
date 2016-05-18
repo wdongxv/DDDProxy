@@ -19,7 +19,7 @@ if __name__ == "__main__":
 	parser.add_option("-p", "--port",help="proxy server bind port" , default=8080)
 	parser.add_option("-l", "--loglevel",help="log level" , default=2)
 	parser.add_option("-c", "--RemoteConnectLimit",help="one remote address connect limit" , default=2)
-	parser.add_option("-m", "--remoteConnectMaxTime",help="set remote connect idle more connect max time" , default=0)
+	parser.add_option("-m", "--remoteConnectMaxTime",help="set remote connect idle more connect max time" , default=1800)
 	parser.add_option("-u", "--update",help="auto update on start" , default=True)
 	
 	startUpArgs = parser.parse_args()[0]
