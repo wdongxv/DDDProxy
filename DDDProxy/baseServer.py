@@ -200,9 +200,10 @@ class sockConnect(object):
 	def shutdown(self):
 		if self.server.removeSocketConnect(self):
 			try:
-				_sock.close()
+				self._sock.close()
 			except:
 				pass
+			self._sock = None
 			self.server.addCallback(self.onClose)
 		
 # 		self.close()
