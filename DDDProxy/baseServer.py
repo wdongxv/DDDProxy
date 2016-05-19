@@ -515,7 +515,7 @@ class epollBaseServer(_baseServer):
 		return res
 	def onIOEventFlagsChanged(self, connect):
 		if connect._ioEventFlags != sockConnect.socketIOEventFlagsNone:
-			eventmask = 0
+			eventmask = select.EPOLLERR | select.EPOLLHUP
 			if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead:
 				eventmask |= select.EPOLLIN
 			if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite:
