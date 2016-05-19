@@ -51,7 +51,7 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps(data))
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
-
+		localToRemoteConnectManger.manager.onConnectClose(self)
 class localToRemoteConnectManger():
 	"""
 	"""

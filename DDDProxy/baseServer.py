@@ -393,7 +393,7 @@ class _baseServer():
 			connect = handler.address[0]
 			if not connect in connects:
 				connects[connect] = []
-			info = {"name":str(handler) + str(handler._ioEventFlags)}
+			info = {"name":str(handler)}
 			info.update(handler.info)
 			connects[connect].append(info)
 		

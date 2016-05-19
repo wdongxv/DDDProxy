@@ -67,7 +67,6 @@ class symmetryConnect(sockConnect):
 			self.setIOEventFlags(flags)
 		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
 			self.shutdown()
-			self.onClose()
 			log.log(2,self,"<<< optCloseForceSymmetryConnect, close")
 		
 	def sendOptToSymmetryConnect(self,opt):
