@@ -70,6 +70,9 @@ class sockConnect(object):
 	def onClose(self):
 		pass
 	def setIOEventFlags(self, flags):
+		if not self._sock:
+			return
+
 		if flags == sockConnect.socketIOEventFlagsWrite:
 			pass
 		if self._ioEventFlags != flags:
@@ -465,8 +468,6 @@ class kqueueBaseServer(_baseServer):
 			connect.setIOEventFlags(0)
 		return res
 	def onIOEventFlagsChanged(self, connect):
-		if not connect._sock:
-			return
 		fileno = connect._sock.fileno()
 		changed = connect._ioEventFlags_keventSet ^ connect._ioEventFlags
 		if changed & sockConnect.socketIOEventFlagsRead:
@@ -528,7 +529,7 @@ class epollBaseServer(_baseServer):
 				eventmask |= select.EPOLLIN
 			if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite:
 				eventmask |= select.EPOLLOUT
-			if connect.registerEpoll:
+			if not connect.registerEpoll:
 				self.epollor.register(connect._sock.fileno(), eventmask)
 				connect.registerEpoll = True
 			else:
@@ -539,7 +540,8 @@ class epollBaseServer(_baseServer):
 		
 	def start(self):
 		while True:
-			for fd, event in self.epollor.poll():
+			eventList = self.epollor.poll(1,1000)
+			for fd, event in eventList:
 				if select.EPOLLIN & event:
 					self.onSocketEvent(fd, sockConnect.socketEventCanRecv)
 				elif select.EPOLLOUT & event:
