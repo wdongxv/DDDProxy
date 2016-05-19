@@ -353,6 +353,7 @@ class _baseServer():
 	def removeSocketConnect(self, connect):
 		for k, v in self._socketConnectList.items():
 			if v == connect:
+				connect.setIOEventFlags(0)
 				del self._socketConnectList[k]
 				return True
 		return False
@@ -439,7 +440,6 @@ class selectBaseServer(_baseServer):
 		res = _baseServer.removeSocketConnect(self, connect)
 		if res:
 			self.allList.remove(connect._sock)
-			connect.setIOEventFlags(0)
 		return res
 	def onIOEventFlagsChanged(self, connect):
 		if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead:
@@ -462,11 +462,6 @@ class kqueueBaseServer(_baseServer):
 		res = _baseServer.addSockConnect(self, connect)
 		if res:
 			connect._ioEventFlags_keventSet = 0
-		return res
-	def removeSocketConnect(self, connect):
-		res = _baseServer.removeSocketConnect(self, connect)
-		if res:
-			connect.setIOEventFlags(0)
 		return res
 	def onIOEventFlagsChanged(self, connect):
 		fileno = connect._sock.fileno()
@@ -517,11 +512,6 @@ class epollBaseServer(_baseServer):
 		res = _baseServer.addSockConnect(self, connect)
 		if res:
 			connect.registerEpoll = False
-		return res
-	def removeSocketConnect(self, connect):
-		res = _baseServer.removeSocketConnect(self, connect)
-		if res:
-			connect.setIOEventFlags(0)
 		return res
 	def onIOEventFlagsChanged(self, connect):
 		if connect._ioEventFlags != sockConnect.socketIOEventFlagsNone:
