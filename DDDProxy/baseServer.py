@@ -182,7 +182,7 @@ class sockConnect(object):
 		if self.connectStatus():
 			raise Exception(self, "connect status is", self.connectStatus())
 		self._connecting = True
-		address = address
+		self.address = address
 		sockConnect._connectPool.apply_async(self._doConnectSock, address, useSsl, cb)
 	def send(self, data):
 		if self._requsetClose:
