@@ -499,7 +499,7 @@ class baseServer():
 			connect = self._socketConnectList[sock]
 			connect.onSocketEvent(event)
 		elif sock:
-				sock.shutdown(0)
+				sock.close()
 				log.log(2,"sock not in self._socketConnectList:");
 # other
 	def dumpConnects(self):
