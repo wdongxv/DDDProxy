@@ -446,14 +446,13 @@ class selectBaseServer(_baseServer):
 			if not connect._sock in self.rlist:
 				self.rlist.append(connect._sock)
 		elif connect._sock in self.rlist:
-			del self.rlist[connect._sock]
+			self.rlist.remove(connect._sock)
 			
 		if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite:
-			if not connect._sock in self.rlist:
+			if not connect._sock in self.wlist:
 				self.wlist.append(connect._sock)
-		elif connect._sock in self.rlist:
-			del self.wlist[connect._sock]
-
+		elif connect._sock in self.wlist:
+			self.wlist.remove(connect._sock)
 class kqueueBaseServer(_baseServer):
 	def __init__(self):
 		_baseServer.__init__(self)
@@ -543,7 +542,8 @@ class epollBaseServer(_baseServer):
 					log.log(3, "unknow event", event) 
 
 			self._handlerCallback()
-baseServer = _baseServer
+
+baseServer = selectBaseServer
 # if "kqueue" in select.__dict__:
 # 	baseServer = kqueueBaseServer
 if "epoll" in select.__dict__:
