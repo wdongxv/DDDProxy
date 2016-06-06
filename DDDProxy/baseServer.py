@@ -544,8 +544,8 @@ class epollBaseServer(_baseServer):
 
 			self._handlerCallback()
 baseServer = _baseServer
-if "kqueue" in select.__dict__:
-	baseServer = kqueueBaseServer
+# if "kqueue" in select.__dict__:
+# 	baseServer = kqueueBaseServer
 if "epoll" in select.__dict__:
 	baseServer = epollBaseServer
 

@@ -36,17 +36,14 @@ class localConnectHandler(localSymmetryConnect):
 				_d = self.preConnectRecvCache
 				port = 0
 				version = "Socks5"
-				setConnectHost = False
 				if(_d[0] == "\x05"):
 					if _d[3] == '\x01':
 						self.connectHost = "%d.%d.%d.%d" % (ord(_d[4]), ord(_d[5]), ord(_d[6]), ord(_d[7]))
 						port = ord(_d[8]) * 0x100 + ord(_d[9])
-						setConnectHost = True
 					elif _d[3] == "\x03":
 						hostendindex = 5 + ord(_d[4])
 						self.connectHost = _d[5:hostendindex]
 						port = ord(_d[hostendindex]) * 0x100 + ord(_d[hostendindex + 1])
-						setConnectHost = True
 				elif _d[0] == "\x04":
 					if _d[1] == '\x01' or _d[1] == '\x02':
 						self.connectHost = "%d.%d.%d.%d" % (ord(_d[4]), ord(_d[5]), ord(_d[6]), ord(_d[7]))
@@ -55,10 +52,7 @@ class localConnectHandler(localSymmetryConnect):
 							splits = _d[8:].split("\x00")
 							self.connectHost = splits[-2]
 							version = "Socks4a"
-						setConnectHost = True
 						port = ord(_d[2]) * 0x100 + ord(_d[3])
-				if setConnectHost:
-					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + " " + version + " " + self.connectHost + ":%d" % (port) 
 				
 			if self.serverAuthPass and self.preConnectRecvCache:
