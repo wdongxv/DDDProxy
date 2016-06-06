@@ -213,7 +213,6 @@ class localConnectHandler(localSymmetryConnect):
 				path = "/index.html"
 			content = self.getFileContent(dirname(__file__) + "/template" + path)
 			if content and path.find("..") == -1:
-				
 				self.reseponse(content, ContentType=get_mime_type(path), connection=self.httpMessageParse.connection())
 			else:
 				self.reseponse("\"" + path + "\" not found", code=404, connection=self.httpMessageParse.connection())

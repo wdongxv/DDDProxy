@@ -199,13 +199,15 @@ class sockConnect(object):
 	
 	def shutdown(self):
 		if self.server.removeSocketConnect(self):
-			try:
-				self._sock.close()
-			except:
-				pass
+			sock = self._sock 
+			def close():
+				try:
+					sock.close()
+				except:
+					pass
+				self.server.addCallback(self.onClose)
 			self._sock = None
-			self.server.addCallback(self.onClose)
-		
+			self.server.addDelay(1, close)
 # 		self.close()
 # 	for server
 
