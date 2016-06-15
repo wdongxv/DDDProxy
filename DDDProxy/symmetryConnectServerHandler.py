@@ -80,7 +80,7 @@ class symmetryConnect(sockConnect):
 				self._symmetryConnectSendPendingCache.append(part)
 				
 			self._symmetryPingLenght += len(data)
-			if(self._symmetryPingLenght>1024*500):
+			if(self._symmetryPingLenght>1024*50):
 				self._symmetryPingLenght = 0
 				self.setIOEventFlags(sockConnect.socketIOEventFlagsNone)
 				self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
@@ -128,9 +128,10 @@ class symmetryConnectServerHandler(sockConnect):
 			if not found:
 				break
 			
-		return sockConnect.getSendData(self, length)
-# 		print "<onSend  ------\n",data,"\n--------->"
-
+		data = sockConnect.getSendData(self, length)
+		if not data:
+			print "<onSend  ------\n",data,"\n--------->"
+		return data
 # -------------  
 
 	def onServerToServerMessage(self,serverMessage):

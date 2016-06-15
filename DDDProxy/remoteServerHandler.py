@@ -29,7 +29,8 @@ class realServerConnect(symmetryConnect):
 # 	def onConnected(self):
 # 		sockConnect.onConnected(self)
 
-		
+	def onSend(self, data):
+		symmetryConnect.onSend(self, data)		
 	def onHTTP(self, method):
 		try:
 			if method == "POST":
