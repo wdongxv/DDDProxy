@@ -40,12 +40,6 @@ class symmetryConnect(sockConnect):
 		sockConnect.onRecv(self, data)
 		self.sendDataToSymmetryConnect(data)
 		
-		self._symmetryPingLenght += len(data)
-		if(self._symmetryPingLenght>1024*1024*4):
-			self._symmetryPingLenght = 0
-			self.setIOEventFlags(sockConnect.socketIOEventFlagsNone)
-			self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
-		
 	def onClose(self):
 		self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
 		self._requestRemove = True
@@ -73,23 +67,31 @@ class symmetryConnect(sockConnect):
 		if not self._requestRemove:
 			optData = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt)
 			if type(optData) != str:
-				raise "data not is str"
+				raise Exception("data not is str")
 			self._symmetryConnectSendPendingCache.append(optData)
 		self.requestSymmetryConnectManagerWrite()
 	def sendDataToSymmetryConnect(self,data):
 		if not self._requestRemove:
 			if type(data) != str:
-				raise "data not is str"
+				raise Exception("data not is str")
 			for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
 				if type(part) != str:
-					raise  "part not is str"
+					raise  Exception("part not is str")
 				self._symmetryConnectSendPendingCache.append(part)
+				
+			self._symmetryPingLenght += len(data)
+			if(self._symmetryPingLenght>1024*500):
+				self._symmetryPingLenght = 0
+				self.setIOEventFlags(sockConnect.socketIOEventFlagsNone)
+				self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
+				
 		self.requestSymmetryConnectManagerWrite()
 	def requestSymmetryConnectManagerWrite(self):
-		if not self.symmetryConnectManager:
-			pass
-		else:
-			self.symmetryConnectManager.send("")
+		if self.symmetryConnectSendPending():
+			if not self.symmetryConnectManager:
+				pass
+			else:
+				self.symmetryConnectManager.send("")
 #--------------- for symmetryConnectServerHandler
 	def symmetryConnectSendPending(self):
 		return len(self._symmetryConnectSendPendingCache)
@@ -125,6 +127,7 @@ class symmetryConnectServerHandler(sockConnect):
 					del self.symmetryConnectList[symmetryConnectId]
 			if not found:
 				break
+			
 		return sockConnect.getSendData(self, length)
 # 		print "<onSend  ------\n",data,"\n--------->"
 

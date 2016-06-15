@@ -35,8 +35,7 @@ function IntToDataCount(dataCount, jinzhi) {
 	var units = [ "B", "K", "M", "G", "T" ];
 	var list = ("" + dataCount).split(".")
 
-	return (list.length > 1 ? (list[0] + '.' + list[1].substr(0, 1)) : list[0])
-			+ units[unit];
+	return dataCount.toFixed(1) + units[unit];
 }
 
 function dumpdataParse(data) {
@@ -50,10 +49,8 @@ function dumpdataParse(data) {
 		html += "<div class='client'>";
 		for (var j = 0; j < threads.length; j++) {
 			var thread = threads[j]
-			html += "<div class='connect'>"
-					+ "<span class='connectInfo'>" + thread.name + " "
-					+ (data.currentTime - thread.startTime) + "s</span>"
-					+ "</div>"
+			html += "<div class='connect'>" + "<span class='connectInfo'>" + thread.name + " "
+					+ (data.currentTime - thread.startTime) + "s</span>" + "</div>"
 		}
 		html += "</div>"
 	}
@@ -62,25 +59,21 @@ function dumpdataParse(data) {
 		allKey.push(i)
 	}
 	allKey.sort()
-	
-	for ( var i = 0;i<allKey.length;i++) {
+
+	for (var i = 0; i < allKey.length; i++) {
 		var remoteConnectList = connectList[allKey[i]];
 		var clientConectHtml = ""
 		for (var j = 0; j < remoteConnectList.length; j++) {
 			var connect = remoteConnectList[j]
-			clientConectHtml += "<div class='connect'>"
-					+ "<span class='send'>↾" + IntToDataCount(connect.send)
-					+ "</span>" + "<span class='recv'>⇃"
-					+ IntToDataCount(connect.recv) + "</span>"
-					+ "<span class='connectInfo'>" + connect.name + " "
-					+ (data.currentTime - connect.lastAlive) + "s</span>"
-					+ "</div>"
+			clientConectHtml += "<div class='connect'>" + "<span class='send'>↾" + IntToDataCount(connect.send)
+					+ "</span>" + "<span class='recv'>⇃" + IntToDataCount(connect.recv) + "</span>"
+					+ "<span class='connectInfo'>" + connect.name + " " + (data.currentTime - connect.lastAlive)
+					+ "s</span>" + "</div>"
 		}
 
 		connectCount += remoteConnectList.length
 
-		html += "<div class='clientAddr'>" + allKey[i] + " count("
-				+ remoteConnectList.length + ")</div>"
+		html += "<div class='clientAddr'>" + allKey[i] + " count(" + remoteConnectList.length + ")</div>"
 		html += "<div class='client'>";
 		html += clientConectHtml
 		html += "</div>"
