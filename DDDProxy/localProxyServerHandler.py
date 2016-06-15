@@ -68,12 +68,13 @@ class localConnectHandler(localSymmetryConnect):
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
 				self.preConnectRecvCache = ""
 			return
-# 		print "local >> ", len(data), binascii.b2a_hex(data)
 		if data[0] == '\x05' or data[0] == '\x04':  # socks5
 			if data[1] == '\x02' or data[1] == '\x01':
 				self.setToProxyMode()
 				self.socksMode = True
-			pass
+			else:
+				print "local >> ", len(data), binascii.b2a_hex(data)
+				pass
 		else:
 			httpmessagedone = self.httpMessageParse.appendData(data)
 			if self.httpMessageParse.headerOk():
