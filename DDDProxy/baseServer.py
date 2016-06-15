@@ -548,8 +548,8 @@ class epollBaseServer(_baseServer):
 baseServer = selectBaseServer
 # if "kqueue" in select.__dict__:
 # 	baseServer = kqueueBaseServer
-if "epoll" in select.__dict__:
-	baseServer = epollBaseServer
+# if "epoll" in select.__dict__:
+# 	baseServer = epollBaseServer
 
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)
