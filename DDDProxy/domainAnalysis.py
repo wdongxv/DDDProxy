@@ -159,6 +159,6 @@ class domainAnalysis():
 
 		except:
 			log.log(3,"analysis error!")
-		server.addDelay(5, analysis.analysisThread,server)
+		server.addDelay(10, analysis.analysisThread,server)
 		
 analysis = domainAnalysis()

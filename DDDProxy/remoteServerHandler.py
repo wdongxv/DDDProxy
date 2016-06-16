@@ -1,23 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import hashlib
+import json
 import os
+import re
+import socket
 import ssl
 import struct
 import time
 
-from configFile import configFile
-from baseServer import sockConnect
-from hostParser import parserUrlAddrPort
-from socetMessageParser import httpMessageParser
 from DDDProxy import log
 from DDDProxy.symmetryConnectServerHandler import symmetryConnectServerHandler, \
 	symmetryConnect
-import json
-import urlparse
-import re
-import binascii
-import socket
+from baseServer import sockConnect
+from configFile import configFile
+from hostParser import parserUrlAddrPort
+from socetMessageParser import httpMessageParser
+
 
 remoteAuth = ""
 
@@ -176,9 +174,12 @@ class remoteServerHandler(symmetryConnectServerHandler):
 			if time.time() - 1800 < timenum and time.time() + 1800 > timenum and self.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
 				self.authPass = True
 				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth", "status":"ok"}))
+				self.sendPingSpeedResponse()
 			else:
 				log.log(2, "auth failed", serverMessage, self.authMake(remoteAuth, timenum))
 				self.close()
+		else:
+			symmetryConnectServerHandler.onServerToServerMessage(self,serverMessage)
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert")

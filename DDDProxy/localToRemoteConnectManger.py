@@ -37,9 +37,11 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 				self.authCallbackList = []
 				self.authPass = True
 				self.connectName = "[remote:" + str(self.fileno()) + "]	" + self.address[0]
-				
+				self.sendPingSpeedResponse()
 			else:
 				self.close()
+		else:
+			symmetryConnectServerHandler.onServerToServerMessage(self,serverMessage)
 	def addLocalRealConnect(self, connect):
 		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
 		if self.authPass:
