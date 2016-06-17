@@ -327,7 +327,13 @@ class _baseServer():
 		self.callbackList.append((cb, 0, args, kwargs))
 	def addDelay(self, delay, cb, *args, **kwargs):
 		self.callbackList.append((cb, delay + time.time(), args, kwargs))
-		
+	def cancelCallback(self,cb):
+		i = len(self.callbackList) - 1
+		while i >= 0:
+			c = self.callbackList[i][0]
+			if c == cb:
+				del self.callbackList[i]
+			i -= 1
 	def addListen(self, handler, port, host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
 		log.log(1, "run in ", host, ":", port)
@@ -364,17 +370,20 @@ class _baseServer():
 	def start(self):
 		raise "error"
 	def _handlerCallback(self):
-		cblist = self.callbackList
-		self.callbackList = []
 		currentTime = time.time()
-		for cbobj in cblist:
+		cblist = []
+		cbDelaylist = []
+		for cbobj in self.callbackList:
 			if cbobj[1] <= currentTime:
-				try:
-					cbobj[0](*cbobj[2], **cbobj[3])
-				except:
-					log.log(3, cbobj)
+				cblist.append(cbobj)
 			else:
-				self.callbackList.append(cbobj)
+				cbDelaylist.append(cbobj)
+		self.callbackList = cbDelaylist
+		for cbobj in cblist:
+			try:
+				cbobj[0](*cbobj[2], **cbobj[3])
+			except:
+				log.log(3, cbobj)
 		
 		currentTime = time.time()
 		for _, connect in self._socketConnectList.items():

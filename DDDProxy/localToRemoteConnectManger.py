@@ -86,7 +86,9 @@ class localToRemoteConnectManger():
 				connect = None
 				if index in connectList:
 					connect = connectList[index]
-					if (not connect.connectStatus()) or (connect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time()):
+					if ((not connect.connectStatus()) 
+						or (connect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time()) 
+						or connect.slowConnectStatus):
 						connect = None
 				if not connect:
 					connect = remoteServerConnecter(self.server)
