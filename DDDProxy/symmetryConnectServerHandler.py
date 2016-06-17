@@ -127,6 +127,9 @@ class symmetryConnectServerHandler(sockConnect):
 						raise Exception(data, "is generator??")
 				elif v.requestRemove():
 					del self.symmetryConnectList[symmetryConnectId]
+					if len(self.symmetryConnectList) == 0:
+						self.server.addDelay(30, self.requestIdleClose)
+						
 			if not found:
 				break
 			
@@ -134,7 +137,10 @@ class symmetryConnectServerHandler(sockConnect):
 		if not data:
 			print "<onSend  ------\n", data, "\n--------->"
 		return data
-
+	def requestIdleClose(self):
+		if len(self.symmetryConnectList) == 0:
+			self.close()
+			
 	def onServerToServerMessage(self, serverMessage):
 		opt = serverMessage["opt"] if "opt" in  serverMessage else ""
 		if opt == "pingSpeed":
