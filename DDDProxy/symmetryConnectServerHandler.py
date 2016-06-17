@@ -150,7 +150,7 @@ class symmetryConnectServerHandler(sockConnect):
 				self._symmetryPingDataCacheLenght += 1024*100
 			_symmetryPingDataCacheLenght = max(min(1024 * 1024 , self._symmetryPingDataCacheLenght), 1024100)
 			self.server.cancelCallback(self.setStatusSlow)
-			self.server.addDelay(30, self.sendPingSpeedResponse)
+			self.server.addDelay(10, self.sendPingSpeedResponse)
 	def sendPingSpeedResponse(self):
 		data = {
 			"opt":"pingSpeed",
@@ -158,7 +158,7 @@ class symmetryConnectServerHandler(sockConnect):
 		}
 		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 					 json.dumps(data))
-		self.server.addDelay(60, self.setStatusSlow)
+		self.server.addDelay(10, self.setStatusSlow)
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
 	def onClose(self):
