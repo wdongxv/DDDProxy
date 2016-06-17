@@ -140,6 +140,8 @@ class symmetryConnectServerHandler(sockConnect):
 	def requestIdleClose(self):
 		if len(self.symmetryConnectList) == 0:
 			self.close()
+	def requestSlowClose(self):
+		self.close()
 			
 	def onServerToServerMessage(self, serverMessage):
 		opt = serverMessage["opt"] if "opt" in  serverMessage else ""
@@ -156,7 +158,9 @@ class symmetryConnectServerHandler(sockConnect):
 				self._symmetryPingDataCacheLenght += 1024*100
 			_symmetryPingDataCacheLenght = max(min(1024 * 1024 , self._symmetryPingDataCacheLenght), 1024100)
 			self.server.cancelCallback(self.setStatusSlow)
+			self.server.cancelCallback(self.requestSlowClose)
 			self.server.addDelay(10, self.sendPingSpeedResponse)
+			self.server.addDelay(120, self.requestSlowClose,True)
 	def sendPingSpeedResponse(self):
 		data = {
 			"opt":"pingSpeed",
