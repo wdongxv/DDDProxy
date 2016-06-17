@@ -22,15 +22,15 @@
 			<h3>代理协议支持:</h3>
 			<p>
 				自动代理配置(pac)：<a class="pacAddr"></a><a class='helplink'
-					href="#setttingHelp">如何使用?</a><br> HTTP/SOCKS4/SOCKS4a/SOCKS5代理协议 服务器地址：<span
-					id="proxyServer"></span> 端口：<span id="proxyPort"></span>
+					href="#setttingHelp">如何使用?</a><br>
+				HTTP/SOCKS4/SOCKS4a/SOCKS5代理协议 服务器地址：<span id="proxyServer"></span>
+				端口：<span id="proxyPort"></span>
 			</p>
 		</div>
 
 		<div class="part" style="">
-			<h3 style="display: inline-block; margin-right: 10px;"
-				id="domainAnalysisTitle"></h3>
-			<a id="domainAnalysisShow" href="javascript:"></a>
+			<h3 id="domainAnalysisTitle"></h3>
+			<a elementId="domainAnalysis" class="toggleButton" href="javascript:"></a>
 			<div id="domainAnalysis"></div>
 			<div id="dataAnalysis" style="height: 200px;"></div>
 		</div>
@@ -61,8 +61,16 @@
 			<span id="backupStatus"> </span>
 		</div>
 		<div class="part">
+			<h3>
+				当前连接池<span id="status">loading...</span>
+			</h3>
+			<a class="toggleButton" elementId="connectList" href="javascript:"></a>
+			<div id="connectList"></div>
+		</div>
+		<div class="part">
+			<h3>设置方法</h3>
+			<a class="toggleButton" elementId="setttingHelp" href="javascript:"></a>
 			<div id="setttingHelp">
-				<h3>设置方法</h3>
 				<div>
 					> mac设置方法<br />在“系统偏好设置”时找到“网络”，在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”，URL填入“
 					<span class="pacAddr"></span> ”
@@ -78,32 +86,30 @@
 						class="pacAddr"></span> ”
 				</div>
 			</div>
+			<br />
 			<h3>其他帮助</h3>
-			<div class="part" id="help1">
-				1. 在网址管理页面添加网站后：chrome请地址栏输入 <a href="chrome://net-internals/#proxy"
-					style="color: #888;">chrome://net-internals/#proxy</a> ，然后点击
-				re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
+			<a class="toggleButton" elementId="otherHelp" href="javascript:"></a>
+			<div id="otherHelp">
+				<div class="part" id="help1">
+					1. 在网址管理页面添加网站后：chrome请地址栏输入 <a
+						href="chrome://net-internals/#proxy" style="color: #888;">chrome://net-internals/#proxy</a>
+					，然后点击 re-apply setting 来刷新代理网址列表。其它浏览器或应用需要重新打开程序才能使代理网址列表生成
+				</div>
+				<div class="part" id="help2">
+					2. 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br /> 如果代理服务搭建在本机，那么请访问
+					http://127.0.0.1:8080 或 http://localhost:8080 来备份。<br />
+					如果不在本机，那么请在本机hosts文件加入<span>代理服务ip dddproxy</span>,例如：<span>192.168.1.2
+						dddproxy</span>,然后访问 http://dddproxy:8080 来备份
+				</div>
+				<div class="part" id="help3">3. 备份至Google
+					Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件</div>
+				<div class="part" id="help4">4. 从备份合并恢复是指，从 Google Drive
+					拉取的备份合并到本地代理地址列表,但优先使用备份的开关设置</div>
+				<div class="part" id="help5">5. 抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份</div>
+				<div class="part" id="help6">6.
+					代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
+					Store下载应用时不占用带宽</div>
 			</div>
-			<div class="part" id="help2">
-				2. 使用备份需要链接到Google,由于安全原因，请您阅读一下说明<br /> 如果代理服务搭建在本机，那么请访问
-				http://127.0.0.1:8080 或 http://localhost:8080 来备份。<br />
-				如果不在本机，那么请在本机hosts文件加入<span>代理服务ip dddproxy</span>,例如：<span>192.168.1.2
-					dddproxy</span>,然后访问 http://dddproxy:8080 来备份
-			</div>
-			<div class="part" id="help3">3. 备份至Google
-				Drive时要注意，会完全覆盖掉Google Drive上已经备份的文件</div>
-			<div class="part" id="help4">4. 从备份合并恢复是指，从 Google Drive
-				拉取的备份合并到本地代理地址列表,但优先使用备份的开关设置</div>
-			<div class="part" id="help5">5. 抹掉并恢复慎用，此功能会将本地代理地址列表清空然后在恢复备份</div>
-			<div class="part" id="help6">6.
-				代理地址列表中如果将某个地址断开（由蓝色变成灰色，也就是点击⌧后），那么这个地址就会加入到白名单；例：apple.com为蓝色，iosapps.itunes.apple.com为灰色，这个既可以安全快速的访问apple绝大多数服务，又在App
-				Store下载应用时不占用带宽</div>
-		</div>
-		<div class="part">
-			<h3>
-				当前连接池<span id="status">loading...</span>
-			</h3>
-			<div id="connectList"></div>
 		</div>
 		<div>
 			<div class="part">
@@ -259,8 +265,8 @@
 				proxyapi("serverList", null, function(data) {
 
 					$(".pacAddr").text(data["pac"])
-					$("a.pacAddr").attr("href",data["pac"])
-					
+					$("a.pacAddr").attr("href", data["pac"])
+
 					$("#proxyServer").text(data["proxyAddr"][0]);
 					$("#proxyPort").text(data["proxyAddr"][1]);
 					$("#version").text(data["version"])
@@ -309,6 +315,18 @@
 					s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
 					document.body.appendChild(s)
 				}, 2000)
+
+				var toggleButton = $(".toggleButton")
+				var toggleButtonClick = function() {
+					var button = $(this)
+					var hide = button.attr("hide") == "true";
+					hide = !hide;
+					button.attr("hide", hide ? "true" : "");
+					button.text(hide ? "显示" : "隐藏");
+					$("#" + button.attr("elementId")).css("display", hide ? "none" : "");
+				}
+				toggleButton.click(toggleButtonClick)
+				toggleButton.each(toggleButtonClick)
 			});
 		})();
 	</script>

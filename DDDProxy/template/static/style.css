@@ -13,6 +13,10 @@ body a.helplink{
 	margin: 0 2px;
 	color: #5aa;
 }
+h3{
+	display: inline-block;
+	margin-right: 10px;
+}
 .info_block {
 	display: inline-block;
 	vertical-align: top;

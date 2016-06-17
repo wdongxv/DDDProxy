@@ -164,16 +164,6 @@ $(document).ready(function(){
 	
 	/** ************************ */
 	
-	var domainAnalysisShow = $("#domainAnalysisShow")
-	domainAnalysisShow.click(function(){
-		var hide = domainAnalysisShow.attr("hide") == "true";
-		hide = !hide;
-		domainAnalysisShow.attr("hide",hide?"true":"");
-		domainAnalysisShow.text(hide?"显示":"隐藏");
-		$("#domainAnalysis").css("display",hide?"none":"");
-	})
-	domainAnalysisShow.click();
-	
 	var analysisDomain = null;
 	var todayAnalysis = function(){
 		var startTime = (new Date())/1000-3600*72;
