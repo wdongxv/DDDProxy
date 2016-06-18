@@ -77,19 +77,18 @@ class localConnectHandler(localSymmetryConnect):
 				pass
 		else:
 			httpmessagedone = self.httpMessageParse.appendData(data)
-			if self.httpMessageParse.headerOk():
+			if self.httpMessageParse.headerOk() and httpmessagedone:
 				method = self.httpMessageParse.method()
 				path = self.httpMessageParse.path()
 				self.connectName = self.filenoStr() + "	" + method + "	" + path
 				if not path.startswith("http://") and method in ["GET", "POST"]:
-					if httpmessagedone:
-						path = path.split("?")
-						self.onHTTP(self.httpMessageParse.headers,
-								method,
-								path[0],
-								path[1] if len(path) > 1 else "",
-								self.httpMessageParse.getBody() if method == "POST" else "")
-						self.mode = "http"
+					path = path.split("?")
+					self.onHTTP(self.httpMessageParse.headers,
+							method,
+							path[0],
+							path[1] if len(path) > 1 else "",
+							self.httpMessageParse.getBody() if method == "POST" else "")
+					self.mode = "http"
 				else:
 					host = None
 					port = None
