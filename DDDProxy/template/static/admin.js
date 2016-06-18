@@ -134,6 +134,7 @@ $(document).ready(function(){
 				var domain = domainList[i];
 				html += echoName(domain.domain,domain.open,domain.connectTimes,i);
 			}
+			$("#proxyDomainListCount").text(domainList.length);
 			$("#proxyDomainList").html(html);
 			$(".close,.open,.delete").click(function(){
 				var cls = this.className;
@@ -146,21 +147,27 @@ $(document).ready(function(){
 	
 	refreshDomainList();
 	
+	var infoTimer = null;
 	$("#newUrlSubmit").click(function(){
 		var url = $("#newUrl")[0];
+		if(infoTimer){
+			clearTimeout(infoTimer);
+			infoTimer = null;
+		}
 		proxyapi("addDomain",{"url":url.value},function(data){
 			var newUrlInfo = $("#newUrlInfo")
 			if(data.status == "ok"){
 				url.value = "";
-				newUrlInfo.text("");
+				newUrlInfo.text("添加成功");
 				refreshDomainList();
 			}else{
 				newUrlInfo.text(url.value+" 错误的URL,末添加")
 			}
+			infoTimer = setTimeout(function(){
+				newUrlInfo.text("");
+			},5000)
 		});
 	})
-	
-	
 	
 	/** ************************ */
 	

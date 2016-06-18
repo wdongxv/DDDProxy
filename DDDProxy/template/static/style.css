@@ -14,8 +14,8 @@ body a.helplink{
 	color: #5aa;
 }
 h3{
-	display: inline-block;
-	margin-right: 10px;
+	display: inline;
+	margin-right: 5px;
 }
 .info_block {
 	display: inline-block;
@@ -101,15 +101,12 @@ div.domainLine {
 	}
 }
 
-
-
 <!--
-
 .line {
 	display: inline-block;
 	position: relative;
 	background: #00a0ff;
-	margin: 10px 20px 0 0;
+	margin: 5px 10px;
 	padding: 1px;
 }
 

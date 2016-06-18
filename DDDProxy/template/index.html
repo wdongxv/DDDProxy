@@ -35,30 +35,32 @@
 			<div id="dataAnalysis" style="height: 200px;"></div>
 		</div>
 		<div class="part">
-			<h3>远程服务地址设置:</h3>
+			<h3>远程服务地址设置</h3>
 			<div id="serverList"></div>
 			<button id="saveServerButton">保存</button>
 		</div>
 
-		<div style="display: block; margin: 12px 0;">
-			<h3 style="display: inline-block;">代理地址列表：</h3>
-			<input id="newUrl" style="width: 320px;" name="url"
+		<div class="part">
+			<h3>
+				代理地址列表(<span id="proxyDomainListCount">0</span>)
+			</h3>
+			<a elementId="proxyDomainList" class="toggleButton"
+				href="javascript:"></a> <input id="newUrl" style="width: 320px;"
+				name="url"
 				placeholder="https://www.apple.com/  || iosapps.itunes.apple.com" />
 			<input id="newUrlSubmit" value="添加" type="submit" /><a
-				class='helplink' href="#help1">?</a>
-			<p id="newUrlInfo"></p>
+				class='helplink' href="#help1">?</a> <span id="newUrlInfo"></span>
 		</div>
-		<p style="color: #888; font-style: italic;"></p>
 		<div id="proxyDomainList" style="text-align: center;"></div>
-		<div id="backupBox" class="part"
-			style="display: none; text-align: right;">
-			<a id="replaceRestore" href="javascript:">抹掉并恢复</a><a
+		<div id="backupBox"
+			style="display: none; line-height: 20px; padding-left: 20px">
+			Google Drive 备份: <a id="replaceRestore" href="javascript:">清空后恢复</a><a
 				class='helplink' href="#help5">?</a> <a id="restore"
-				href="javascript:">合并恢复</a><a class='helplink' href="#help4">?</a> <a
-				id="backup" href="javascript:">备份</a><a class='helplink'
-				href="#help3">?</a> <a id="sync" href="javascript:">与Google
-				Drive同步</a> <a class='helplink' href="#help2">[无法登陆Google?]</a> <br />
-			<span id="backupStatus"> </span>
+				href="javascript:">与备份合并</a><a class='helplink' href="#help4">?</a>
+			<a id="backup" href="javascript:">重新备份</a><a class='helplink'
+				href="#help3">?</a> <a id="sync" href="javascript:">同步</a> <a
+				class='helplink' href="#help2">[无法登陆Google?]</a> <br /> <span
+				id="backupStatus"> </span>
 		</div>
 		<div class="part">
 			<h3>
@@ -261,12 +263,10 @@
 				var inputList = serverList.find("[name='host'],[name='auth'],[name='port']");
 				inputList.keyup(domainListChangedHandler)
 			}
-			function getServerList() {
+			function getServerList(cb) {
 				proxyapi("serverList", null, function(data) {
-
 					$(".pacAddr").text(data["pac"])
 					$("a.pacAddr").attr("href", data["pac"])
-
 					$("#proxyServer").text(data["proxyAddr"][0]);
 					$("#proxyPort").text(data["proxyAddr"][1]);
 					$("#version").text(data["version"])
@@ -282,6 +282,8 @@
 					serverList.html(html)
 					bindInputKey();
 					connectCheck()
+					if (cb)
+						cb();
 				})
 			}
 			$(document).ready(function() {
@@ -295,39 +297,49 @@
 				}
 				setInterval(getStatus, 2000)
 				getStatus();
-				getServerList();
+				getServerList(function(){
+					helplinkList.each(function() {
+						var self = $(this);
+						var help = $(self.attr("href"))
+						var text = help.text()
+						self.attr("title", text.replace(/\t\s+/g, ""))
+					})
+				});
 
-				$(".helplink").click(function() {
-					var help = $($(this).attr("href"))
-
-					var index = 0
-					var timer = setInterval(function() {
-						help.css("background", index % 3 > 0 ? "#aaa" : "none");
-						index++
-						if (index > 6) {
-							clearInterval(timer)
-						}
-					}, 100)
-
-				})
 				setTimeout(function() {
 					var s = document.createElement("script")
 					s.src = "https://apis.google.com/js/client.js?onload=onGoogleClientLoadCallback";
 					document.body.appendChild(s)
 				}, 2000)
-
-				var toggleButton = $(".toggleButton")
-				var toggleButtonClick = function() {
-					var button = $(this)
-					var hide = button.attr("hide") == "true";
-					hide = !hide;
-					button.attr("hide", hide ? "true" : "");
-					button.text(hide ? "显示" : "隐藏");
-					$("#" + button.attr("elementId")).css("display", hide ? "none" : "");
-				}
-				toggleButton.click(toggleButtonClick)
-				toggleButton.each(toggleButtonClick)
 			});
+
+			var helplinkList = $(".helplink");
+			helplinkList.click(function() {
+				$("#setttingHelp,#otherHelp").show()
+
+				var help = $($(this).attr("href"))
+				var index = 0
+				var timer = setInterval(function() {
+					help.css("outline", index % 3 > 0 ? "#f00 solid" : "none");
+					index++
+					if (index > 9) {
+						clearInterval(timer)
+					}
+				}, 200)
+			})
+
+			var toggleButton = $(".toggleButton")
+			var toggleButtonClick = function() {
+				var button = $(this)
+				var hide = button.attr("hide") == "true";
+				hide = !hide;
+				button.attr("hide", hide ? "true" : "");
+				button.text(hide ? "显示" : "隐藏");
+				$("#" + button.attr("elementId")).css("display", hide ? "none" : "");
+			}
+			toggleButton.click(toggleButtonClick)
+			toggleButton.each(toggleButtonClick)
+
 		})();
 	</script>
 </body>
