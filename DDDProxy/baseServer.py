@@ -10,6 +10,7 @@ import socket
 import ssl
 import threading
 import time
+import random
 
 from ThreadPool import ThreadPool
 from configFile import configFile
@@ -125,12 +126,14 @@ class sockConnect(object):
 			threadName = "connect %s:%s" % (address[0], address[1])
 			log.log(1, threadName)
 			setThreadName(threadName)
-			addr = (socket.gethostbyname(address[0]), address[1])
+			
+			
+			addr = (random.choice(socket.gethostbyname_ex(address[0])[2]), address[1])
 			if useSsl:
-				if self.fetchRemoteCert(address[0], address[1]):
+				if self.fetchRemoteCert(addr[0], addr[1]):
 					sock = ssl.wrap_socket(
 								sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-								ca_certs	=	self.SSLLocalCertPath(address[0], addr[1]),
+								ca_certs	=	self.SSLLocalCertPath(addr[0], addr[1]),
 								cert_reqs	=	ssl.CERT_REQUIRED)
 			else:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -141,7 +144,7 @@ class sockConnect(object):
 				ok = False
 		except Exception as e:
 			if str(e).find("handshake"):
-				self.deleteRemoteCert(address[0], address[1])
+				self.deleteRemoteCert(addr[0], addr[1])
 			log.log(3, address)
 			ok = False
 		if ok:
