@@ -93,8 +93,12 @@ class localConnectHandler(localSymmetryConnect):
 					host = None
 					port = None
 					if path.find("status.dddproxy.com") > 0:
+						
 						jsonMessage = self.httpMessageParse.getBody()
-						jsonBody = json.loads(jsonMessage)
+						try:
+							jsonBody = json.loads(jsonMessage)
+						except:
+							jsonBody = {}
 						host = jsonBody["host"]
 						port = jsonBody["port"]
 					if self.setToProxyMode(host=host, port=port):
@@ -107,11 +111,7 @@ class localConnectHandler(localSymmetryConnect):
 		connect = localToRemoteConnectManger.getConnect()
 		if host:
 			try:
-				connect = None
-				connectList = localToRemoteConnectManger.getConnectHost(host, port)
-				if connectList:
-					for _, v in connectList.items():
-						connect = v
+				connect = localToRemoteConnectManger.getConnectHost(host, port)
 			except:
 				pass
 		if connect:
