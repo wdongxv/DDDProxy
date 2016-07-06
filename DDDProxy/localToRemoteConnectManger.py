@@ -123,7 +123,7 @@ class localToRemoteConnectManger():
 	def getConnectHost(host, port):
 		port = port if port else 8082
 		for connet in localToRemoteConnectManger.manager.remoteConnectList:
-			if connet.address[0] == host and connet.address[0] == port:
+			if connet.address[0] == host and connet.address[1] == port:
 				return connet
 		return None
 		
