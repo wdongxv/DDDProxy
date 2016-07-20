@@ -237,7 +237,7 @@ class sockConnect(object):
 			self.info["recv"] += len(data)
 			self.onRecv(data)
 		else:
-			log.log(2, self, "<<< data is pool,close")
+			log.log(1, self, "<<< data is pool,close")
 			self.shutdown()
 	def _onReadySend(self):
 		data = self.getSendData(socketBufferMaxLenght)
@@ -249,7 +249,7 @@ class sockConnect(object):
 				return
 			except:
 				log.log(3)
-		log.log(2, self, "<<< request close")
+		log.log(1, self, "<<< request close")
 		self.shutdown()
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
@@ -319,7 +319,7 @@ class sockServerConnect(sockConnect):
 			sock, address = self._sock.accept()
 			connect = self.handler(server=self.server)
 			connect._setConnect(sock, address)
-			log.log(2, connect, "*	connect")
+			log.log(1, connect, "*	connect")
 class _baseServer():
 	def __init__(self):
 		self._socketConnectList = {}
