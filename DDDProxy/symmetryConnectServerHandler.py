@@ -168,8 +168,8 @@ class symmetryConnectServerHandler(sockConnect):
 		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 					 json.dumps(data))
 		if not fristPing: #兼容旧版远程服务
-			self.server.addDelay(10, self.setStatusSlow)
-			self.server.addDelay(120, self.requestSlowClose)
+			self.server.addDelay(5, self.setStatusSlow)
+			self.server.addDelay(60, self.requestSlowClose)
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
 	def onClose(self):
