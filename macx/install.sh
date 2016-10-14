@@ -7,6 +7,13 @@ rootDir=$(dirname $(pwd))
 plistPath=~/Library/LaunchAgents/com.wangdongxu.ddproxy.plist
 plist=$(cat "$(pwd)/com.wangdongxu.ddproxy.plist")
 plist=${plist/path-to-DDDProxy/$rootDir}
+
+if [ ! -d ~/Library/LaunchAgents ]; then
+	echo "mkdir ~/Library/LaunchAgents"
+	mkdir ~/Library/LaunchAgents
+fi
+
+
 echo "Install $plistPath ..."
 echo $plist > $plistPath
 
