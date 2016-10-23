@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	
 	parser = OptionParser(usage="%prog -a [password]")
 	parser.add_option("-a", "--auth",help="server password *")
-	parser.add_option("-p", "--port",help="bind port" , default=8082)
+	parser.add_option("-p", "--port",help="bind port" , default="-1")
 	parser.add_option("-l", "--loglevel",help="log level" , default=2)
 	startUpArgs = parser.parse_args()[0]
 	remoteServerHandler.remoteAuth =  startUpArgs.auth
@@ -25,6 +25,6 @@ if __name__ == "__main__":
 		
 	
 	server = baseServer()
-	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int(startUpArgs.port))
+	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8082" if startUpArgs.port == "-1" else startUpArgs.port))
 	server.start()
 	

@@ -16,7 +16,7 @@ if __name__ == "__main__":
 	
 	
 	parser = OptionParser()
-	parser.add_option("-p", "--port",help="proxy server bind port" , default=8080)
+	parser.add_option("-p", "--port",help="proxy server bind port" , default="-1")
 	parser.add_option("-l", "--loglevel",help="log level" , default=2)
 	parser.add_option("-c", "--RemoteConnectLimit",help="one remote address connect limit" , default=2)
 	parser.add_option("-m", "--remoteConnectMaxTime",help="set remote connect idle more connect max time" , default=1800)
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 	domainAnalysis.startAnalysis(server)
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
 		
-	server.addListen(handler=localConnectHandler,port=int(startUpArgs.port))
+	server.addListen(handler=localConnectHandler,port=int("8080" if startUpArgs.port == "-1" else startUpArgs.port))
 	server.start()
 	
 	

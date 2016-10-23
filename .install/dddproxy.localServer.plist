@@ -3,16 +3,17 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>com.wangdongxu.dddproxy</string>
+    <string>dddproxy</string>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><false/>
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python</string>
         <string>localServer.py</string>
+        <string>-p</string><string>{{port-setting}}</string>
     </array>
-    <key>WorkingDirectory</key><string>path-to-DDDProxy</string>
-	<key>StandardErrorPath</key><string>/tmp/ddproxy.err.log</string>
-	<key>StandardOutPath</key><string>/tmp/ddproxy.out.log</string>
+    <key>WorkingDirectory</key><string>{{path-to-DDDProxy}}</string>
+	<key>StandardErrorPath</key><string>/tmp/ddproxy.local.err.log</string>
+	<key>StandardOutPath</key><string>/tmp/ddproxy.local.out.log</string>
   </dict>
 </plist>
