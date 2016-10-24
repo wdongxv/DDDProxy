@@ -8,7 +8,7 @@
     <key>KeepAlive</key><false/>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python</string>
+        <string>{{python}}</string>
         <string>localServer.py</string>
         <string>-p</string><string>{{port-setting}}</string>
     </array>

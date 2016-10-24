@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=forking
 ExecStart={{python}}
-ExecStop={{python}} $OPTIONS shutdown
-ExecReload=/usr/bin/supervisorctl $OPTIONS reload
+ExecStop=kill
+ExecReload=
 KillMode=process
 Restart=on-failure
 RestartSec=42s
