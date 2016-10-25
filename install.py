@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	print "install", server , "on", platformName
 	
 	
-	def setInitFile(tempFilePath, filePath):
+	def setInitFile(tempFilePath, filePath, authFormat):
 		f = file(tempFilePath, "r")
 		InitFileContent = "" + f.read()
 		f.close()
@@ -56,6 +56,8 @@ if __name__ == "__main__":
 		InitFileContent = InitFileContent.replace("{{python}}", sys.executable)
 		InitFileContent = InitFileContent.replace("{{path-to-DDDProxy}}", mainPath)
 		InitFileContent = InitFileContent.replace("{{port-setting}}", str(startUpArgs.port))
+		InitFileContent = InitFileContent.replace("{{entry-point}}", "%s.py" % (server))
+		InitFileContent = InitFileContent.replace("{{server-name}}", "dddproxy." + server)
 		if server == "remoteServer":
 			serverPassword = ""
 			while True:
@@ -68,8 +70,9 @@ if __name__ == "__main__":
 					print "Passphrases do not match. try again"
 				else:
 					break
-			InitFileContent = InitFileContent.replace("{{serverPassword}}", serverPassword)
-		
+			InitFileContent = InitFileContent.replace("{{auth}}", authFormat % (serverPassword))
+		else:
+			InitFileContent = InitFileContent.replace("{{auth}}", "")
 		if os.path.exists(filePath):
 			overwrite = raw_input(filePath + " already exists.\nOverwrite (y/n)?")
 			if overwrite != "y":
@@ -88,7 +91,7 @@ if __name__ == "__main__":
 
 		plistName = "dddproxy." + server + ".plist"
 		plistPath = launchAgentsDir + "/" + plistName
-		setInitFile(mainPath + "/.install/" + plistName, plistPath)
+		setInitFile(mainPath + "/.install/mac.plist" , plistPath, "<string>--auth</string><string>%s</string>")
 		
 		print "try unload server ..."
 		os.system("launchctl unload \"%s\"" % (plistPath))
@@ -105,8 +108,8 @@ if __name__ == "__main__":
 		release, version, _ = platform.dist()
 		if release == "centos":
 			if version.startswith("7."):
-				serverFile = server + ".service"
-				setInitFile(mainPath + "/.install/centos7", "/usr/lib/systemd/system/" + serverFile)
+				serverFile = server + "_dddproxy.service"
+				setInitFile(mainPath + "/.install/centos7", "/usr/lib/systemd/system/" + serverFile, "--auth %s")
 				os.system("systemctl enable " + serverFile)
 				os.system("systemctl stop " + serverFile)
 				os.system("systemctl start " + serverFile)

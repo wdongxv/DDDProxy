@@ -1,15 +1,9 @@
 [Unit]
-Description=dddproxy
+Description={{server-name}}
 After=network.target
 
 [Service]
-Type=forking
-ExecStart={{python}}
-ExecStop=kill
-ExecReload=
-KillMode=process
-Restart=on-failure
-RestartSec=42s
+ExecStart={{python}} {{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}}
 
 [Install]
 WantedBy=multi-user.target
