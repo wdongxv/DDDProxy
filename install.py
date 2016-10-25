@@ -64,18 +64,18 @@ if __name__ == "__main__":
 					serverPassword = pwGen(20)
 					print "Server password:", serverPassword
 					break
-				if serverPassword != getpass.getpass("Enter same passphrase again"):
+				if serverPassword != getpass.getpass("Enter same passphrase again:"):
 					print "Passphrases do not match. try again"
 				else:
 					break
 			InitFileContent = InitFileContent.replace("{{serverPassword}}", serverPassword)
 		
-		if os.path.exists(plistPath):
-			overwrite = raw_input(plistPath + " already exists.\nOverwrite (y/n)?")
+		if os.path.exists(filePath):
+			overwrite = raw_input(filePath + " already exists.\nOverwrite (y/n)?")
 			if overwrite != "y":
 				exit(1)
-		print "Write file ", plistPath
-		f = file(plistPath, "w+")
+		print "Write file ", filePath
+		f = file(filePath, "w+")
 		f.write(InitFileContent)
 		f.close()
 		
