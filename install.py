@@ -108,7 +108,7 @@ if __name__ == "__main__":
 		release, version, _ = platform.dist()
 		if release == "centos":
 			if version.startswith("7."):
-				serverFile = server + "_dddproxy.service"
+				serverFile = "dddproxy_" + server + ".service"
 				setInitFile(mainPath + "/.install/centos7", "/usr/lib/systemd/system/" + serverFile, "--auth %s")
 				os.system("systemctl enable " + serverFile)
 				os.system("systemctl stop " + serverFile)
