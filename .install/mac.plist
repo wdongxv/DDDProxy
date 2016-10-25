@@ -9,7 +9,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>{{python}}</string>
-        <string>remoteServer.py</string>
+        <string>{{entry-point}}</string>
         <string>-p</string><string>{{port-setting}}</string>
         {{auth}}
     </array>
