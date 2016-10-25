@@ -14,7 +14,7 @@
         {{auth}}
     </array>
     <key>WorkingDirectory</key><string>{{path-to-DDDProxy}}</string>
-	<key>StandardErrorPath</key><string>/tmp/ddproxy.remote.err.log</string>
-	<key>StandardOutPath</key><string>/tmp/ddproxy.remote.out.log</string>
+	<key>StandardErrorPath</key><string>/tmp/{{server-name}}.err.log</string>
+	<key>StandardOutPath</key><string>/tmp/{{server-name}}.out.log</string>
   </dict>
 </plist>
