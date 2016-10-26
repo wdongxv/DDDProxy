@@ -18,6 +18,7 @@ from DDDProxy import log
 import json
 from datetime import datetime
 import httplib
+import math
 
 
 
@@ -46,18 +47,19 @@ class sockConnect(object):
 		self.info = {
 					"startTime":int(time.time()),
 					"send":0,
-					"recv":0
+					"recv":0,
+					"lastSendTime":int(time.time()),
+					"lastRecvTime":int(time.time()),
 					}
-		self.makeAlive()
 		self._sock = None
 		self.address = (None, None)
+		self.addressIp = ""
 		sockConnect._filenoLoop += 1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
 		self._sendPendingCache = ""
 		self._requsetClose = False
 		self._connecting = False
-		
 		self._ioEventFlags = sockConnect.socketIOEventFlagsNone
 	def fileno(self):
 		return self._fileno
@@ -65,8 +67,10 @@ class sockConnect(object):
 		self.setIOEventFlags(sockConnect.socketIOEventFlagsRead)
 		
 	def onRecv(self, data):
+		self.info["lastRecvTime"] = int(time.time())
 		pass
 	def onSend(self, data):
+		self.info["lastSendTime"] = int(time.time())
 		pass
 	def onClose(self):
 		pass
@@ -118,43 +122,7 @@ class sockConnect(object):
 	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 	_connectPool = ThreadPool(maxThread=100)
-	def _doConnectSock(self, address, useSsl=False, cb=None, setThreadName=None):
-		self._connecting = True
-		ok = True
-		try:
-			sock = None
-			threadName = "connect %s:%s" % (address[0], address[1])
-			log.log(1, threadName)
-			setThreadName(threadName)
-			
-			
-			addr = (random.choice(socket.gethostbyname_ex(address[0])[2]), address[1])
-			if useSsl:
-				if self.fetchRemoteCert(addr[0], addr[1]):
-					sock = ssl.wrap_socket(
-								sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-								ca_certs	=	self.SSLLocalCertPath(addr[0], addr[1]),
-								cert_reqs	=	ssl.CERT_REQUIRED)
-			else:
-				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-			if sock:
-				sock.connect(addr)
-			else:
-				ok = False
-		except Exception as e:
-			if str(e).find("handshake"):
-				self.deleteRemoteCert(addr[0], addr[1])
-			log.log(3, address)
-			ok = False
-		if ok:
-			self.server.addCallback(self._setConnect, sock, address)
-		else:
-			self._connecting = False
-			self.server.addCallback(self.onClose)
-		
-		if cb:
-			self.server.addCallback(cb, self if ok else None)
+	
 	def _setConnect(self, sock, address):
 		"""
 		@type sock: _socketobject
@@ -186,7 +154,48 @@ class sockConnect(object):
 			raise Exception(self, "connect status is", self.connectStatus())
 		self._connecting = True
 		self.address = address
-		sockConnect._connectPool.apply_async(self._doConnectSock, address, useSsl, cb)
+		self.addressIp = ""
+		def _doConnectSock(address, useSsl=False, cb=None, setThreadName=None):
+			self._connecting = True
+			ok = True
+			try:
+				sock = None
+				
+				addr = (random.choice(socket.gethostbyname_ex(address[0])[2]), address[1])
+	
+				threadName = "connect %s:%s" % (address[0], address[1])
+				log.log(1, threadName)
+				setThreadName(threadName)
+				if addr[0] != address[0]:
+					self.addressIp = addr[0]
+			
+				if useSsl:
+					if self.fetchRemoteCert(addr[0], addr[1]):
+						sock = ssl.wrap_socket(
+									sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
+									ca_certs	=	self.SSLLocalCertPath(addr[0], addr[1]),
+									cert_reqs	=	ssl.CERT_REQUIRED)
+				else:
+					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+				if sock:
+					sock.connect(addr)
+				else:
+					ok = False
+			except Exception as e:
+				if str(e).find("handshake"):
+					self.deleteRemoteCert(addr[0], addr[1])
+				log.log(3, address)
+				ok = False
+			if ok:
+				self.server.addCallback(self._setConnect, sock, address)
+			else:
+				self._connecting = False
+				self.server.addCallback(self.onClose)
+			
+			if cb:
+				self.server.addCallback(cb, self if ok else None)
+		sockConnect._connectPool.apply_async(_doConnectSock, address, useSsl, cb)
 	def send(self, data):
 		if self._requsetClose:
 			return
@@ -198,7 +207,6 @@ class sockConnect(object):
 			return
 		self.send("")
 		self._requsetClose = True
-		self.makeAlive()
 	
 	def shutdown(self):
 		if self.server.removeSocketConnect(self):
@@ -213,7 +221,8 @@ class sockConnect(object):
 			self.server.addDelay(1, close)
 # 		self.close()
 # 	for server
-
+	def lastAlive(self):
+		return max(self.info["lastRecvTime"], self.info["lastSendTime"])
 	def _onReadyRecv(self):
 		data = None
 		
@@ -260,7 +269,6 @@ class sockConnect(object):
 			self.shutdown()
 			log.log(2, self, "<<< socketEventExcept, close")
 
-		self.makeAlive()
 			
 # 	for http
 	def getFileContent(self, name):
@@ -284,7 +292,11 @@ class sockConnect(object):
 		if type(data) is unicode:
 			data = data.encode("utf-8")
 		elif not type(data) is str:
-			data = json.dumps(data)
+			try:
+				data = json.dumps(data)
+			except:
+				log.log(3, data)
+				data = []
 			ContentType = "application/json"
 		httpMessage = ""
 		httpMessage += "HTTP/1.1 " + str(code) + " " + (httplib.responses[code]) + "\r\n"
@@ -300,13 +312,12 @@ class sockConnect(object):
 		return httpMessage
 	def reseponse(self, data, ContentType="text/html", code=200, connection="close", header={}):
 		self.send(self.makeReseponse(data, ContentType, code, connection, header))
-
+	
 # other 
-
-	def makeAlive(self):
-		self.info["lastAlive"] = int(time.time())
 	def __str__(self, *args, **kwargs):
-		return self.connectName if self.connectName else  (self.filenoStr() + str(self.address))
+		if self.connectName:
+			return self.connectName
+		return  self.filenoStr() + str(self.address)
 	def filenoStr(self):
 		return "[" + str(self.fileno()) + "]"
 
@@ -330,7 +341,7 @@ class _baseServer():
 		self.callbackList.append((cb, 0, args, kwargs))
 	def addDelay(self, delay, cb, *args, **kwargs):
 		self.callbackList.append((cb, delay + time.time(), args, kwargs))
-	def cancelCallback(self,cb):
+	def cancelCallback(self, cb):
 		i = len(self.callbackList) - 1
 		while i >= 0:
 			c = self.callbackList[i][0]
@@ -392,7 +403,7 @@ class _baseServer():
 		for _, connect in self._socketConnectList.items():
 			if isinstance(connect, sockServerConnect):
 				continue
-			if connect.info["lastAlive"] < currentTime - 1800:
+			if connect.lastAlive() < currentTime - 1800:
 				connect.shutdown()
 			
 # 	for  sock event
@@ -467,6 +478,7 @@ class selectBaseServer(_baseServer):
 				self.wlist.append(connect._sock)
 		elif connect._sock in self.wlist:
 			self.wlist.remove(connect._sock)
+
 class kqueueBaseServer(_baseServer):
 	def __init__(self):
 		_baseServer.__init__(self)
@@ -544,7 +556,7 @@ class epollBaseServer(_baseServer):
 		
 	def start(self):
 		while True:
-			eventList = self.epollor.poll(1,1000)
+			eventList = self.epollor.poll(1, 1000)
 			for fd, event in eventList:
 				if select.EPOLLIN & event:
 					self.onSocketEvent(fd, sockConnect.socketEventCanRecv)

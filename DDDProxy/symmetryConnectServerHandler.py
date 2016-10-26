@@ -149,9 +149,11 @@ class symmetryConnectServerHandler(sockConnect):
 			serverMessage["opt"] = "pingSpeedResponse"
 			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 						 json.dumps(serverMessage))
+			
 		elif opt == "pingSpeedResponse":
 			useTime = time.time() - serverMessage["time"]
-# 			print "pingSpeedResponse", useTime, self._symmetryPingDataCacheLenght
+			self.info["lastPingSendTime"] = serverMessage["time"]
+			self.info["pingSpeed"] = useTime
 			if useTime > 1:
 				self._symmetryPingDataCacheLenght /= 2
 			elif useTime < 0.3:
@@ -172,6 +174,7 @@ class symmetryConnectServerHandler(sockConnect):
 			self.server.addDelay(60, self.requestSlowClose)
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
+		self.info["slowConnectStatus"] = True
 	def onClose(self):
 		for _, connect in self.symmetryConnectList.items():
 			connect.onSymmetryConnectServerClose()

@@ -37,12 +37,12 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 					self.server.addCallback(connect.setServerAuthPass)
 				self.authCallbackList = []
 				self.authPass = True
-				self.connectName = "[remote:" + str(self.fileno()) + "]	" + self.address[0]
+				self.connectName = "[remote:%d]	%s(%s)" % (self.fileno(), self.address[0], self.addressIp)
 				self.sendPingSpeedResponse()
 			else:
 				self.close()
 		else:
-			symmetryConnectServerHandler.onServerToServerMessage(self,serverMessage)
+			symmetryConnectServerHandler.onServerToServerMessage(self, serverMessage)
 	def addLocalRealConnect(self, connect):
 		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
 		if self.authPass:
@@ -85,7 +85,7 @@ class localToRemoteConnectManger():
 			requestRemove = True
 			for remoteServer in remoteServerList:
 				port = int(remoteServer["port"]) if remoteServer["port"] else 8082
-				if(remoteServer['host']==remoteConnect.address[0] and port ==remoteConnect.address[1]):
+				if(remoteServer['host'] == remoteConnect.address[0] and port == remoteConnect.address[1]):
 					requestRemove = False
 					break
 			if ((not remoteConnect.connectStatus()) 
@@ -108,11 +108,8 @@ class localToRemoteConnectManger():
 		
 		return remoteConnect
 	def onConnectClose(self, connect):
-		for _, connectList in self.remoteConnectList.items():
-			for k, v in connectList.items():
-				if v == connect:
-					del connectList[k]
-					return
+		if connect in self.remoteConnectList:
+			self.remoteConnectList.remove(connect)
 
 	manager = None
 	@staticmethod

@@ -73,14 +73,14 @@ class realServerConnect(symmetryConnect):
 				else:
 					reply = b"\x05\x07\x00\x01\x00\x00\x00\x00\x00\x00"
 
-				self.connectName = "	<	" + self.filenoStr() + " Socks5 " + host					
+				self.connectName = "	<	%s	Socks5:%s(%s)" % (self.filenoStr(), host, self.addressIp)
 				self.sendDataToSymmetryConnect(reply)
 			else:
 				self.close()
-		elif len(data) and  data[0] == '\x04':#socks4/socks4a
+		elif len(data) and  data[0] == '\x04':  # socks4/socks4a
 			def connectOk(ok):
 				if ok:
-					send = b"\x00\x5A"+data[2:8]
+					send = b"\x00\x5A" + data[2:8]
 				else:
 					send = b"\x00\x5B"
 # 				print "local << ", len(send), binascii.b2a_hex(send)
@@ -90,12 +90,12 @@ class realServerConnect(symmetryConnect):
 			if data[1] == '\x01' or data[1] == '\x02':
 				host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
 				version = "Socks4"
-				if host.startswith("0.0.0.") and ord(data[7])!=0: #socks4a
+				if host.startswith("0.0.0.") and ord(data[7]) != 0:  # socks4a
 					splits = data[8:].split("\x00")
 					host = splits[-2]
 					version = "Socks4a"
 				port = ord(data[2]) * 0x100 + ord(data[3])
-				self.connectName = "	<	" + self.filenoStr() + " "+version+" " + host
+				self.connectName = "	<	%s	%s:%s(%s)" % (self.filenoStr(), version, host, self.addressIp)
 				return self.connect((host, port), cb=connectOk)
 			else:
 				self.sendDataToSymmetryConnect(b'\x04\x91')
@@ -179,7 +179,7 @@ class remoteServerHandler(symmetryConnectServerHandler):
 				log.log(2, "auth failed", serverMessage, self.authMake(remoteAuth, timenum))
 				self.close()
 		else:
-			symmetryConnectServerHandler.onServerToServerMessage(self,serverMessage)
+			symmetryConnectServerHandler.onServerToServerMessage(self, serverMessage)
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert")

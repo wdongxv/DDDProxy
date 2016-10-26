@@ -24,18 +24,20 @@ function proxyapi(opt, data, callback, url) {
 	}
 	xhr.send(JSON.stringify(post));
 }
-function IntToDataCount(dataCount, jinzhi) {
+var timeUnits = ["s","m","h"]
+function IntToDataCount(dataCount, jinzhi, units) {
 	if (!jinzhi)
 		jinzhi = 1024.0;
 	var unit = 0;
-	while (dataCount > jinzhi) {
+	if (!units)
+		units = [ "B", "K", "M", "G", "T" ];
+	while (Math.abs(dataCount) > jinzhi && unit < units.length - 1) {
 		dataCount = dataCount / jinzhi;
 		unit++;
 	}
-	var units = [ "B", "K", "M", "G", "T" ];
 	var list = ("" + dataCount).split(".")
 
-	return dataCount.toFixed(1) + units[unit];
+	return dataCount.toFixed(unit >= 1 ? 1 : 0) + units[unit];
 }
 
 function dumpdataParse(data) {
@@ -49,8 +51,7 @@ function dumpdataParse(data) {
 		html += "<div class='client'>";
 		for (var j = 0; j < threads.length; j++) {
 			var thread = threads[j]
-			html += "<div class='connect'>" + "<span class='connectInfo'>" + thread.name + " "
-					+ (data.currentTime - thread.startTime) + "s</span>" + "</div>"
+			html += "<div class='connect'>" + "<span class='connectInfo'>" + thread.name + " " + (data.currentTime - thread.startTime) + "s</span>" + "</div>"
 		}
 		html += "</div>"
 	}
@@ -65,10 +66,13 @@ function dumpdataParse(data) {
 		var clientConectHtml = ""
 		for (var j = 0; j < remoteConnectList.length; j++) {
 			var connect = remoteConnectList[j]
-			clientConectHtml += "<div class='connect'>" + "<span class='send'>↾" + IntToDataCount(connect.send)
-					+ "</span>" + "<span class='recv'>⇃" + IntToDataCount(connect.recv) + "</span>"
-					+ "<span class='connectInfo'>" + connect.name + " " + (data.currentTime - connect.lastAlive)
-					+ "s</span>" + "</div>"
+			clientConectHtml += "<div class='connect'>" 
+				+ "<span class='send'>↾" + IntToDataCount(connect.send) + "</span>" 
+				+ "<span class='recv'>⇃" + IntToDataCount(connect.recv) + "</span>"
+				+ "<span class='connectInfo'>" + connect.name + " "
+				+ (connect.pingSpeed ? ("ping " + IntToDataCount(data.currentTime - connect.lastPingSendTime,60,timeUnits) + " ttl " + (connect.pingSpeed * 1000).toFixed(1) + "ms") : "") + "</span>"
+				+ "<span class='lastUpdatetime'>"+IntToDataCount(data.currentTime - Math.max(connect.lastSendTime,connect.lastRecvTime), 60, timeUnits) + "</span>" 
+				+ "</div>";
 		}
 
 		connectCount += remoteConnectList.length

@@ -69,25 +69,32 @@ div.domainLine {
 	margin:0 1em;
 }
 #connectList .clientAddr{
-	background: #aaa;
+	background: #555;
 	color: #fff;
 	margin-top: 1em;
 	padding:0 1em; 
 }
-#connectList span{
+.connect{
+	color:#aaa;
+	display: inline-block;
+ 	width: 5000px;
+}
+.connect:HOVER{
+	color:#000;
+	background:#eee;
+}
+.connect span{
 	font-size: 12px;
 	line-height: 16px;
 	display: inline-block;
 	height: 16px;
 }
-#connectList div.connect{
-	display: inline-block;
- 	width: 2000px;
+.connect .connectInfo{
+	color:#000;
 }
-#connectList .connectInfo{
-}
-#connectList .send,#connectList .recv{
-	width: 60px;
+.connect .send,.connect .recv,.connect .lastUpdatetime{
+	width: 55px;
+	margin-left: 5px;
 }
 #mainContent{
 	width: 80%;
@@ -101,7 +108,6 @@ div.domainLine {
 	}
 }
 
-<!--
 .line {
 	display: inline-block;
 	position: relative;
@@ -207,4 +213,3 @@ div.domainLine {
 	background: #fff;
 }
 
--->

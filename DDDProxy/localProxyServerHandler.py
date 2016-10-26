@@ -59,7 +59,7 @@ class localConnectHandler(localSymmetryConnect):
 						port = ord(_d[2]) * 0x100 + ord(_d[3])
 				if setConnectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
-				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + " " + version + " " + self.connectHost + ":%d" % (port) 
+				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + "	" + version + ":" + self.connectHost + ":%d" % (port) 
 				
 			if self.serverAuthPass and self.preConnectRecvCache:
 				if self.connectHost:
