@@ -1,11 +1,5 @@
 <h2>DDDProxy 3.2.2</h2>
 私有安全的代理软件
-
-
-3.X 更改了传输协议与2.x 远程服务不兼容
-
-E-Mail：wdongxv@gmail.com
-
 <h3>主要有以下功能或特点</h3>
 *	增加一键安装功能 支持 MacOs，Centos 7+，Ubuntu
 *	增加对SOCKS5代理协议的兼容（3.2.0版本新增）
