@@ -34,8 +34,7 @@ def pwGen(length):
 	return ''.join([random.choice(chars) for _ in range(length)])
 
 if __name__ == "__main__":
-	parser = OptionParser("%s remoteServer|localServer [options]" % (sys.argv[0]))
-	parser.add_option("-p", "--port", help="bind port" , default=-1)
+	parser = OptionParser("%s remoteServer|localServer" % (sys.argv[0]))
 	if len(sys.argv) < 2 or not sys.argv[1] in ["remoteServer", "localServer"]:
 		parser.print_help()
 		exit(1)
@@ -52,10 +51,13 @@ if __name__ == "__main__":
 		f = file(tempFilePath, "r")
 		InitFileContent = "" + f.read()
 		f.close()
-		
+
+		port = raw_input("Enter Bind Port(empty for default):")
+		if not port:
+			port = "-1"
 		InitFileContent = InitFileContent.replace("{{python}}", sys.executable)
 		InitFileContent = InitFileContent.replace("{{path-to-DDDProxy}}", mainPath)
-		InitFileContent = InitFileContent.replace("{{port-setting}}", str(startUpArgs.port))
+		InitFileContent = InitFileContent.replace("{{port-setting}}", port)
 		InitFileContent = InitFileContent.replace("{{entry-point}}", "%s.py" % (server))
 		InitFileContent = InitFileContent.replace("{{server-name}}", "dddproxy." + server)
 		if server == "remoteServer":
@@ -81,7 +83,7 @@ if __name__ == "__main__":
 		f = file(filePath, "w+")
 		f.write(InitFileContent)
 		f.close()
-		
+		return port
 	if platformName == "darwin":
 # 		if server == "localServer":
 		homedir = os.path.expandvars('$HOME')
@@ -91,7 +93,7 @@ if __name__ == "__main__":
 
 		plistName = "dddproxy." + server + ".plist"
 		plistPath = launchAgentsDir + "/" + plistName
-		setInitFile(mainPath + "/.install/mac.plist" , plistPath, "<string>--auth</string><string>%s</string>")
+		port = setInitFile(mainPath + "/.install/mac.plist" , plistPath, "<string>--auth</string><string>%s</string>")
 		
 		print "try unload server ..."
 		os.system("launchctl unload \"%s\"" % (plistPath))
@@ -101,7 +103,7 @@ if __name__ == "__main__":
 		if server == "localServer":
 			openMPage = raw_input("Open management page (y/n)?")
 			if openMPage == "y":
-				os.system("open http://127.0.0.1:%s" % ("8080" if startUpArgs.port == -1 else startUpArgs.port))
+				os.system("open http://127.0.0.1:%s" % ("8080" if port == "-1" else port))
 		
 		print "done!"
 	elif platformName == "linux":
@@ -115,5 +117,14 @@ if __name__ == "__main__":
 				os.system("systemctl start " + serverFile)
 		elif release == "debian":
 			pass
+		elif release == "Ubuntu":
+			serverFile = "dddproxy_" + server + ""
+			setInitFile(mainPath + "/.install/ubuntu", "/etc/init.d/" + serverFile, "--auth %s")
+			os.system("chmod +x /etc/init.d/"+serverFile)
+			os.system("update-rc.d %s defaults"%(serverFile))
+			print "run this command line for start:"
+			print ""
+			print "sudo /etc/init.d/%s restart"%(serverFile)
+			print ""
 	else:
 		print ""

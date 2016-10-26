@@ -1,0 +1,56 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:	  {{server-name}}
+# Required-Start:    $local_fs $remote_fs $network $syslog $named
+# Required-Stop:     $local_fs $remote_fs $network $syslog $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PID="/var/run/{{server-name}}.pid";
+DAEMON={{python}}
+DAEMON_OPTS="{{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}} >> /tmp/{{server-name}}.log"
+start(){
+	echo -n "Starting {{server-name}}: ";
+	start-stop-daemon --start --background --pidfile $PID --exec $DAEMON --test > /dev/null \
+		|| return 1
+	start-stop-daemon --start --background --pidfile $PID --exec $DAEMON -- \
+		$DAEMON_OPTS 2>/dev/null \
+		|| return 2
+}
+stop(){
+	start-stop-daemon --stop --background --pidfile $PID --name $NAME
+	RETVAL="$?"
+	sleep 1
+	return "$RETVAL"
+}
+case $1 in
+start)
+	start;
+	case "$?" in
+			0|1) log_end_msg 0 ;;
+			2)   log_end_msg 1 ;;
+	esac
+	;;
+stop)
+	stop;
+	case "$?" in
+		0|1) log_end_msg 0 ;;
+		2)   log_end_msg 1 ;;
+	esac
+	;;
+restart)
+	stop;
+	case "$?" in
+		0|1) log_end_msg 0 ;;
+		2)   log_end_msg 1 ;;
+	esac
+	start;
+	case "$?" in
+		0|1) log_end_msg 0 ;;
+		2)   log_end_msg 1 ;;
+	esac
+	;;
+esac
