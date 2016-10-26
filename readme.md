@@ -7,7 +7,7 @@
 E-Mail：wdongxv@gmail.com
 
 <h3>主要有以下功能或特点</h3>
-*	增加一键安装功能 支持 MacOs，Centos 7+
+*	增加一键安装功能 支持 MacOs，Centos 7+，Ubuntu
 *	增加对SOCKS5代理协议的兼容（3.2.0版本新增）
 *	异步I/O
 *	多远程服务器支持(2015年8月8日新增)
@@ -18,33 +18,9 @@ E-Mail：wdongxv@gmail.com
 *	pac列表会以统计为标准，将访问次数较多的网站放到最前面来减少客户端的运算
 *	远程服务器与本地服务器之间采用SSL加密
 *	代理域名列表可备份到Google Drive
-<h3>使用帮助</h3>
-mac设置方法
-*	在“系统偏好设置”时找到“网络”
-*	在左侧选中当前使用的网络，然后选择“高级...”，“代理”，“自动代理配置”
-*	URL填入自动代理地址
 
-iPhone设置方法
-*	在“设置”时找到“Wi-Fi”
-*	点击当前连接的网络后面的ⓘ，找到http代理，选择自动，URL填入自动代理地址。 
-*	注意：在连接不同的无线网络时，都需要为当前无线重新填写。
-
-Android设置方法（支持Android 6.0及以上）
-
-windows设置方法
-*	打开IE，在菜单找到并打开“Internet选项”
-*	切换至“连接”标签后，点击“局域网设置(L)”
-*	在“局域网设置”中勾选“使用自动配置脚本”后，在“地址(R)”填入自动代理地址
-
-
-<h3>如何运行？</h3>
+<h3>安装向导</h3>
 在远程服务器运行: 
-<pre>python remoteServer.py -a [passWord]</pre>
+<pre>python install.py remoteServer</pre>
 本地服务器运行: 
-<pre>python localServer.py</pre>
-用浏览器打开：
-<pre>http://127.0.0.1:8080/</pre>
-这样你就会看到完整的帮助，以及所有的设置
-
-<h3>当然，做为新的开源项目，还有很多事要做的：</h3>
-*	pac文件还没有做缓存
+<pre>python install.py localServer</pre>
