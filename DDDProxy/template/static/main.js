@@ -70,7 +70,7 @@ function dumpdataParse(data) {
 				+ "<span class='send'>↾" + IntToDataCount(connect.send) + "</span>" 
 				+ "<span class='recv'>⇃" + IntToDataCount(connect.recv) + "</span>"
 				+ "<span class='connectInfo'>" + connect.name + " "
-				+ (connect.pingSpeed ? ("ping " + IntToDataCount(data.currentTime - connect.lastPingSendTime,60,timeUnits) + " ttl " + (connect.pingSpeed * 1000).toFixed(1) + "ms") : "") + "</span>"
+				+ (connect.pingSpeed ? ("ttl " + (connect.pingSpeed * 1000).toFixed(1) + "ms") : "") + "</span>"
 				+ "<span class='lastUpdatetime'>"+IntToDataCount(data.currentTime - Math.max(connect.lastSendTime,connect.lastRecvTime), 60, timeUnits) + "</span>" 
 				+ "</div>";
 		}
