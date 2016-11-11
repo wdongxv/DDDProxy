@@ -160,8 +160,9 @@ class sockConnect(object):
 			ok = True
 			try:
 				sock = None
-				
-				addr = (random.choice(socket.gethostbyname_ex(address[0])[2]), address[1])
+				iplist = socket.gethostbyname_ex(address[0])[2]
+				iplist.sort()
+				addr = (random.choice(iplist), address[1])
 	
 				threadName = "connect %s:%s" % (address[0], address[1])
 				log.log(1, threadName)
