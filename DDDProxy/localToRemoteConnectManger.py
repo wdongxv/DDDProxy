@@ -89,9 +89,9 @@ class localToRemoteConnectManger():
 					requestRemove = False
 					break
 			if ((not remoteConnect.connectStatus()) 
-# 						or (connect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time())
-				or requestRemove
-				or remoteConnect.slowConnectStatus):
+			or (remoteConnect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time())
+			or requestRemove
+			or remoteConnect.slowConnectStatus):
 				del  self.remoteConnectList[self.remoteConnectListLoop]
 				remoteConnect.requestIdleClose();
 				remoteConnect = None
