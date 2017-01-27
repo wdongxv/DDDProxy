@@ -192,7 +192,7 @@ class sockConnect(object):
 				self.server.addCallback(self._setConnect, sock, address)
 			else:
 				self._connecting = False
-				self.server.addCallback(self.onClose)
+				self.server.addCallback(self.shutdown)
 			
 			if cb:
 				self.server.addCallback(cb, self if ok else None)
