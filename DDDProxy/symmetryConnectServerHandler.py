@@ -163,16 +163,15 @@ class symmetryConnectServerHandler(sockConnect):
 			
 			_symmetryPingDataCacheLenght = max(min(1024 * 1024 , self._symmetryPingDataCacheLenght), 1024100)
 			self.server.cancelCallback(self.requestSlowClose)
-			self.server.addDelay(10, self.sendPingSpeedResponse, False)
-	def sendPingSpeedResponse(self, fristPing=True):
+			self.server.addDelay(10, self.sendPingSpeedResponse)
+	def sendPingSpeedResponse(self):
 		data = {
 			"opt":"pingSpeed",
 			"time":time.time()
 		}
 		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 					 json.dumps(data))
-		if not fristPing: #兼容旧版远程服务
-			self.server.addDelay(60, self.requestSlowClose)
+		self.server.addDelay(10, self.requestSlowClose)
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
 		self.info["slowConnectStatus"] = True
