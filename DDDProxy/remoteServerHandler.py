@@ -174,7 +174,6 @@ class remoteServerHandler(symmetryConnectServerHandler):
 			if time.time() - 1800 < timenum and time.time() + 1800 > timenum and self.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
 				self.authPass = True
 				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth", "status":"ok"}))
-				self.sendPingSpeedResponse()
 			else:
 				log.log(2, "auth failed", serverMessage, self.authMake(remoteAuth, timenum))
 				self.close()

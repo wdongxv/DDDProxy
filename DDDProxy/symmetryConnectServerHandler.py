@@ -111,6 +111,9 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectIdLoop = 0
 		self._symmetryPingDataCacheLenght = 1024 * 100
 		self.slowConnectStatus = False
+	def onConnected(self):
+		sockConnect.onConnected(self)
+		self.sendPingSpeedResponse()
 
 	def onSend(self, data):
 		sockConnect.onSend(self, data)

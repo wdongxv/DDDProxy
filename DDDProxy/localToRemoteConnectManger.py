@@ -38,7 +38,6 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 				self.authCallbackList = []
 				self.authPass = True
 				self.connectName = "[remote:%d]	%s(%s)" % (self.fileno(), self.address[0], self.addressIp)
-				self.sendPingSpeedResponse()
 			else:
 				self.close()
 		else:
