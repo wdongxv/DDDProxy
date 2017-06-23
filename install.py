@@ -108,6 +108,7 @@ if __name__ == "__main__":
 		print "done!"
 	elif platformName == "linux":
 		release, version, _ = platform.dist()
+		release = release.lower()
 		if release == "centos":
 			if version.startswith("7."):
 				serverFile = "dddproxy_" + server + ".service"
@@ -115,9 +116,7 @@ if __name__ == "__main__":
 				os.system("systemctl enable " + serverFile)
 				os.system("systemctl stop " + serverFile)
 				os.system("systemctl start " + serverFile)
-		elif release == "debian":
-			pass
-		elif release == "Ubuntu":
+		elif release == "ubuntu" or release == "debian":
 			serverFile = "dddproxy_" + server + ""
 			setInitFile(mainPath + "/.install/ubuntu", "/etc/init.d/" + serverFile, "--auth %s")
 			os.system("chmod +x /etc/init.d/"+serverFile)
