@@ -174,7 +174,7 @@ class symmetryConnectServerHandler(sockConnect):
 		}
 		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 					 json.dumps(data))
-		self.server.addDelay(10, self.requestSlowClose)
+		self.server.addDelay(30, self.requestSlowClose)
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
 		self.info["slowConnectStatus"] = True
