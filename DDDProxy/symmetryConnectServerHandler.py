@@ -80,7 +80,7 @@ class symmetryConnect(sockConnect):
 				self._symmetryConnectSendPendingCache.append(part)
 			
 			if len(self._symmetryConnectSendPendingCache) > 800:
-				self.unsetIOEventFlags( sockConnect.socketIOEventFlagsRead)
+				self.setIOEventFlags(0)
 				
 # 			self._symmetryPingLenght += len(data)
 # 			if(self.symmetryConnectManager and self._symmetryPingLenght > self.symmetryConnectManager._symmetryPingDataCacheLenght):
@@ -101,7 +101,11 @@ class symmetryConnect(sockConnect):
 	def getSymmetryConnectSendData(self):
 		data = self._symmetryConnectSendPendingCache.pop(0)
 		if len(self._symmetryConnectSendPendingCache) < 500:
-			self.addIOEventFlags(sockConnect.socketIOEventFlagsRead)
+			flags = sockConnect.socketIOEventFlagsRead
+			if self.getSendPending():
+				flags |= sockConnect.socketIOEventFlagsWrite
+			self.setIOEventFlags(flags)
+			
 		return data
 	def requestRemove(self):
 		return self._requestRemove

@@ -8,7 +8,11 @@ def parserUrlAddrPort(path):
 	hostname = url.netloc
 	port = "443" if url.scheme == "https" else "80"
 	if hostname.find(':') > 0:
-		addr, port = hostname.split(':')
+		try:
+			addr, port = hostname.split(':')
+		except:
+			log(3)
+			addr = hostname
 	else:
 		addr = hostname
 	port = int(port)
