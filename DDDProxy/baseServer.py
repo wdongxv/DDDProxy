@@ -147,7 +147,7 @@ class sockConnect(object):
 	def getSendData(self, length):
 		data = self._sendPendingCache[:length]
 		self._sendPendingCache = self._sendPendingCache[length:]
-		if not self._sendPendingCache and not self._requsetClose:
+		if len(self._sendPendingCache) == 0 and not self._requsetClose:
 			self.unsetIOEventFlags(sockConnect.socketIOEventFlagsWrite)
 		return data
 

@@ -33,7 +33,7 @@ class symmetryConnect(sockConnect):
 		self._requestRemove = False
 		self.symmetryConnectManager = None
 # 		self._symmetryPingLenght = 0
-		
+		self._pauseRecv = False
 #--------
 
 	def onRecv(self, data):
@@ -64,22 +64,25 @@ class symmetryConnect(sockConnect):
 			log.log(2, self, "<<< optCloseForceSymmetryConnect, close")
 		
 	def sendOptToSymmetryConnect(self, opt):
+		addData = False
 		if not self._requestRemove:
 			optData = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt)
 			if type(optData) != str:
 				raise Exception("data not is str")
 			self._symmetryConnectSendPendingCache.append(optData)
-		self.requestSymmetryConnectManagerWrite()
+			addData = True
+		if addData:
+			self.requestSymmetryConnectManagerWrite()
+		else:
+			pass
 	def sendDataToSymmetryConnect(self, data):
+		addData = False
 		if not self._requestRemove:
-			if type(data) != str:
-				raise Exception("data not is str")
 			for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
-				if type(part) != str:
-					raise  Exception("part not is str")
 				self._symmetryConnectSendPendingCache.append(part)
-			
-			if len(self._symmetryConnectSendPendingCache) > 800:
+				addData = True
+			if len(self._symmetryConnectSendPendingCache) > 100 and not self._pauseRecv:
+				self._pauseRecv = True
 				self.setIOEventFlags(0)
 				
 # 			self._symmetryPingLenght += len(data)
@@ -87,8 +90,10 @@ class symmetryConnect(sockConnect):
 # 				self._symmetryPingLenght = 0
 # 				self.setIOEventFlags(sockConnect.socketIOEventFlagsNone)
 # 				self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
-				
-		self.requestSymmetryConnectManagerWrite()
+		if addData:
+			self.requestSymmetryConnectManagerWrite()
+		else:
+			pass
 	def requestSymmetryConnectManagerWrite(self):
 		if self.symmetryConnectSendPending():
 			if not self.symmetryConnectManager:
@@ -100,12 +105,13 @@ class symmetryConnect(sockConnect):
 		return len(self._symmetryConnectSendPendingCache)
 	def getSymmetryConnectSendData(self):
 		data = self._symmetryConnectSendPendingCache.pop(0)
-		if len(self._symmetryConnectSendPendingCache) < 500:
+
+		if self._pauseRecv and len(self._symmetryConnectSendPendingCache) < 100:
 			flags = sockConnect.socketIOEventFlagsRead
 			if self.getSendPending():
 				flags |= sockConnect.socketIOEventFlagsWrite
 			self.setIOEventFlags(flags)
-			
+			self._pauseRecv = False
 		return data
 	def requestRemove(self):
 		return self._requestRemove
@@ -129,7 +135,7 @@ class symmetryConnectServerHandler(sockConnect):
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
 	def getSendData(self, length):
-		while sockConnect.getSendPending(self) <= socketBufferMaxLenght:
+		while sockConnect.getSendPending(self) <= socketBufferMaxLenght * 2:
 			found = False
 			for symmetryConnectId, v in self.symmetryConnectList.items():
 				if v.symmetryConnectSendPending():
@@ -148,13 +154,14 @@ class symmetryConnectServerHandler(sockConnect):
 				break
 			
 		data = sockConnect.getSendData(self, length)
-		if not data:
-			print "<onSend  ------\n", data, "\n--------->"
+		if not data and not self._requsetClose:
+			log.log(2, "not data")
 		return data
 	def requestIdleClose(self):
 		if len(self.symmetryConnectList) == 0:
 			self.close()
 	def requestSlowClose(self):
+		log.log(2, self, "very slow , close")
 		self.close()
 			
 	def onServerToServerMessage(self, serverMessage):
@@ -171,25 +178,26 @@ class symmetryConnectServerHandler(sockConnect):
 # 				self._symmetryPingDataCacheLenght /= 2
 # 			elif useTime < 10:
 # 				self._symmetryPingDataCacheLenght += 1024 * 100
-			log.log(2,"recv pingSpeedResponse",useTime)
-			if useTime > 10:
-				self.setStatusSlow()
+			log.log(2, self, "recv pingSpeedResponse", useTime)
+# 			if useTime > 10:
+# 				self.setStatusSlow()
 # 			self._symmetryPingDataCacheLenght = max(min(1024 * 1024 * 10 , self._symmetryPingDataCacheLenght), 1024*1024)
-			self.server.cancelCallback(self.requestSlowClose)
+			self.server.cancelCallback(self.setStatusSlow)
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 	def sendPingSpeedResponse(self):
 		if self._connectIsLive:
-			log.log(2,"is live")
+			log.log(2, self, "is live")
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 		else:
-			log.log(2,"not is live,ping...")
+			log.log(2, self, "not is live,ping...")
 			data = {
 				"opt":"pingSpeed",
 				"time":time.time()
 			}
 			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 						 json.dumps(data))
-			self.server.addDelay(30, self.requestSlowClose)
+			self.server.addDelay(10, self.setStatusSlow)
+# 			self.server.addDelay(60, self.requestSlowClose)
 		self._connectIsLive = False
 		
 	def setStatusSlow(self):
