@@ -64,7 +64,7 @@ class sockConnect(object):
 	def fileno(self):
 		return self._fileno
 	def onConnected(self):
-		self.setIOEventFlags(sockConnect.socketIOEventFlagsRead)
+		self.addIOEventFlags(sockConnect.socketIOEventFlagsRead)
 		
 	def onRecv(self, data):
 		self.info["lastRecvTime"] = int(time.time())
@@ -83,6 +83,10 @@ class sockConnect(object):
 		if self._ioEventFlags != flags:
 			self._ioEventFlags = flags
 			self.server.onIOEventFlagsChanged(self)
+	def unsetIOEventFlags(self, flags):
+		self.setIOEventFlags(self._ioEventFlags & (0xffff ^ flags))
+	def addIOEventFlags(self, flags):
+		self.setIOEventFlags(self._ioEventFlags | flags)
 	def connectStatus(self):
 		"""
 		0:none
@@ -144,7 +148,7 @@ class sockConnect(object):
 		data = self._sendPendingCache[:length]
 		self._sendPendingCache = self._sendPendingCache[length:]
 		if not self._sendPendingCache and not self._requsetClose:
-			self.setIOEventFlags(sockConnect.socketIOEventFlagsRead)
+			self.unsetIOEventFlags(sockConnect.socketIOEventFlagsWrite)
 		return data
 
 # 	client operating
@@ -201,7 +205,7 @@ class sockConnect(object):
 		if self._requsetClose:
 			return
 		self._sendPendingCache += data
-		self.setIOEventFlags(sockConnect.socketIOEventFlagsRead | sockConnect.socketIOEventFlagsWrite)
+		self.addIOEventFlags(sockConnect.socketIOEventFlagsWrite)
 
 	def close(self):
 		if self._requsetClose:
