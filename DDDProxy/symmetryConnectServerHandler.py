@@ -97,7 +97,7 @@ class symmetryConnect(sockConnect):
 	def getSymmetryConnectSendData(self):
 		sendData = ""
 		sendOpt = ""
-		while len(self._symmetryConnectSendPendingCache) > 0 and len(sendData) < 1024 * 30 and sendOpt != 0:
+		while len(self._symmetryConnectSendPendingCache) > 0 and len(sendData) < 1024 * 27 and sendOpt != 0:
 			data = self._symmetryConnectSendPendingCache.pop(0)
 			if type(data) == str:
 				sendData += data;
@@ -210,7 +210,7 @@ class symmetryConnectServerHandler(sockConnect):
 	_headSize = struct.calcsize("ih")
 	@staticmethod
 	def dataChunk(symmetryConnectId, data):
-		chunkLength = 1024*1024
+		chunkLength = 32000
 		while len(data) > 0:
 			dataSend = data[:chunkLength]
 			data = data[chunkLength:]
