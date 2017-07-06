@@ -66,10 +66,7 @@ class symmetryConnect(sockConnect):
 	def sendOptToSymmetryConnect(self, opt):
 		addData = False
 		if not self._requestRemove:
-			optData = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, opt)
-			if type(optData) != str:
-				raise Exception("data not is str")
-			self._symmetryConnectSendPendingCache.append(optData)
+			self._symmetryConnectSendPendingCache.append(opt)
 			addData = True
 		if addData:
 			self.requestSymmetryConnectManagerWrite()
@@ -78,18 +75,11 @@ class symmetryConnect(sockConnect):
 	def sendDataToSymmetryConnect(self, data):
 		addData = False
 		if not self._requestRemove:
-			for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, data):
-				self._symmetryConnectSendPendingCache.append(part)
-				addData = True
+			self._symmetryConnectSendPendingCache.append(data)
+			addData = True
 			if len(self._symmetryConnectSendPendingCache) > 100 and not self._pauseRecv:
 				self._pauseRecv = True
 				self.setIOEventFlags(0)
-				
-# 			self._symmetryPingLenght += len(data)
-# 			if(self.symmetryConnectManager and self._symmetryPingLenght > self.symmetryConnectManager._symmetryPingDataCacheLenght):
-# 				self._symmetryPingLenght = 0
-# 				self.setIOEventFlags(sockConnect.socketIOEventFlagsNone)
-# 				self.sendOptToSymmetryConnect(symmetryConnect.optSymmetryPing)
 		if addData:
 			self.requestSymmetryConnectManagerWrite()
 		else:
@@ -100,19 +90,31 @@ class symmetryConnect(sockConnect):
 				pass
 			else:
 				self.symmetryConnectManager.send("")
+
 #--------------- for symmetryConnectServerHandler
 	def symmetryConnectSendPending(self):
 		return len(self._symmetryConnectSendPendingCache)
 	def getSymmetryConnectSendData(self):
-		data = self._symmetryConnectSendPendingCache.pop(0)
-
+		sendData = ""
+		sendOpt = ""
+		while len(self._symmetryConnectSendPendingCache) > 0 and len(sendData) < 1024 * 30 and sendOpt != 0:
+			data = self._symmetryConnectSendPendingCache.pop(0)
+			if type(data) == str:
+				sendData += data;
+			elif type(data) == int:
+				sendOpt = symmetryConnectServerHandler.optChunk(self.symmetryConnectId, data)
+				break
 		if self._pauseRecv and len(self._symmetryConnectSendPendingCache) < 100:
 			flags = sockConnect.socketIOEventFlagsRead
 			if self.getSendPending():
 				flags |= sockConnect.socketIOEventFlagsWrite
 			self.setIOEventFlags(flags)
 			self._pauseRecv = False
-		return data
+		data = ""
+		if sendData:
+			for part in symmetryConnectServerHandler.dataChunk(self.symmetryConnectId, sendData):
+				data += part
+		return data + sendOpt
 	def requestRemove(self):
 		return self._requestRemove
 	
@@ -125,7 +127,6 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectList = {}
 		self._symmetryConnectMessageBuffer = ""
 		self.symmetryConnectIdLoop = 0
-# 		self._symmetryPingDataCacheLenght = 1024 * 100
 		self.slowConnectStatus = False
 		self._connectIsLive = True
 	def onConnected(self):
@@ -174,14 +175,7 @@ class symmetryConnectServerHandler(sockConnect):
 			useTime = time.time() - serverMessage["time"]
 			self.info["lastPingSendTime"] = serverMessage["time"]
 			self.info["pingSpeed"] = useTime
-# 			if useTime > 12:
-# 				self._symmetryPingDataCacheLenght /= 2
-# 			elif useTime < 10:
-# 				self._symmetryPingDataCacheLenght += 1024 * 100
 			log.log(2, self, "recv pingSpeedResponse", useTime)
-# 			if useTime > 10:
-# 				self.setStatusSlow()
-# 			self._symmetryPingDataCacheLenght = max(min(1024 * 1024 * 10 , self._symmetryPingDataCacheLenght), 1024*1024)
 			self.server.cancelCallback(self.setStatusSlow)
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 	def sendPingSpeedResponse(self):
@@ -216,9 +210,10 @@ class symmetryConnectServerHandler(sockConnect):
 	_headSize = struct.calcsize("ih")
 	@staticmethod
 	def dataChunk(symmetryConnectId, data):
+		chunkLength = 1024*1024
 		while len(data) > 0:
-			dataSend = data[:32000]
-			data = data[32000:]
+			dataSend = data[:chunkLength]
+			data = data[chunkLength:]
 			yield struct.pack("i", symmetryConnectId) + struct.pack("h", len(dataSend)) + dataSend + "\n"
 	
 	def onRecv(self, data):
@@ -256,8 +251,6 @@ class symmetryConnectServerHandler(sockConnect):
 			connect = self.getSymmetryConnect(symmetryConnectId)
 			if connect:
 				connect.onSymmetryConnectData(data)
-# 			else:
-# 				raise Exception(symmetryConnectId,"not found??")
 	def _onRecvOpt(self, symmetryConnectId, opt):
 # 		print "<_onRecvOpt ",symmetryConnectId," ------",opt,"--------->"
 		if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
