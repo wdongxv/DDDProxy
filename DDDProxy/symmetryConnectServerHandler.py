@@ -177,6 +177,7 @@ class symmetryConnectServerHandler(sockConnect):
 			self.info["pingSpeed"] = useTime
 			log.log(2, self, "recv pingSpeedResponse", useTime)
 			self.server.cancelCallback(self.setStatusSlow)
+			self.server.cancelCallback(self.requestSlowClose)
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 	def sendPingSpeedResponse(self):
 		if self._connectIsLive:
@@ -191,7 +192,7 @@ class symmetryConnectServerHandler(sockConnect):
 			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 						 json.dumps(data))
 			self.server.addDelay(10, self.setStatusSlow)
-# 			self.server.addDelay(60, self.requestSlowClose)
+			self.server.addDelay(60, self.requestSlowClose)
 		self._connectIsLive = False
 		
 	def setStatusSlow(self):
