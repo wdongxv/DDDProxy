@@ -129,6 +129,7 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectIdLoop = 0
 		self.slowConnectStatus = False
 		self._connectIsLive = True
+		self._forcePing = 0
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		self.sendPingSpeedResponse()
@@ -180,10 +181,12 @@ class symmetryConnectServerHandler(sockConnect):
 			self.server.cancelCallback(self.requestSlowClose)
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 	def sendPingSpeedResponse(self):
-		if self._connectIsLive:
+		if self._connectIsLive and self._forcePing < 10:
 # 			log.log(2, self, "is live")
 			self.server.addDelay(5, self.sendPingSpeedResponse)
+			self._forcePing += 1
 		else:
+			self._forcePing = 0
 			log.log(2, self, "unknow live status , ping...")
 			data = {
 				"opt":"pingSpeed",
@@ -191,7 +194,7 @@ class symmetryConnectServerHandler(sockConnect):
 			}
 			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 						 json.dumps(data))
-			self.server.addDelay(10, self.setStatusSlow)
+			self.server.addDelay(5, self.setStatusSlow)
 			self.server.addDelay(60, self.requestSlowClose)
 		self._connectIsLive = False
 		
