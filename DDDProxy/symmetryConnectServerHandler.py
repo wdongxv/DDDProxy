@@ -181,8 +181,8 @@ class symmetryConnectServerHandler(sockConnect):
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 	def sendPingSpeedResponse(self):
 		if self._connectIsLive:
-			log.log(2, self, "is live")
-			self.server.addDelay(30, self.sendPingSpeedResponse)
+# 			log.log(2, self, "is live")
+			self.server.addDelay(5, self.sendPingSpeedResponse)
 		else:
 			log.log(2, self, "not is live,ping...")
 			data = {
