@@ -22,7 +22,7 @@ if __name__ == "__main__":
 		exit()
 		
 	log.debuglevel = int(startUpArgs.loglevel)
-		
+	
 	
 	server = baseServer()
 	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8082" if startUpArgs.port == "-1" else startUpArgs.port))

@@ -97,7 +97,7 @@ class symmetryConnect(sockConnect):
 	def getSymmetryConnectSendData(self):
 		sendData = ""
 		sendOpt = ""
-		while len(self._symmetryConnectSendPendingCache) > 0 and len(sendData) < 1024 * 27 and sendOpt != 0:
+		while len(self._symmetryConnectSendPendingCache) > 0 and len(sendData) < 1024 * 8:
 			data = self._symmetryConnectSendPendingCache.pop(0)
 			if type(data) == str:
 				sendData += data;
