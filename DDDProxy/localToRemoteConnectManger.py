@@ -59,53 +59,64 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 			return
 		symmetryConnectServerHandler.requestIdleClose(self)
 class localToRemoteConnectManger():
-	"""
-	"""
 	def __init__(self, server):
+		"""
+		@param server: _baseServer
+		"""
 		self.server = server;
 		self.remoteConnectList = []
-		self.remoteConnectListLoop = 0
-		self
+		self.server.addDelay(1, self.handlerRemoteConnects)
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
+		remoteConnect = None
+		for connect in self.remoteConnectList:
+			if not remoteConnect or remoteConnect.info["pingSpeed"] > connect.info["pingSpeed"]:
+				remoteConnect = connect
+
+		if not remoteConnect:
+			remoteConnect = self.addRemoteConnect()
+		return remoteConnect
+	
+	def addRemoteConnect(self):
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
 		if remoteServerList == None:
 			return None
-
-		self.remoteConnectListLoop += 1;
-		if self.remoteConnectListLoop >= maxConnectByOnServer:
-			self.remoteConnectListLoop = 0
-
-		remoteConnect = None
-		if self.remoteConnectListLoop < len(self.remoteConnectList):
-			remoteConnect = self.remoteConnectList[self.remoteConnectListLoop]
+		
+		remoteConnect = remoteServerConnecter(self.server)
+		remoteServer = random.choice(remoteServerList)
+		
+		def connectDone(ok):
+			if ok:
+				remoteConnect.auth(remoteServer["auth"])
+		port = int(remoteServer["port"]) if remoteServer["port"] else 8082
+		remoteConnect.connect((remoteServer["host"], port), True, connectDone)
+		self.remoteConnectList.append(remoteConnect);
+		return remoteConnect
+	def handlerRemoteConnects(self):
+		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
+		if remoteServerList == None:
+			return None
+		removeConnectList = []
+		for remoteConnect in self.remoteConnectList:
 			requestRemove = True
 			for remoteServer in remoteServerList:
 				port = int(remoteServer["port"]) if remoteServer["port"] else 8082
 				if(remoteServer['host'] == remoteConnect.address[0] and port == remoteConnect.address[1]):
 					requestRemove = False
 					break
-			if ((not remoteConnect.connectStatus()) 
-			or (remoteConnect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time())
-			or requestRemove
-			or remoteConnect.slowConnectStatus):
-				del  self.remoteConnectList[self.remoteConnectListLoop]
-				remoteConnect.requestIdleClose();
-				remoteConnect = None
-		if not remoteConnect:
-			remoteConnect = remoteServerConnecter(self.server)
-			remoteServer = random.choice(remoteServerList)
-			
-			def connectDone(ok):
-				if ok:
-					remoteConnect.auth(remoteServer["auth"])
-			port = int(remoteServer["port"]) if remoteServer["port"] else 8082
-			remoteConnect.connect((remoteServer["host"], port), True, connectDone)
-			self.remoteConnectList.append(remoteConnect);
+			if (not remoteConnect.connectStatus()) or (remoteConnect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time()) or requestRemove or remoteConnect.slowConnectStatus:
+				removeConnectList.append(remoteConnect)
+		for remoteConnect in removeConnectList:
+			self.remoteConnectList.remove(remoteConnect)
+			remoteConnect.requestIdleClose();
 		
-		return remoteConnect
+		for _ in range(maxConnectByOnServer):
+			if maxConnectByOnServer > len(self.remoteConnectList):
+				self.addRemoteConnect()
+		self.server.addDelay(10, self.handlerRemoteConnects)
+		
 	def onConnectClose(self, connect):
 		if connect in self.remoteConnectList:
 			self.remoteConnectList.remove(connect)
