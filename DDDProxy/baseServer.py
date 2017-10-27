@@ -162,6 +162,7 @@ class sockConnect(object):
 		def _doConnectSock(address, useSsl=False, cb=None, setThreadName=None):
 			self._connecting = True
 			ok = True
+			addr = None
 			try:
 				sock = None
 				iplist = socket.gethostbyname_ex(address[0])[2]
@@ -188,7 +189,7 @@ class sockConnect(object):
 				else:
 					ok = False
 			except Exception as e:
-				if str(e).find("handshake"):
+				if str(e).find("handshake") and addr:
 					self.deleteRemoteCert(addr[0], addr[1])
 				log.log(3, address)
 				ok = False
