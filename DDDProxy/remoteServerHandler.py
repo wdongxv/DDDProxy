@@ -39,7 +39,11 @@ class realServerConnect(symmetryConnect):
 		except:
 			log.log(3)
 		self.sendDataToSymmetryConnect(self.makeReseponse("1", code=405))
-
+	def connect(self, address, useSsl=False, cb=None):
+		addr = address[0]
+		if addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
+			return connectOk(False)
+		symmetryConnect.connect(self, address, useSsl=useSsl, cb=cb)
 	def onSymmetryConnectData(self, data):
 		if self.proxyMode:
 			self.send(data)
@@ -117,8 +121,6 @@ class realServerConnect(symmetryConnect):
 					path = path.split("?")
 					if httpmessagedone:
 						self.onHTTP(method)
-				elif addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
-					self.server.addCallback(self.onClose)
 				else:
 					if self.connectStatus() == 0:
 						if method != "CONNECT":
