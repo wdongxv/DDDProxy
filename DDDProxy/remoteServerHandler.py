@@ -117,7 +117,7 @@ class realServerConnect(symmetryConnect):
 					path = path.split("?")
 					if httpmessagedone:
 						self.onHTTP(method)
-				elif addr in ["127.0.0.1", "localhost"]:
+				elif addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
 					self.server.addCallback(self.onClose)
 				else:
 					if self.connectStatus() == 0:
