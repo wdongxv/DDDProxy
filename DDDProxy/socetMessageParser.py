@@ -37,6 +37,8 @@ class httpMessageParser():
 		return "keep-alive" if (connection and connection.lower() == "keep-alive") else "close"
 	def headerOk(self):
 		return self.status == "end" or self.status == "bodyReadding" 
+	def headerError(self):
+		return self.status == "error" 
 	def readingBody(self):
 		m = self.messageCache
 		self.readingBodyLength += len(m)

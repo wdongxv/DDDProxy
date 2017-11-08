@@ -40,12 +40,14 @@ class symmetryConnect(sockConnect):
 		sockConnect.onRecv(self, data)
 		self.sendDataToSymmetryConnect(data)
 		
-	def onClose(self):
-		self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
+	def close(self):
+		if not self._requestRemove:
+			self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
 		self._requestRemove = True
-	
+		sockConnect.close(self)
 #--------
 	def onSymmetryConnectServerClose(self):
+		self._requestRemove = True
 		self.close()
 	def onSymmetryConnectData(self, data):
 		pass

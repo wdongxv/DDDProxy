@@ -40,12 +40,17 @@ class realServerConnect(symmetryConnect):
 			log.log(3)
 		self.sendDataToSymmetryConnect(self.makeReseponse("1", code=405))
 	def connect(self, address, useSsl=False, cb=None):
+		
+		def connectOk(ok):
+			if not ok:
+				self.server.addDelay(1, self.close)			
+			if cb:
+				cb(ok)
+			
 		addr = address[0]
 		if addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
-			if cb:
-				cb(False)
-			return
-		symmetryConnect.connect(self, address, useSsl=useSsl, cb=cb)
+			return connectOk(False)
+		symmetryConnect.connect(self, address, useSsl=useSsl, cb=connectOk)
 	def onSymmetryConnectData(self, data):
 		if self.proxyMode:
 			self.send(data)
@@ -115,7 +120,10 @@ class realServerConnect(symmetryConnect):
 				if method == "CONNECT":
 					path = "https://" + path
 					def _connectOk(ok):
-						self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
+						if ok:
+							self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
+						else:
+							self.sendDataToSymmetryConnect("HTTP/1.1 502 Bad Gateway\r\n\r\n")
 					connectOk = _connectOk
 					self.proxyMode = True
 				addr, port = parserUrlAddrPort(path)
@@ -129,6 +137,8 @@ class realServerConnect(symmetryConnect):
 							m = re.search("^(?:(?:http)://[^/]+)(.*)$", path)
 							if m:
 								def _connectOk(ok):
+									if not ok:
+										return self.sendDataToSymmetryConnect("HTTP/1.1 502 Bad Gateway\r\n\r\n")
 									dataCache = "%s %s %s\r\n" % (method, m.group(1), self.messageParse.httpVersion())
 									dataCache += self.messageParse.HeaderString() + "\r\n"
 									dataCache += self.messageParse.readingBody()
@@ -143,7 +153,9 @@ class realServerConnect(symmetryConnect):
 						self.send(self.messageParse.readingBody())
 						if httpmessagedone:
 							self.messageParse.clear()
-
+			elif self.messageParse.headerError():
+				self.close()
+				
 class remoteServerHandler(symmetryConnectServerHandler):
 	
 	def __init__(self, *args, **kwargs):
@@ -163,7 +175,7 @@ class remoteServerHandler(symmetryConnectServerHandler):
 			self.server.addCallback(symmetryConnectServerHandler._setConnect, self, sock, address)
 		except:
 			log.log(3)
-			self.server.addCallback(self.onClose)
+			self.server.addCallback(self.close)
 	def getSymmetryConnect(self, symmetryConnectId):
 		symmetryConnect = symmetryConnectServerHandler.getSymmetryConnect(self, symmetryConnectId)
 		if not symmetryConnect and self.authPass:
