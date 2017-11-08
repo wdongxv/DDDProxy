@@ -42,7 +42,9 @@ class realServerConnect(symmetryConnect):
 	def connect(self, address, useSsl=False, cb=None):
 		addr = address[0]
 		if addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
-			return connectOk(False)
+			if cb:
+				cb(False)
+			return
 		symmetryConnect.connect(self, address, useSsl=useSsl, cb=cb)
 	def onSymmetryConnectData(self, data):
 		if self.proxyMode:
