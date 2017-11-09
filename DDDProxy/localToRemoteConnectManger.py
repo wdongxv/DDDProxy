@@ -90,6 +90,7 @@ class localToRemoteConnectManger():
 		def connectDone(ok):
 			if ok:
 				remoteConnect.auth(remoteServer["auth"])
+			
 		port = int(remoteServer["port"]) if remoteServer["port"] else 8082
 		remoteConnect.connect((remoteServer["host"], port), True, connectDone)
 		self.remoteConnectList.append(remoteConnect);

@@ -26,7 +26,6 @@ class realServerConnect(symmetryConnect):
 		self.proxyMode = False
 # 	def onConnected(self):
 # 		sockConnect.onConnected(self)
-
 	def onSend(self, data):
 		symmetryConnect.onSend(self, data)		
 	def onHTTP(self, method):
@@ -43,7 +42,7 @@ class realServerConnect(symmetryConnect):
 		
 		def connectOk(ok):
 			if not ok:
-				self.server.addDelay(1, self.close)			
+				self.server.addCallback(self.close)			
 			if cb:
 				cb(ok)
 			

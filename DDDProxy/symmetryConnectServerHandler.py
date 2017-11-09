@@ -45,6 +45,11 @@ class symmetryConnect(sockConnect):
 			self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
 		self._requestRemove = True
 		sockConnect.close(self)
+	
+	def onClose(self):
+		self._requestRemove = True
+		sockConnect.onClose(self)
+	
 #--------
 	def onSymmetryConnectServerClose(self):
 		self._requestRemove = True
@@ -63,7 +68,7 @@ class symmetryConnect(sockConnect):
 # 			self.setIOEventFlags(flags)
 		elif opt == symmetryConnect.optCloseForceSymmetryConnect:
 			self.shutdown()
-			log.log(2, self, "<<< optCloseForceSymmetryConnect, close")
+# 			log.log(2, self, "<<< optCloseForceSymmetryConnect, close")
 		
 	def sendOptToSymmetryConnect(self, opt):
 		addData = False
@@ -137,6 +142,7 @@ class symmetryConnectServerHandler(sockConnect):
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		self.sendPingSpeedResponse()
+		log.log(2, self, "onConnected")
 
 	def onSend(self, data):
 		sockConnect.onSend(self, data)
@@ -206,9 +212,12 @@ class symmetryConnectServerHandler(sockConnect):
 		self.slowConnectStatus = True
 		self.info["slowConnectStatus"] = True
 	def onClose(self):
+		self.server.cancelCallback(self.sendPingSpeedResponse)
+		self.server.cancelCallback(self.setStatusSlow)
+		self.server.cancelCallback(self.requestSlowClose)
 		for _, connect in self.symmetryConnectList.items():
 			connect.onSymmetryConnectServerClose()
-
+		log.log(2, self, "onClose")
 	@staticmethod
 	def optChunk(symmetryConnectId, opt):
 		if opt >= 0:

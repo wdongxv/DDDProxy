@@ -197,8 +197,8 @@ class sockConnect(object):
 				self.server.addCallback(self._setConnect, sock, address)
 			else:
 				self._connecting = False
-				self.server.addCallback(self.shutdown)
-			
+				self.server.addCallback(self.onClose)
+				
 			if cb:
 				self.server.addCallback(cb, self if ok else None)
 		sockConnect._connectPool.apply_async(_doConnectSock, address, useSsl, cb)

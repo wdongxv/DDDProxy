@@ -116,6 +116,7 @@ class localConnectHandler(localSymmetryConnect):
 				pass
 		if connect:
 			connect.addLocalRealConnect(self)
+			self.connectName = connect.filenoStr() + "	<	" + self.connectName
 			return True
 		else:
 			self.close()
@@ -127,7 +128,6 @@ class localConnectHandler(localSymmetryConnect):
 		"""
 		@type connect: remoteServerConnectLocalHander
 		"""
-		self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.connectName
 		self.onRecv("");
 	def onClose(self):
 		self.sendOptToSymmetryConnect(symmetryConnect.optCloseForceSymmetryConnect)
