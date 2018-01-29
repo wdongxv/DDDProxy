@@ -19,6 +19,8 @@ import json
 from datetime import datetime
 import httplib
 import math
+from _sqlite3 import connect
+from DDDProxy.version import version
 
 
 
@@ -297,16 +299,17 @@ class sockConnect(object):
 		        dt.year, dt.hour, dt.minute, dt.second)
 		if type(data) is unicode:
 			data = data.encode("utf-8")
+			header[""]
 		elif not type(data) is str:
 			try:
 				data = json.dumps(data)
 			except:
 				log.log(3, data)
-				data = []
+				data = "error"
 			ContentType = "application/json"
 		httpMessage = ""
 		httpMessage += "HTTP/1.1 " + str(code) + " " + (httplib.responses[code]) + "\r\n"
-		httpMessage += "Server: DDDProxy/2.0\r\n"
+		httpMessage += "Server: DDDProxy/%s\r\n"%(version)
 		httpMessage += "Date: " + httpdate() + "\r\n"
 		httpMessage += "Content-Length: " + str(len(data)) + "\r\n"
 		httpMessage += "Content-Type: " + ContentType + "\r\n"
@@ -318,7 +321,8 @@ class sockConnect(object):
 		return httpMessage
 	def reseponse(self, data, ContentType="text/html", code=200, connection="close", header={}):
 		self.send(self.makeReseponse(data, ContentType, code, connection, header))
-	
+		if connection == "close":
+			self.close()
 # other 
 	def __str__(self, *args, **kwargs):
 		if self.connectName:
