@@ -37,7 +37,7 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 					self.server.addCallback(connect.setServerAuthPass)
 				self.authCallbackList = []
 				self.authPass = True
-				self.connectName = "[remote:%d]	%s(%s)" % (self.fileno(), self.address[0], self.addressIp)
+				self.connectName = "[remote:%d]	%s" % (self.fileno(), self.addressStr())
 			else:
 				self.close()
 		else:
@@ -72,7 +72,7 @@ class localToRemoteConnectManger():
 		"""
 		remoteConnect = None
 		for connect in self.remoteConnectList:
-			if not remoteConnect or remoteConnect.info["pingSpeed"] > connect.info["pingSpeed"]:
+			if (not remoteConnect or remoteConnect.info["pingSpeed"] > connect.info["pingSpeed"]) and not connect.slowConnectStatus:
 				remoteConnect = connect
 
 		if not remoteConnect:

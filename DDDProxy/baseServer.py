@@ -173,7 +173,8 @@ class sockConnect(object):
 	
 				threadName = "connect %s:%s" % (address[0], address[1])
 				log.log(1, threadName)
-				setThreadName(threadName)
+				if setThreadName:
+					setThreadName(threadName)
 				if addr[0] != address[0]:
 					self.addressIp = addr[0]
 			
@@ -324,10 +325,12 @@ class sockConnect(object):
 		if connection == "close":
 			self.close()
 # other 
+	def addressStr(self):
+		return "%s%s:%s"%(self.address[0],("("+self.addressIp +")") if self.addressIp != "" else "",self.address[1])
 	def __str__(self, *args, **kwargs):
 		if self.connectName:
 			return self.connectName
-		return  self.filenoStr() + str(self.address)
+		return  self.filenoStr() + self.addressStr()
 	def filenoStr(self):
 		return "[" + str(self.fileno()) + "]"
 
