@@ -38,7 +38,7 @@ class realServerConnect(symmetryConnect):
 		except:
 			log.log(3)
 		self.sendDataToSymmetryConnect(self.makeReseponse("1", code=405))
-	def connect(self, address, useSsl=False, cb=None):
+	def connect(self, address,  cb=None):
 		
 		def connectOk(ok):
 			if not ok:
@@ -49,7 +49,8 @@ class realServerConnect(symmetryConnect):
 		addr = address[0]
 		if addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
 			return connectOk(False)
-		symmetryConnect.connect(self, address, useSsl=useSsl, cb=connectOk)
+		symmetryConnect.connect(self, address,  cb=connectOk)
+		
 	def onSymmetryConnectData(self, data):
 		if self.proxyMode:
 			self.send(data)
@@ -186,21 +187,27 @@ class remoteServerHandler(symmetryConnectServerHandler):
 		opt = serverMessage["opt"]
 		if opt == "auth":
 			timenum = serverMessage["time"]
-			if time.time() - 1800 < timenum and time.time() + 1800 > timenum and self.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
+			if time.time() - 1800 < timenum and time.time() + 1800 > timenum and symmetryConnectServerHandler.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
 				self.authPass = True
 				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth", "status":"ok"}))
 			else:
-				log.log(2, "auth failed", serverMessage, self.authMake(remoteAuth, timenum))
+				log.log(2, "auth failed", serverMessage, symmetryConnectServerHandler.authMake(remoteAuth, timenum))
 				self.close()
 		else:
 			symmetryConnectServerHandler.onServerToServerMessage(self, serverMessage)
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
-SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert")
-SSLKeyPath = configFile.makeConfigFilePathName("dddproxy.remote.key")
+SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert.pem")
+SSLKeyPath = configFile.makeConfigFilePathName("dddproxy.remote.key.pem")
+lastCreateCertTime = 0 
 def createSSLCert():
-	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
-		shell = "openssl req -new -newkey rsa:1024 -days 3650 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=ddd\" -keyout %s  -out %s" % (
+	global lastCreateCertTime
+# 	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
+	timenum = time.time()
+	if timenum - lastCreateCertTime > 86400*10:
+		lastCreateCertTime = timenum
+		auth = symmetryConnectServerHandler.authMake(remoteAuth, timenum)
+		shell = "openssl req -new -newkey rsa:1024 -days 10 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=%d_%s\" -keyout %s  -out %s" % (timenum,auth["password"],
 																							SSLKeyPath, SSLCertPath)
 		os.system(shell)
 	

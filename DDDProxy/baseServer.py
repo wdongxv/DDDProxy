@@ -4,21 +4,17 @@ Created on 2015年9月3日
 
 @author: dxw
 '''
-import os
 import select
 import socket
 import ssl
-import threading
 import time
 import random
 
 from ThreadPool import ThreadPool
-from configFile import configFile
 from DDDProxy import log
 import json
 from datetime import datetime
 import httplib
-import math
 from _sqlite3 import connect
 from DDDProxy.version import version
 
@@ -102,31 +98,7 @@ class sockConnect(object):
 		return 0
 # 	connect to host
 
-	_createCertLock = threading.RLock()
-	def fetchRemoteCert(self, remoteServerHost, remoteServerPort):
-		ok = False
-		sockConnect._createCertLock.acquire()
-		certPath = self.SSLLocalCertPath(remoteServerHost, remoteServerPort)
-		try:
-			if not os.path.exists(certPath):
-				cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerPort))
-				f = open(certPath, "wt")
-				f.write(cert)
-				f.close()
-			ok = True
-		except:
-			log.log(3, remoteServerHost, remoteServerPort)
-		sockConnect._createCertLock.release()
-		return ok
-	def deleteRemoteCert(self, remoteServerHost, remoteServerPort):
-		sockConnect._createCertLock.acquire()
-		certPath = self.SSLLocalCertPath(remoteServerHost, remoteServerPort)
-		if os.path.exists(certPath):
-			os.unlink(certPath)
-		sockConnect._createCertLock.release()
 		
-	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
-		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 	_connectPool = ThreadPool(maxThread=100)
 	
 	def _setConnect(self, sock, address):
@@ -154,23 +126,25 @@ class sockConnect(object):
 		return data
 
 # 	client operating
-	
-	def connect(self, address, useSsl=False, cb=None):
+	def _initSocket(self,addr):
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.connect(addr)
+		return sock
+	def connect(self, address, cb=None):
 		if self.connectStatus():
 			raise Exception(self, "connect status is", self.connectStatus())
 		self._connecting = True
 		self.address = address
 		self.addressIp = ""
-		def _doConnectSock(address, useSsl=False, cb=None, setThreadName=None):
+		def _doConnectSock(setThreadName=None):
 			self._connecting = True
 			ok = True
 			addr = None
+			sock = None
 			try:
-				sock = None
 				iplist = socket.gethostbyname_ex(address[0])[2]
 				iplist.sort()
 				addr = (random.choice(iplist), address[1])
-	
 				threadName = "connect %s:%s" % (address[0], address[1])
 				log.log(1, threadName)
 				if setThreadName:
@@ -178,22 +152,10 @@ class sockConnect(object):
 				if addr[0] != address[0]:
 					self.addressIp = addr[0]
 			
-				if useSsl:
-					if self.fetchRemoteCert(addr[0], addr[1]):
-						sock = ssl.wrap_socket(
-									sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-									ca_certs	=	self.SSLLocalCertPath(addr[0], addr[1]),
-									cert_reqs	=	ssl.CERT_REQUIRED)
-				else:
-					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	
-				if sock:
-					sock.connect(addr)
-				else:
+				sock = self._initSocket(addr)
+				if not sock:
 					ok = False
 			except Exception as e:
-				if str(e).find("handshake") and addr:
-					self.deleteRemoteCert(addr[0], addr[1])
 				log.log(3, address)
 				ok = False
 			if ok:
@@ -201,10 +163,9 @@ class sockConnect(object):
 			else:
 				self._connecting = False
 				self.server.addCallback(self.onClose)
-				
 			if cb:
 				self.server.addCallback(cb, self if ok else None)
-		sockConnect._connectPool.apply_async(_doConnectSock, address, useSsl, cb)
+		sockConnect._connectPool.apply_async(_doConnectSock)
 	def send(self, data):
 		if self._requsetClose:
 			return

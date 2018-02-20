@@ -41,12 +41,12 @@ class symmetryConnect(sockConnect):
 		self.sendDataToSymmetryConnect(data)
 		
 	def close(self):
-		if not self._requestRemove:
-			self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
 		self._requestRemove = True
 		sockConnect.close(self)
 	
 	def onClose(self):
+		if not self._requestRemove:
+			self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
 		self._requestRemove = True
 		sockConnect.onClose(self)
 	
@@ -292,8 +292,8 @@ class symmetryConnectServerHandler(sockConnect):
 	def makeSymmetryConnectId(self):
 		self.symmetryConnectIdLoop += 1
 		return self.symmetryConnectIdLoop
-
-	def authMake(self, auth, timenum):
+	@staticmethod
+	def authMake( auth, timenum):
 		return {
 			"time":timenum,
 			"password":hashlib.md5("%s_%d" % (auth, timenum)).hexdigest()
