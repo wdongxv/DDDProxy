@@ -4,7 +4,7 @@ Created on 2015年9月5日
 
 @author: dxw
 '''
-from configFile import configFile
+from .configFile import configFile
 
 
 mainSetting = None

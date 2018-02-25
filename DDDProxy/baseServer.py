@@ -10,14 +10,13 @@ import ssl
 import time
 import random
 
-from ThreadPool import ThreadPool
-from DDDProxy import log
+from .ThreadPool import ThreadPool
+from . import log
 import json
 from datetime import datetime
-import httplib
 from _sqlite3 import connect
-from DDDProxy.version import version
-
+from .version import version
+import httplib
 
 
 socket.setdefaulttimeout(5)
@@ -327,7 +326,7 @@ class _baseServer():
 		log.log(1, "run in ", host, ":", port)
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
-		print "start server on: " + host + ":" + str(port)
+		log.log(1,"start server on: " , host + ":" , str(port))
 		sock.bind((host, port))
 		sock.listen(socketBufferMaxLenght)
 		self.addSockListen(sock, handler)

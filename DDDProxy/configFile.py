@@ -22,7 +22,7 @@ class configFile:
 	def __init__(self):
 		self.setting = None
 		try:
-			fp = file(self.getConfigfileFilePath(),"r")
+			fp = open(self.getConfigfileFilePath(),"r")
 			self.setting = json.load(fp,object_hook = autoDataObject)
 			fp.close()
 		except:
@@ -35,7 +35,7 @@ class configFile:
 		self.setting[k] = v;
 		self.save()
 	def save(self):
-		fp = file(self.getConfigfileFilePath(),"w")
+		fp = open(self.getConfigfileFilePath(),"w")
 		json.dump(self.setting,fp)
 		fp.close()
 	def getConfigfileFilePath(self):

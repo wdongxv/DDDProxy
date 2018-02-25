@@ -5,16 +5,12 @@ Created on 2015年9月9日
 @author: dxw
 '''
 import json
-import re
 import time
-import urlparse
 
-from baseServer import baseServer
-from configFile import autoDataObject
-from configFile import configFile
-import domainConfig
-from DDDProxy import log
-from DDDProxy.hostParser import parserUrlAddrPort, getDomainName
+from . import domainConfig, log
+from .configFile import autoDataObject
+from .configFile import configFile
+from .hostParser import parserUrlAddrPort, getDomainName
 
 
 class analysisSite(object):
@@ -45,9 +41,9 @@ class analysisSiteList(object):
 		self.siteList.append(site)
 		return site
 	
-	def put(self,fromIp,domain,timeMark,type,val):
+	def put(self,fromIp,domain,timeMark,dataType,val):
 		site = self.get(fromIp,domain,timeMark)
-		setattr(site, type, getattr(site, type)+val)
+		setattr(site, dataType, getattr(site, dataType)+val)
 		site.lastTime = time.time()
 		site.mergeTimes+=1
 	def pop(self):
@@ -96,7 +92,7 @@ class domainAnalysis():
 			timeData = self.domainAnalysis[startTime];
 			outgoing.append(0)
 			incoming.append(0)
-			for formIp,domainData in timeData.items():
+			for _,domainData in timeData.items():
 				for domain,data in domainData.items():
 					if not selectDomain or domain == selectDomain:
 						outgoing[index] += data[domainAnalysisType.outgoing]
@@ -110,7 +106,7 @@ class domainAnalysis():
 		for timeMark,timeData in self.domainAnalysis.items():
 			if timeMark<todayStartTime:
 				continue
-			for formIp,domainData in timeData.items():
+			for _,domainData in timeData.items():
 				for domain,data in domainData.items():
 					if domain not in domainCountData:
 						domainCountData[domain] = 0
@@ -149,7 +145,7 @@ class domainAnalysis():
 				data["outgoing"] += domainData.outgoing
 				
 				dataExpireTime = time.time()-86400*7 #删除7天之前的数据
-				for (k,d) in self.domainAnalysis.items():
+				for (k,_) in self.domainAnalysis.items():
 					if(k < dataExpireTime):
 						del self.domainAnalysis[k]
 						break

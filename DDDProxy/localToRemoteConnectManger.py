@@ -13,13 +13,16 @@ import ssl
 import threading
 import time
 
-from baseServer import sockConnect
-from configFile import configFile
-import log
-from settingConfig import settingConfig
-from symmetryConnectServerHandler import symmetryConnect
-from symmetryConnectServerHandler import symmetryConnectServerHandler
-
+from .baseServer import sockConnect
+from .configFile import configFile
+from . import log
+from .settingConfig import settingConfig
+from .symmetryConnectServerHandler import symmetryConnect
+from .symmetryConnectServerHandler import symmetryConnectServerHandler
+try:
+	from builtins import str
+except:
+	pass
 
 maxConnectByOnServer = 2
 remoteConnectMaxTime = 0
@@ -93,7 +96,10 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 				sock.connect(addr)
 				cert = sock.getpeercert()
 				subject = dict(x[0] for x in cert['subject'])
-				commonName = subject["commonName"].encode('utf-8')
+				commonName = subject["commonName"]
+				commonNameUTF8 = commonName.encode('utf-8')
+				if type(commonNameUTF8) == str:
+					commonName = commonNameUTF8
 				authObj = commonName.split("_")
 				certMakeTime = int(authObj[0])
 				if time.time() - certMakeTime < 86400*15:

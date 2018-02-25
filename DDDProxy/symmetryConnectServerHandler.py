@@ -205,7 +205,7 @@ class symmetryConnectServerHandler(sockConnect):
 			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
 						 json.dumps(data))
 			self.server.addDelay(5, self.setStatusSlow)
-			self.server.addDelay(60, self.requestSlowClose)
+			self.server.addDelay(60*2, self.requestSlowClose)
 		self._connectIsLive = False
 		
 	def setStatusSlow(self):
@@ -294,7 +294,10 @@ class symmetryConnectServerHandler(sockConnect):
 		return self.symmetryConnectIdLoop
 	@staticmethod
 	def authMake( auth, timenum):
+		md5Str = "%s_%d" % (auth, timenum)
+		md5Str = hashlib.md5(md5Str.encode('utf-8'))
+		md5Str = md5Str.hexdigest()
 		return {
 			"time":timenum,
-			"password":hashlib.md5("%s_%d" % (auth, timenum)).hexdigest()
+			"password":md5Str
 			}

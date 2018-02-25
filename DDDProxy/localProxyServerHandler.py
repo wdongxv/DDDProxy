@@ -3,17 +3,18 @@
 import json
 from os.path import dirname
 
-from domainAnalysis import analysis, domainAnalysisType
-import domainConfig
-from hostParser import parserUrlAddrPort, getDomainName
-from localToRemoteConnectManger import localSymmetryConnect
-from localToRemoteConnectManger import localToRemoteConnectManger
-from mime import get_mime_type
-from settingConfig import settingConfig
-from socetMessageParser import httpMessageParser
-from DDDProxy.symmetryConnectServerHandler import symmetryConnect
-from DDDProxy import version
+from .domainAnalysis import analysis, domainAnalysisType
+from . import domainConfig
+from .hostParser import parserUrlAddrPort, getDomainName
+from .localToRemoteConnectManger import localSymmetryConnect
+from .localToRemoteConnectManger import localToRemoteConnectManger
+from .mime import get_mime_type
+from .settingConfig import settingConfig
+from .socetMessageParser import httpMessageParser
+from .symmetryConnectServerHandler import symmetryConnect
+from . import version
 import binascii
+from .log import log
 
 
 class localConnectHandler(localSymmetryConnect):
@@ -73,7 +74,7 @@ class localConnectHandler(localSymmetryConnect):
 				self.setToProxyMode()
 				self.socksMode = True
 			else:
-				print "local >> ", len(data), binascii.b2a_hex(data)
+				log(1,"local >> ", len(data), binascii.b2a_hex(data))
 				pass
 		else:
 			httpmessagedone = self.httpMessageParse.appendData(data)

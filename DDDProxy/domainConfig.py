@@ -4,9 +4,9 @@ Created on 2015年9月8日
 
 @author: dxw
 '''
-from configFile import configFile
+from .configFile import configFile
 import time
-from DDDProxy.hostParser import getDomainName
+from .hostParser import getDomainName
 class domainConfig(configFile):
 	defaultDomainList = ["google.com", "gstatic.com", "googleusercontent.com", "googleapis.com", "googleusercontent.com",
 						"googlevideo.com", "facebook.com", "youtube.com", "akamaihd.net", "ytimg.com", "twitter.com",
