@@ -260,7 +260,6 @@ class sockConnect(object):
 		        dt.year, dt.hour, dt.minute, dt.second)
 		if type(data) is unicode:
 			data = data.encode("utf-8")
-			header[""]
 		elif not type(data) is str:
 			try:
 				data = json.dumps(data)
