@@ -23,6 +23,10 @@ def log(level, *args, **kwargs):
 	
 	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
 	sys.stderr.write(["DEBUG", "INFO", "WARNING", "ERROR"][level] +":	" + data + "\n")
+
+def cmp(a,b):
+	return (a>b)-(a<b)
+
 if __name__ == "__main__":
 	log(3, "123")
 	log(2, "123")

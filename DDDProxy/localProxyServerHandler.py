@@ -23,7 +23,7 @@ class localConnectHandler(localSymmetryConnect):
 		self.mode = ""
 		self.connectHost = ""
 
-		self.preConnectRecvCache = ""
+		self.preConnectRecvCache = b""
 
 		self.httpMessageParse = httpMessageParser()
 		
@@ -58,6 +58,9 @@ class localConnectHandler(localSymmetryConnect):
 							version = "Socks4a"
 						setConnectHost = True
 						port = ord(_d[2]) * 0x100 + ord(_d[3])
+				else:
+					log(3,_d[0],"not support")
+					self.close()
 				if setConnectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + "	" + version + ":" + self.connectHost + ":%d" % (port) 
@@ -67,10 +70,10 @@ class localConnectHandler(localSymmetryConnect):
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 					
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
-				self.preConnectRecvCache = ""
+				self.preConnectRecvCache = b""
 			return
-		if data[0] == '\x05' or data[0] == '\x04':  # socks5
-			if data[1] == '\x02' or data[1] == '\x01':
+		if data[0] == b'\x05' or data[0] == b'\x04':  # socks5
+			if data[1] == b'\x02' or data[1] == b'\x01':
 				self.setToProxyMode()
 				self.socksMode = True
 			else:
@@ -129,7 +132,7 @@ class localConnectHandler(localSymmetryConnect):
 		"""
 		@type connect: remoteServerConnectLocalHander
 		"""
-		self.onRecv("");
+		self.onRecv(b"");
 	def onClose(self):
 		self.sendOptToSymmetryConnect(symmetryConnect.optCloseForceSymmetryConnect)
 		localSymmetryConnect.onClose(self)

@@ -8,13 +8,12 @@ import ssl
 import struct
 import time
 
-from DDDProxy import log
-from DDDProxy.symmetryConnectServerHandler import symmetryConnectServerHandler, \
-	symmetryConnect
-from baseServer import sockConnect
-from configFile import configFile
-from hostParser import parserUrlAddrPort
-from socetMessageParser import httpMessageParser
+from . import log
+from .baseServer import sockConnect
+from .configFile import configFile
+from .hostParser import parserUrlAddrPort
+from .socetMessageParser import httpMessageParser
+from .symmetryConnectServerHandler import symmetryConnectServerHandler, symmetryConnect
 
 
 remoteAuth = ""
@@ -56,11 +55,11 @@ class realServerConnect(symmetryConnect):
 			self.send(data)
 			return
 		
-		if len(data) and data[0] == '\x05':  # socks5
+		if len(data) and data[0] == b'\x05':  # socks5
 # 			print "local >> ", len(data), binascii.b2a_hex(data)
-			if (data[1] == '\x02' or data[1] == '\x01') and len(data) <= 4:
+			if (data[1] == b'\x02' or data[1] == b'\x01') and len(data) <= 4:
 				self.sendDataToSymmetryConnect(b"\x05\x00")
-			elif data[1] == '\x01':
+			elif data[1] == b'\x01':
 				def connectOk(ok):
 					if ok:
 						send = b"\x05\x00\x00\x01"
@@ -72,7 +71,7 @@ class realServerConnect(symmetryConnect):
 					self.sendDataToSymmetryConnect(send)
 					self.proxyMode = True
 				host = "<None>"
-				if data[3] == '\x01':
+				if data[3] == b'\x01':
 					host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
 					port = ord(data[8]) * 0x100 + ord(data[9])
 					return self.connect((host, port), cb=connectOk)
@@ -88,7 +87,7 @@ class realServerConnect(symmetryConnect):
 				self.sendDataToSymmetryConnect(reply)
 			else:
 				self.close()
-		elif len(data) and  data[0] == '\x04':  # socks4/socks4a
+		elif len(data) and  data[0] == b'\x04':  # socks4/socks4a
 			def connectOk(ok):
 				if ok:
 					send = b"\x00\x5A" + data[2:8]
@@ -98,7 +97,7 @@ class realServerConnect(symmetryConnect):
 				self.sendDataToSymmetryConnect(send)
 				self.proxyMode = True
 # 			print "local >> ", len(data), binascii.b2a_hex(data)
-			if data[1] == '\x01' or data[1] == '\x02':
+			if data[1] == b'\x01' or data[1] == b'\x02':
 				host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
 				version = "Socks4"
 				if host.startswith("0.0.0.") and ord(data[7]) != 0:  # socks4a
@@ -141,6 +140,7 @@ class realServerConnect(symmetryConnect):
 										return self.sendDataToSymmetryConnect("HTTP/1.1 502 Bad Gateway\r\n\r\n")
 									dataCache = "%s %s %s\r\n" % (method, m.group(1), self.messageParse.httpVersion())
 									dataCache += self.messageParse.HeaderString() + "\r\n"
+									dataCache = dataCache.encode()
 									dataCache += self.messageParse.readingBody()
 									self.send(dataCache)
 								connectOk = _connectOk
@@ -189,7 +189,7 @@ class remoteServerHandler(symmetryConnectServerHandler):
 			timenum = serverMessage["time"]
 			if time.time() - 1800 < timenum and time.time() + 1800 > timenum and symmetryConnectServerHandler.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
 				self.authPass = True
-				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth", "status":"ok"}))
+				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth", "status":"ok"}).encode())
 			else:
 				log.log(2, "auth failed", serverMessage, symmetryConnectServerHandler.authMake(remoteAuth, timenum))
 				self.close()

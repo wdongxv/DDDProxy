@@ -4,19 +4,22 @@ Created on 2015年9月3日
 
 @author: dxw
 '''
-import select
+from datetime import datetime
+from http import HTTPStatus
+import json
+import random
 import socket
 import ssl
 import time
-import random
 
-from .ThreadPool import ThreadPool
-from . import log
-import json
-from datetime import datetime
 from _sqlite3 import connect
+import select
+
+from . import log
+from .ThreadPool import ThreadPool
+from .log import cmp
 from .version import version
-import httplib
+from functools import cmp_to_key
 
 
 socket.setdefaulttimeout(5)
@@ -54,7 +57,7 @@ class sockConnect(object):
 		sockConnect._filenoLoop += 1
 		self._fileno = sockConnect._filenoLoop
 		self.connectName = ""
-		self._sendPendingCache = ""
+		self._sendPendingCache = b""
 		self._requsetClose = False
 		self._connecting = False
 		self._ioEventFlags = sockConnect.socketIOEventFlagsNone
@@ -174,7 +177,7 @@ class sockConnect(object):
 	def close(self):
 		if self._requsetClose:
 			return
-		self.send("")
+		self.send(b"")
 		self._requsetClose = True
 	
 	def shutdown(self):
@@ -240,12 +243,11 @@ class sockConnect(object):
 
 			
 # 	for http
-	def getFileContent(self, name):
+	def getFileContent(self, name,encoding="utf-8"):
 		content = None
 		try:
-			f = open(name)
-			content = f.read()
-			f.close()
+			with open(name,"rt",encoding=encoding) as f:
+				content = f.read()
 		except:
 			pass
 		return content
@@ -258,18 +260,19 @@ class sockConnect(object):
 					"Oct", "Nov", "Dec"][dt.month - 1]
 			return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
 		        dt.year, dt.hour, dt.minute, dt.second)
-		if type(data) is unicode:
-			data = data.encode("utf-8")
-			header[""]
-		elif not type(data) is str:
+		if type(data) is dict or type(data) is list:
 			try:
 				data = json.dumps(data)
 			except:
 				log.log(3, data)
 				data = "error"
 			ContentType = "application/json"
+
+		if type(data) is str:
+			data = data.encode()
 		httpMessage = ""
-		httpMessage += "HTTP/1.1 " + str(code) + " " + (httplib.responses[code]) + "\r\n"
+		httpStatus = HTTPStatus(code)
+		httpMessage += "HTTP/1.1 " + str(code) + " " + httpStatus.phrase + "\r\n"
 		httpMessage += "Server: DDDProxy/%s\r\n"%(version)
 		httpMessage += "Date: " + httpdate() + "\r\n"
 		httpMessage += "Content-Length: " + str(len(data)) + "\r\n"
@@ -278,8 +281,7 @@ class sockConnect(object):
 		for k, v in header.items():
 			httpMessage += k + ": " + v + "\r\n"
 		httpMessage += "\r\n"
-		httpMessage += data
-		return httpMessage
+		return httpMessage.encode() + data
 	def reseponse(self, data, ContentType="text/html", code=200, connection="close", header={}):
 		self.send(self.makeReseponse(data, ContentType, code, connection, header))
 		if connection == "close":
@@ -326,7 +328,7 @@ class _baseServer():
 		log.log(1, "run in ", host, ":", port)
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
-		log.log(1,"start server on: " , host + ":" , str(port))
+		log.log(2,"start server on: " , host + ":" , str(port))
 		sock.bind((host, port))
 		sock.listen(socketBufferMaxLenght)
 		self.addSockListen(sock, handler)
@@ -399,10 +401,10 @@ class _baseServer():
 			info = {"name":str(handler)}
 			info.update(handler.info)
 			connects[connect].append(info)
-		
-		for l in connects.values():
-			l.sort(cmp=lambda x, y : cmp(y["send"] + y["recv"], x["send"] + x["recv"]))
-		
+		def sort(x,y):
+			return cmp(y["send"] + y["recv"], x["send"] + x["recv"])
+		for k,v in connects.items():
+			connects[k] = sorted(v,key=cmp_to_key(sort))
 		return {"connect":connects, "threads":sockConnect._connectPool.dump(), "currentTime":int(time.time())}
 
 class selectBaseServer(_baseServer):
@@ -543,10 +545,10 @@ class epollBaseServer(_baseServer):
 			self._handlerCallback()
 
 baseServer = selectBaseServer
-# if "kqueue" in select.__dict__:
-# 	baseServer = kqueueBaseServer
-# if "epoll" in select.__dict__:
-# 	baseServer = epollBaseServer
+if "kqueue" in select.__dict__:
+	baseServer = kqueueBaseServer
+if "epoll" in select.__dict__:
+	baseServer = epollBaseServer
 
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)

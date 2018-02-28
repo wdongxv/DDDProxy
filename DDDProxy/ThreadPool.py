@@ -5,9 +5,9 @@ Created on 2015年9月10日
 @author: dxw
 '''
 from threading import Thread
-from Queue import Queue
 from DDDProxy import log
 import time
+from queue import Queue
 
 
 class ThreadPoolWorker(Thread):

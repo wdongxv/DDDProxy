@@ -7,7 +7,7 @@ class httpMessageParser():
 		self.clear()
 		
 	def clear(self):
-		self.messageCache = ""
+		self.messageCache = b""
 		self.protocol = None  # (method, path, protocol)
 		self.headers = []
 		self.status	 = "readding"
@@ -57,17 +57,17 @@ class httpMessageParser():
 			return
 		self.messageCache += data
 		while True:
-			index = self.messageCache.find("\r\n")
+			index = self.messageCache.find(b"\r\n")
 			if index < 0 :
 				return False
 			
-			line = self.messageCache[:index]
+			line = self.messageCache[:index].decode('ascii')
 			self.messageCache = self.messageCache[index + 2:]
 			if self.protocol:
 				if index == 0:
 					if self.method() == "POST":
 						self.status = "bodyReadding"
-						return self.appendData("")
+						return self.appendData(b"")
 					self.status = "end"
 					return True
 				header = line.split(": ", 1)

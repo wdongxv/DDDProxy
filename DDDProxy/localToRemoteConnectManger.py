@@ -63,7 +63,7 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 		timenum = math.floor(time.time())
 		data = {"opt":"auth"}
 		data.update(symmetryConnectServerHandler.authMake(self.authCode, timenum))
-		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps(data))
+		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps(data).encode())
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 		localToRemoteConnectManger.manager.onConnectClose(self)

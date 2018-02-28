@@ -11,7 +11,8 @@ from . import domainConfig, log
 from .configFile import autoDataObject
 from .configFile import configFile
 from .hostParser import parserUrlAddrPort, getDomainName
-
+from .log import cmp
+from functools import cmp_to_key
 
 class analysisSite(object):
 	def __init__(self,domain,fromIp,timeMark):
@@ -116,7 +117,9 @@ class domainAnalysis():
 		for domain,data in domainCountData.items():
 			countData += data
 			domainDataList.append({"domain":domain,"dataCount":data})
-		domainDataList.sort(cmp=lambda x,y : cmp(y["dataCount"],x["dataCount"]))
+		def sort(x,y):
+			return cmp(y["dataCount"],x["dataCount"])
+		domainDataList = sorted(domainDataList,key=cmp_to_key(sort))
 		return {"outgoing":outgoing,"incoming":incoming,"domainDataList":domainDataList,"countData":countData}
 
 	@staticmethod

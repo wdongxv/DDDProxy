@@ -18,7 +18,7 @@ if __name__ == "__main__":
 	startUpArgs = parser.parse_args()[0]
 	remoteServerHandler.remoteAuth =  startUpArgs.auth
 	if not remoteServerHandler.remoteAuth:
-		print parser.get_usage()
+		print(parser.get_usage())
 		exit()
 		
 	log.debuglevel = int(startUpArgs.loglevel)

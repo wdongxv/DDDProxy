@@ -7,6 +7,8 @@ Created on 2015年9月8日
 from .configFile import configFile
 import time
 from .hostParser import getDomainName
+from functools import cmp_to_key
+from .log import cmp
 class domainConfig(configFile):
 	defaultDomainList = ["google.com", "gstatic.com", "googleusercontent.com", "googleapis.com", "googleusercontent.com",
 						"googlevideo.com", "facebook.com", "youtube.com", "akamaihd.net", "ytimg.com", "twitter.com",
@@ -34,14 +36,12 @@ class domainConfig(configFile):
 			if opend == 2 or domain["open"] == opend:
 				pacList.append(domain["domain"])
 		return pacList
-	
 	def getDomainListWithAnalysis(self):
 		data = [{"domain":key, "open":value["open"], "connectTimes":value["connectTimes"]} for (key, value) in self.setting.items()]
 		def sort(x, y):
 			o = cmp(y["open"], x["open"])
 			return cmp(y["connectTimes"], x["connectTimes"]) if o == 0 else o
-		data.sort(cmp=sort)
-		return data;
+		return sorted(data,key=cmp_to_key(sort));
 	def removeDomain(self, domain):
 		if domain in self.setting:
 			del self.setting[domain]

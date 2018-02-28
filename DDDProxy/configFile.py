@@ -6,7 +6,7 @@ Created on 2015年9月5日
 '''
 import json
 import os
-from __builtin__ import BaseException
+from builtins import BaseException
 
 
 class autoDataObject(dict):

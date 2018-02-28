@@ -1,10 +1,10 @@
-import urlparse
 import re
 from DDDProxy.log import log
+from urllib.parse import urlparse
 
 	
 def parserUrlAddrPort(path):
-	url = urlparse.urlparse(path)
+	url = urlparse(path)
 	hostname = url.netloc
 	port = "443" if url.scheme == "https" else "80"
 	if hostname.find(':') > 0:
