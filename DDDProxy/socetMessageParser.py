@@ -42,7 +42,7 @@ class httpMessageParser():
 	def readingBody(self):
 		m = self.messageCache
 		self.readingBodyLength += len(m)
-		self.messageCache = ""
+		self.messageCache = b""
 		return m
 	def appendData(self, data):
 		if self.status == "bodyReadding":
