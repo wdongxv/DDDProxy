@@ -9,7 +9,6 @@ import math
 import os
 import random
 import socket
-import ssl
 import threading
 import time
 
@@ -19,29 +18,13 @@ from . import log
 from .settingConfig import settingConfig
 from .symmetryConnectServerHandler import symmetryConnect
 from .symmetryConnectServerHandler import symmetryConnectServerHandler
-try:
-	from builtins import str
-except:
-	pass
 
 maxConnectByOnServer = 2
 remoteConnectMaxTime = 0
-class localSymmetryConnect(symmetryConnect):
-	def __init__(self, server):
-		symmetryConnect.__init__(self, server)
-		self.serverAuthPass = False
-		
-	def onServerAuthPass(self):
-		pass
-	def setServerAuthPass(self):
-		self.serverAuthPass = True
-		self.onServerAuthPass()
 	
 class remoteServerConnecter(symmetryConnectServerHandler):
 	def __init__(self, server, authCode, *args, **kwargs):
-		symmetryConnectServerHandler.__init__(self, server, *args, **kwargs)
-		self.authPass = False
-		self.authCode = authCode
+		symmetryConnectServerHandler.__init__(self, server,authCode, *args, **kwargs)
 	def onServerToServerMessage(self, serverMessage):
 		opt = serverMessage["opt"]
 		if opt == "auth":
@@ -59,11 +42,6 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
 		if self.authPass:
 			self.server.addCallback(connect.setServerAuthPass)
-	def auth(self):
-		timenum = math.floor(time.time())
-		data = {"opt":"auth"}
-		data.update(symmetryConnectServerHandler.authMake(self.authCode, timenum))
-		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps(data))
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 		localToRemoteConnectManger.manager.onConnectClose(self)
@@ -71,49 +49,6 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 		if self in localToRemoteConnectManger.manager.remoteConnectList:
 			return
 		symmetryConnectServerHandler.requestIdleClose(self)
-	def fetchRemoteCert(self, remoteServerHost, remoteServerPort):
-		ok = False
-		remoteServerConnecter._createCertLock.acquire()
-		certPath = self.SSLLocalCertPath(remoteServerHost, remoteServerPort)
-		try:
-			if not os.path.exists(certPath):
-				cert = ssl.get_server_certificate(addr=(remoteServerHost, remoteServerPort))
-				f = open(certPath, "wt")
-				f.write(cert)
-				f.close()
-			ok = True
-		except:
-			log.log(3, remoteServerHost, remoteServerPort)
-		remoteServerConnecter._createCertLock.release()
-		return ok
-	def _initSocket(self, addr):
-		if self.fetchRemoteCert(addr[0], addr[1]):
-			try:
-				sock = ssl.wrap_socket(
-							sock	=		socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-							ca_certs	=	self.SSLLocalCertPath(addr[0], addr[1]),
-							cert_reqs	=	ssl.CERT_REQUIRED)
-				sock.connect(addr)
-				cert = sock.getpeercert()
-				subject = dict(x[0] for x in cert['subject'])
-				commonName = subject["commonName"]
-				commonNameUTF8 = commonName.encode('utf-8')
-				if type(commonNameUTF8) == str:
-					commonName = commonNameUTF8
-				authObj = commonName.split("_")
-				certMakeTime = int(authObj[0])
-				if time.time() - certMakeTime < 86400*15:
-					makeAuth = symmetryConnectServerHandler.authMake(self.authCode, certMakeTime)
-					if  authObj [1] == makeAuth["password"]:
-						return sock
-			except Exception as e:
-				log.log(3, addr)
-			self.deleteRemoteCert(addr[0], addr[1])
-			try:
-				sock.close()
-			except:
-				pass
-		return None
 	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 	def deleteRemoteCert(self, remoteServerHost, remoteServerPort):
@@ -155,13 +90,8 @@ class localToRemoteConnectManger():
 		
 		remoteServer = random.choice(remoteServerList)
 		remoteConnect = remoteServerConnecter(self.server, remoteServer["auth"])
-		
-		def connectDone(ok):
-			if ok:
-				remoteConnect.auth()
-			
 		port = int(remoteServer["port"]) if remoteServer["port"] else 8082
-		remoteConnect.connect((remoteServer["host"], port), connectDone)
+		remoteConnect.connect((remoteServer["host"], port))
 		self.remoteConnectList.append(remoteConnect);
 		return remoteConnect
 	def handlerRemoteConnects(self):
