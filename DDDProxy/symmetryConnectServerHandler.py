@@ -243,7 +243,7 @@ class symmetryConnectServerHandler(sockConnect):
 			dataSend = data[:chunkLength]
 			data = data[chunkLength:]
 			dataSendLength = len(dataSend)
-			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", ) + dataSend
+			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h",) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				chunk = dataSend[:16]
@@ -281,12 +281,11 @@ class symmetryConnectServerHandler(sockConnect):
 			try:
 				serverMessage = json.loads(data.decode())
 			except:
-				log.log(3, self, "symmetryConnectId", symmetryConnectId)
 				self.close()
 				if self.initOk:
-					raise
+					raise BaseException("json.loads(data.decode()) error")
 				else:
-					log.log(3, self, "if not self.initOk, not raise")
+					log.log(2, self, "if not self.initOk, not raise", "symmetryConnectId", symmetryConnectId)
 			if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 				self.onServerToServerMessage(serverMessage)
 			elif symmetryConnectId == symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId:
