@@ -270,7 +270,7 @@ class symmetryConnectServerHandler(sockConnect):
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[symmetryConnectServerHandler._headSize:symmetryConnectServerHandler._headSize + dataSize]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
-					log.log(1, "dataChunk", "symmetryConnectId:", symmetryConnectId, "len(dataSend):", len(dataMessage), "encryptData:", len(encryptChuckSize))
+					log.log(1, "dataChunk", "symmetryConnectId:", symmetryConnectId, "len(dataSend):", len(dataMessage), "encryptData:", encryptChuckSize)
 					self._onRecvData(symmetryConnectId, dataMessage)
 					continue
 			break
