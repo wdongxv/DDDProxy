@@ -102,7 +102,7 @@ class symmetryConnect(sockConnect):
 				sendOpt = self.symmetryConnectManager.optChunk(self.symmetryConnectId, data)
 				break
 			else:
-				raise BaseException("type error:"+str(type(data)))
+				raise BaseException("type error:" + str(type(data)))
 		if self._pauseRecv and len(self._symmetryConnectSendPendingCache) < 100:
 			flags = sockConnect.socketIOEventFlagsRead
 			if self.getSendPending():
@@ -238,10 +238,7 @@ class symmetryConnectServerHandler(sockConnect):
 		while len(data) > 0:
 			dataSend = data[:chunkLength]
 			data = data[chunkLength:]
-			try:
-				dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", len(dataSend)) + dataSend
-			except:
-				raise
+			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", len(dataSend)) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				chunk = dataSend[:16]
@@ -250,6 +247,7 @@ class symmetryConnectServerHandler(sockConnect):
 				encryptData += self.aes.encrypt(chunk)
 				dataSend = dataSend[16:]
 			yield encryptData
+
 	def onRecv(self, data):
 		sockConnect.onRecv(self, data)
 		self._symmetryConnectMessageCryptBuffer += data
@@ -265,7 +263,7 @@ class symmetryConnectServerHandler(sockConnect):
 				encryptChuckSize = dataSize + symmetryConnectServerHandler._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
-					dataMessage = self._symmetryConnectMessageBuffer[symmetryConnectServerHandler._headSize:symmetryConnectServerHandler._headSize+dataSize]
+					dataMessage = self._symmetryConnectMessageBuffer[symmetryConnectServerHandler._headSize:symmetryConnectServerHandler._headSize + dataSize]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
 					self._onRecvData(symmetryConnectId, dataMessage)
 					continue
@@ -276,7 +274,8 @@ class symmetryConnectServerHandler(sockConnect):
 			try:
 				serverMessage = json.loads(data.decode())
 			except:
-				log.log(3)
+				log.log(3, "symmetryConnectId", symmetryConnectId)
+				self.close()
 				return
 			if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 				self.onServerToServerMessage(serverMessage)
