@@ -4,17 +4,14 @@ import json
 import os
 import re
 import socket
-import ssl
 import struct
 import time
 
 from . import log
-from .baseServer import sockConnect
-from .configFile import configFile
+from .symmetryConnectServerHandler import symmetryConnectServerHandler, \
+	symmetryConnect
 from .hostParser import parserUrlAddrPort
 from .socetMessageParser import httpMessageParser
-from .symmetryConnectServerHandler import symmetryConnectServerHandler, symmetryConnect
-
 
 remoteAuth = ""
 
@@ -23,16 +20,15 @@ class realServerConnect(symmetryConnect):
 		symmetryConnect.__init__(self, server)
 		self.messageParse = httpMessageParser()
 		self.proxyMode = False
-# 	def onConnected(self):
-# 		sockConnect.onConnected(self)
 	def onSend(self, data):
 		symmetryConnect.onSend(self, data)		
 	def onHTTP(self, method):
 		try:
 			if method == "POST":
+				origin = self.messageParse.getHeader("origin")
 				self.sendDataToSymmetryConnect(self.makeReseponse(self.server.dumpConnects(),
 									connection=self.messageParse.connection(),
-									header={"Access-Control-Allow-Origin":self.messageParse.getHeader("origin")}))
+									header={"Access-Control-Allow-Origin":origin}  if origin else {} ))
 				return
 		except:
 			log.log(3)
@@ -157,57 +153,14 @@ class realServerConnect(symmetryConnect):
 				self.close()
 				
 class remoteServerHandler(symmetryConnectServerHandler):
-	
-	def __init__(self, *args, **kwargs):
-		symmetryConnectServerHandler.__init__(self, *args, **kwargs)
-		self.authPass = False
-
-	def _setConnect(self, sock, address):
-# 		symmetryConnectServerHandler._setConnect(self, sock, address)
-		sockConnect._connectPool.apply_async(self.wrapToSll, sock, address)
+	def __init__(self, server,  *args, **kwargs):
+		symmetryConnectServerHandler.__init__(self, server, remoteAuth, *args, **kwargs)
 	def onConnected(self):
 		symmetryConnectServerHandler.onConnected(self)
 		self.connectName = "[remote:" + str(self.fileno()) + "]	" + self.address[0]
-	def wrapToSll(self, sock, address, setThreadName):
-		try:
-			createSSLCert()
-			sock = ssl.wrap_socket(sock, certfile=SSLCertPath, keyfile=SSLKeyPath, server_side=True)
-			self.server.addCallback(symmetryConnectServerHandler._setConnect, self, sock, address)
-		except:
-			log.log(3)
-			self.server.addCallback(self.close)
 	def getSymmetryConnect(self, symmetryConnectId):
 		symmetryConnect = symmetryConnectServerHandler.getSymmetryConnect(self, symmetryConnectId)
-		if not symmetryConnect and self.authPass:
+		if not symmetryConnect:
 			symmetryConnect = realServerConnect(self.server)
 			self.addSymmetryConnect(symmetryConnect, symmetryConnectId)
 		return symmetryConnect
-		
-	def onServerToServerMessage(self, serverMessage):
-		opt = serverMessage["opt"]
-		if opt == "auth":
-			timenum = serverMessage["time"]
-			if time.time() - 1800 < timenum and time.time() + 1800 > timenum and symmetryConnectServerHandler.authMake(remoteAuth, timenum)["password"] == serverMessage["password"]:
-				self.authPass = True
-				self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"auth", "status":"ok"}).encode())
-			else:
-				log.log(2, "auth failed", serverMessage, symmetryConnectServerHandler.authMake(remoteAuth, timenum))
-				self.close()
-		else:
-			symmetryConnectServerHandler.onServerToServerMessage(self, serverMessage)
-	def onClose(self):
-		symmetryConnectServerHandler.onClose(self)
-SSLCertPath = configFile.makeConfigFilePathName("dddproxy.remote.cert.pem")
-SSLKeyPath = configFile.makeConfigFilePathName("dddproxy.remote.key.pem")
-lastCreateCertTime = 0 
-def createSSLCert():
-	global lastCreateCertTime
-# 	if not os.path.exists(SSLCertPath) or not os.path.exists(SSLCertPath):
-	timenum = time.time()
-	if timenum - lastCreateCertTime > 86400*10:
-		lastCreateCertTime = timenum
-		auth = symmetryConnectServerHandler.authMake(remoteAuth, timenum)
-		shell = "openssl req -new -newkey rsa:1024 -days 10 -nodes -x509 -subj \"/C=US/ST=Denial/L=Springfield/O=Dis/CN=%d_%s\" -keyout %s  -out %s" % (timenum,auth["password"],
-																							SSLKeyPath, SSLCertPath)
-		os.system(shell)
-	

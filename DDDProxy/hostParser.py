@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 def parserUrlAddrPort(path):
 	url = urlparse(path)
 	hostname = url.netloc
-	port = "443" if url.scheme == "https" else "80"
+	port = ""
 	if hostname.find(':') > 0:
 		try:
 			addr, port = hostname.split(':')
@@ -15,7 +15,11 @@ def parserUrlAddrPort(path):
 			addr = hostname
 	else:
 		addr = hostname
-	port = int(port)
+	try:
+		if not port:
+			port = 443 if url.scheme == "https" else 80
+	except:
+		log(3)
 	return (addr, port)
 
 # ^(.*?)\.*([^\.]+)(\.(?:net\.cn|com\.cn|com\.hk|co\.jp|org\.cn|[^\.\d]{2,3}))$

@@ -7,7 +7,21 @@ Created on 2015年9月5日
 import json
 import os
 from builtins import BaseException
+from DDDProxy.log import log
+def _byteify(data):
+	if isinstance(data, bytes):
+		return data.encode('utf-8')
+	if isinstance(data, list):
+		return [ _byteify(item) for item in data ]
+	if isinstance(data, dict):
+		return {_byteify(key): _byteify(value) for key, value in data.items()}
+	return data
 
+def json_load(*args, **kwargs):
+	return _byteify(json.load(*args, **kwargs))
+	
+def json_loads(*args, **kwargs):
+	return _byteify(json.loads(*args, **kwargs))
 
 class autoDataObject(dict):
 	def __getitem__(self, key):
@@ -23,9 +37,10 @@ class configFile:
 		self.setting = None
 		try:
 			fp = open(self.getConfigfileFilePath(),"r")
-			self.setting = json.load(fp,object_hook = autoDataObject)
+			self.setting = json_load(fp,object_hook = autoDataObject)
 			fp.close()
 		except:
+			log(3)
 			pass
 		if not self.setting:
 			self.setting = {}

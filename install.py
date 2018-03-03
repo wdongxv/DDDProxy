@@ -59,7 +59,7 @@ if __name__ == "__main__":
 		InitFileContent = InitFileContent.replace("{{path-to-DDDProxy}}", mainPath)
 		InitFileContent = InitFileContent.replace("{{port-setting}}", port)
 		InitFileContent = InitFileContent.replace("{{entry-point}}", "%s.py" % (server))
-		InitFileContent = InitFileContent.replace("{{server-name}}", "dddproxy." + server)
+		InitFileContent = InitFileContent.replace("{{server-name}}", "dddproxy.python3." + server)
 		if server == "remoteServer":
 			serverPassword = ""
 			while True:
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 		if not os.path.exists(launchAgentsDir):
 			os.mkdir(launchAgentsDir)
 
-		plistName = "dddproxy." + server + ".plist"
+		plistName = "dddproxy.python3." + server + ".plist"
 		plistPath = launchAgentsDir + "/" + plistName
 		port = setInitFile(mainPath + "/.install/mac.plist" , plistPath, "<string>--auth</string><string>%s</string>")
 		
@@ -111,13 +111,13 @@ if __name__ == "__main__":
 		release = release.lower()
 		if release == "centos":
 			if version.startswith("7."):
-				serverFile = "dddproxy_" + server + ".service"
+				serverFile = "dddproxy_python3_" + server + ".service"
 				setInitFile(mainPath + "/.install/centos7", "/usr/lib/systemd/system/" + serverFile, "--auth %s")
 				os.system("systemctl enable " + serverFile)
 				os.system("systemctl stop " + serverFile)
 				os.system("systemctl start " + serverFile)
 		elif release == "ubuntu" or release == "debian":
-			serverFile = "dddproxy_" + server + ""
+			serverFile = "dddproxy_python3_" + server + ""
 			setInitFile(mainPath + "/.install/ubuntu", "/etc/init.d/" + serverFile, "--auth %s")
 			os.system("chmod +x /etc/init.d/"+serverFile)
 			os.system("update-rc.d %s defaults"%(serverFile))
