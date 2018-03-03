@@ -195,8 +195,6 @@ class symmetryConnectServerHandler(sockConnect):
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 
 	def sendPingSpeedResponse(self):
-		log.log(3,"ignore ping")
-		return
 		if self._connectIsLive and self._forcePing < 10 and self.info["pingSpeed"] != 0:
 # 			log.log(2, self, "is live")
 			self.server.addDelay(5, self.sendPingSpeedResponse)
