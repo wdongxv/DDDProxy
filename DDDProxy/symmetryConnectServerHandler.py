@@ -97,9 +97,10 @@ class symmetryConnect(sockConnect):
 		while len(self._symmetryConnectSendPendingCache) > 0 and len(sendData) < 1024 * 8:
 			data = self._symmetryConnectSendPendingCache.pop(0)
 			if type(data) == bytes:
-				sendData += data;
+				for part in self.symmetryConnectManager.dataChuck.dataChunk(self.symmetryConnectId, data):
+					sendData += part
 			elif type(data) == int:
-				sendOpt = self.symmetryConnectManager.optChunk(self.symmetryConnectId, data)
+				sendOpt = self.symmetryConnectManager.dataChuck.optChunk(self.symmetryConnectId, data)
 				break
 			else:
 				raise BaseException("type error:" + str(type(data)))
@@ -109,16 +110,65 @@ class symmetryConnect(sockConnect):
 				flags |= sockConnect.socketIOEventFlagsWrite
 			self.setIOEventFlags(flags)
 			self._pauseRecv = False
-		data = b""
-		if sendData:
-			for part in self.symmetryConnectManager.dataChunk(self.symmetryConnectId, sendData):
-				data += part
-		return data + sendOpt
+		return sendData + sendOpt
 
 	def requestRemove(self):
 		return self._requestRemove
 
+class encryptDataChuck():
+	def __init__(self,auth):
+		self._symmetryConnectMessageBuffer = b""
+		self._symmetryConnectMessageCryptBuffer = b""
+		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
+		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
+	_headSize = struct.calcsize("iih")
 	
+	def optChunk(self, symmetryConnectId, opt):
+		data = b""
+		for d in self.dataChunk(symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId,
+							json.dumps({"symmetryConnectId":symmetryConnectId, "opt":opt}).encode()):
+			data += d
+		return data
+	chunkId = 0
+	def dataChunk(self, symmetryConnectId, data):
+		chunkLength = 1024 * 32
+		while len(data) > 0:
+			dataSend = data[:chunkLength]
+			data = data[chunkLength:]
+			dataSendLength = len(dataSend)
+			encryptDataChuck.chunkId += 1
+			dataSend = struct.pack("i", encryptDataChuck.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("h", dataSendLength) + dataSend
+			encryptData = b""
+			while len(dataSend) > 0:
+				chunk = dataSend[:16]
+				while len(chunk) < 16:
+					chunk += b'\x00'
+				encryptData += self.aes.encrypt(chunk)
+				dataSend = dataSend[16:]
+			log.log(1, "dataChunk:%d"%encryptDataChuck.chunkId, "symmetryConnectId:%d"%symmetryConnectId, "len(dataSend):%d"%dataSendLength, "encryptData:%d"%len(encryptData))
+			yield encryptData
+	
+	def dataChunkParse(self,data):
+		self._symmetryConnectMessageCryptBuffer += data
+		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
+			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
+			self._symmetryConnectMessageCryptBuffer = self._symmetryConnectMessageCryptBuffer[16:]
+		while True:
+			bufferSize = len(self._symmetryConnectMessageBuffer)
+			if bufferSize >= encryptDataChuck._headSize:
+				chunkId,symmetryConnectId, dataSize = struct.unpack("iih", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
+				if symmetryConnectId < -2:
+					log.log(2,"if symmetryConnectId < -2:")
+				encryptChuckSize = dataSize + encryptDataChuck._headSize
+				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
+				if bufferSize >= encryptChuckSize:
+					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSize]
+					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
+					log.log(1, "dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, "len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize)
+					yield symmetryConnectId,dataMessage
+					continue
+			break
+		
 class symmetryConnectServerHandler(sockConnect):
 
 	serverToServerJsonMessageConnectId = -1
@@ -127,20 +177,16 @@ class symmetryConnectServerHandler(sockConnect):
 	def __init__(self, server, auth, *args, **kwargs):
 		sockConnect.__init__(self, server, *args, **kwargs)
 		self.symmetryConnectList = {}
-		self._symmetryConnectMessageBuffer = b""
-		self._symmetryConnectMessageCryptBuffer = b""
 		self.symmetryConnectIdLoop = 0
 		self.slowConnectStatus = False
 		self._connectIsLive = True
 		self._forcePing = 0
 		self.info["pingSpeed"] = 0
-		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
-		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.initOk = False
-		
+		self.dataChuck = encryptDataChuck(auth)
 	def onConnected(self):
 		sockConnect.onConnected(self)
-		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"init"}).encode())
+		self.sendServerMessage({"opt":"init"})
 		self.sendPingSpeedResponse()
 		log.log(2, self, "onConnected")
 
@@ -180,13 +226,16 @@ class symmetryConnectServerHandler(sockConnect):
 	def requestSlowClose(self):
 		log.log(2, self, "very slow , close")
 		self.close()
-			
+		
+	def sendServerMessage(self,  data):
+		for d in self.dataChuck.dataChunk(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps(data).encode()):
+			self.send(d)
+
 	def onServerToServerMessage(self, serverMessage):
 		opt = serverMessage["opt"] if "opt" in  serverMessage else ""
 		if opt == "pingSpeed":
 			serverMessage["opt"] = "pingSpeedResponse"
-			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
-						 json.dumps(serverMessage).encode())
+			self.sendServerMessage(serverMessage)
 		elif opt == "pingSpeedResponse":
 			useTime = time.time() - serverMessage["time"]
 			self.info["lastPingSendTime"] = serverMessage["time"]
@@ -206,12 +255,10 @@ class symmetryConnectServerHandler(sockConnect):
 		else:
 			self._forcePing = 0
 # 			log.log(2, self, "unknow live status , ping...")
-			data = {
+			self.sendServerMessage({
 				"opt":"pingSpeed",
 				"time":time.time()
-			}
-			self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId,
-						 json.dumps(data).encode())
+			})
 			self.server.addDelay(5, self.setStatusSlow)
 			self.server.addDelay(60 * 2, self.requestSlowClose)
 		self._connectIsLive = False
@@ -228,54 +275,14 @@ class symmetryConnectServerHandler(sockConnect):
 			connect.onSymmetryConnectServerClose()
 		log.log(2, self, "onClose")
 
-	_headSize = struct.calcsize("iih")
-	
-	def optChunk(self, symmetryConnectId, opt):
-		data = b""
-		for d in self.dataChunk(symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId,
-							json.dumps({"symmetryConnectId":symmetryConnectId, "opt":opt}).encode()):
-			data += d
-		return data
-	chunkId = 0
-	def dataChunk(self, symmetryConnectId, data):
-		chunkLength = 1024 * 32
-		while len(data) > 0:
-			dataSend = data[:chunkLength]
-			data = data[chunkLength:]
-			dataSendLength = len(dataSend)
-			symmetryConnectServerHandler.chunkId += 1
-			dataSend = struct.pack("i", symmetryConnectServerHandler.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("h", dataSendLength) + dataSend
-			encryptData = b""
-			while len(dataSend) > 0:
-				chunk = dataSend[:16]
-				while len(chunk) < 16:
-					chunk += b'\x00'
-				encryptData += self.aes.encrypt(chunk)
-				dataSend = dataSend[16:]
-			log.log(1, "dataChunk:%d"%symmetryConnectServerHandler.chunkId, "symmetryConnectId:%d"%symmetryConnectId, "len(dataSend):%d"%dataSendLength, "encryptData:%d"%len(encryptData))
-			yield encryptData
 
+		
 	def onRecv(self, data):
 		sockConnect.onRecv(self, data)
-		self._symmetryConnectMessageCryptBuffer += data
-		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
-			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
-			self._symmetryConnectMessageCryptBuffer = self._symmetryConnectMessageCryptBuffer[16:]
 		
 		self._connectIsLive = True
-		while True:
-			bufferSize = len(self._symmetryConnectMessageBuffer)
-			if bufferSize >= symmetryConnectServerHandler._headSize:
-				chunkId,symmetryConnectId, dataSize = struct.unpack("iih", self._symmetryConnectMessageBuffer[:symmetryConnectServerHandler._headSize])
-				encryptChuckSize = dataSize + symmetryConnectServerHandler._headSize
-				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
-				if bufferSize >= encryptChuckSize:
-					dataMessage = self._symmetryConnectMessageBuffer[symmetryConnectServerHandler._headSize:symmetryConnectServerHandler._headSize + dataSize]
-					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
-					log.log(1, "dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, "len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize)
-					self._onRecvData(symmetryConnectId, dataMessage)
-					continue
-			break
+		for symmetryConnectId, dataMessage in self.dataChuck.dataChunkParse(data):
+			self._onRecvData(symmetryConnectId, dataMessage)
 	
 	def _onRecvData(self, symmetryConnectId, data):
 		if symmetryConnectId < 0:
@@ -309,12 +316,6 @@ class symmetryConnectServerHandler(sockConnect):
 		return self.symmetryConnectList[symmetryConnectId] if symmetryConnectId in self.symmetryConnectList else None
 
 # -----------
-	def sendOpt(self, symmetryConnectId, opt):
-		self.send(self.optChunk(symmetryConnectId, opt))
-
-	def sendData(self, symmetryConnectId, data):
-		for d in self.dataChunk(symmetryConnectId, data):
-			self.send(d)
 
 	def addSymmetryConnect(self, connect, connectId):
 		connect.symmetryConnectId = connectId
