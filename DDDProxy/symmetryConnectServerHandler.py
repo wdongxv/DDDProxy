@@ -242,7 +242,8 @@ class symmetryConnectServerHandler(sockConnect):
 		while len(data) > 0:
 			dataSend = data[:chunkLength]
 			data = data[chunkLength:]
-			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", len(dataSend)) + dataSend
+			dataSendLength = len(dataSend)
+			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", ) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				chunk = dataSend[:16]
@@ -250,7 +251,7 @@ class symmetryConnectServerHandler(sockConnect):
 					chunk += b'\x00'
 				encryptData += self.aes.encrypt(chunk)
 				dataSend = dataSend[16:]
-			log.log(1, "dataChunk", "symmetryConnectId:", symmetryConnectId, "len(dataSend):", len(dataSend), "encryptData:", len(encryptData))
+			log.log(1, "dataChunk", "symmetryConnectId:", symmetryConnectId, "len(dataSend):", dataSendLength, "encryptData:", len(encryptData))
 			yield encryptData
 
 	def onRecv(self, data):
