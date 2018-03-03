@@ -172,8 +172,9 @@ class encryptDataChuck():
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSizeInt]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
-					log.log(1, self.logPrefix,chunkId, symmetryConnectId, 
-						len(dataMessage), encryptChuckSize,md5Bytes == hashlib.md5(dataMessage).digest()[:4])
+					if md5Bytes != hashlib.md5(dataMessage).digest()[:4] or self.logPrefix == "Send":
+						log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, symmetryConnectId, 
+							len(dataMessage), encryptChuckSize,binascii.hexlify(dataMessage))
 					
 					if symmetryConnectId < -2:
 						log.log(2,"if symmetryConnectId < -2:")
