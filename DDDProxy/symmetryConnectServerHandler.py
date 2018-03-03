@@ -161,8 +161,7 @@ class encryptDataChuck():
 			if bufferSize >= encryptDataChuck._headSize:
 				chunkId,symmetryConnectId, dataSizeInt = struct.unpack("iii", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
 				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
-					yield None,None
-					break
+					raise BaseException("bad dataSizeInt")
 				encryptChuckSize = dataSizeInt + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
