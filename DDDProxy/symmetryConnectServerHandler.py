@@ -146,7 +146,7 @@ class encryptDataChuck():
 					chunk += b'\x00'
 				encryptData += self.aes.encrypt(chunk)
 				dataSend = dataSend[16:]
-			log.log(1,"Crea","dataChunk:%d"%encryptDataChuck.chunkId, "symmetryConnectId:%d"%symmetryConnectId, "len(dataSend):%d"%dataSendLength, "encryptData:%d"%len(encryptData))
+# 			log.log(1,"Crea","dataChunk:%d"%encryptDataChuck.chunkId, "symmetryConnectId:%d"%symmetryConnectId, "len(dataSend):%d"%dataSendLength, "encryptData:%d"%len(encryptData))
 			yield encryptData
 	
 	def dataChunkParse(self,data):
