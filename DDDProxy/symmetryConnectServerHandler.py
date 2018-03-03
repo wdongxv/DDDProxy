@@ -122,7 +122,7 @@ class encryptDataChuck():
 		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.logPrefix = logPrefix
-		self.data = open("/tmp/ddproxy."+logPrefix+".data", mode='r')
+# 		self.data = open("/tmp/ddproxy."+logPrefix+".data", mode='wa')
 	_headSize = struct.calcsize("iii")
 	
 	def optChunk(self, symmetryConnectId, opt):
