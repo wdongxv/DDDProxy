@@ -152,10 +152,8 @@ class realServerConnect(symmetryConnect):
 				self.close()
 				
 class remoteServerHandler(symmetryConnectServerHandler):
-	
-	def __init__(self, *args, **kwargs):
-		symmetryConnectServerHandler.__init__(self, *args, **kwargs)
-		self.authPass = False
+	def __init__(self, server,  *args, **kwargs):
+		symmetryConnectServerHandler.__init__(self, server, remoteAuth, *args, **kwargs)
 	def onConnected(self):
 		symmetryConnectServerHandler.onConnected(self)
 		self.connectName = "[remote:" + str(self.fileno()) + "]	" + self.address[0]

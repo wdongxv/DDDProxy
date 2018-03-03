@@ -25,23 +25,8 @@ remoteConnectMaxTime = 0
 class remoteServerConnecter(symmetryConnectServerHandler):
 	def __init__(self, server, authCode, *args, **kwargs):
 		symmetryConnectServerHandler.__init__(self, server,authCode, *args, **kwargs)
-	def onServerToServerMessage(self, serverMessage):
-		opt = serverMessage["opt"]
-		if opt == "auth":
-			if serverMessage["status"] == "ok":
-				for connect in self.symmetryConnectList.values():
-					self.server.addCallback(connect.setServerAuthPass)
-				self.authCallbackList = []
-				self.authPass = True
-				self.connectName = "[remote:%d]	%s" % (self.fileno(), self.addressStr())
-			else:
-				self.close()
-		else:
-			symmetryConnectServerHandler.onServerToServerMessage(self, serverMessage)
 	def addLocalRealConnect(self, connect):
 		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
-		if self.authPass:
-			self.server.addCallback(connect.setServerAuthPass)
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 		localToRemoteConnectManger.manager.onConnectClose(self)
@@ -90,7 +75,7 @@ class localToRemoteConnectManger():
 		
 		remoteServer = random.choice(remoteServerList)
 		remoteConnect = remoteServerConnecter(self.server, remoteServer["auth"])
-		port = int(remoteServer["port"]) if remoteServer["port"] else 8082
+		port = int(remoteServer["port"]) if remoteServer["port"] else 8083
 		remoteConnect.connect((remoteServer["host"], port))
 		self.remoteConnectList.append(remoteConnect);
 		return remoteConnect
@@ -102,7 +87,7 @@ class localToRemoteConnectManger():
 		for remoteConnect in self.remoteConnectList:
 			requestRemove = True
 			for remoteServer in remoteServerList:
-				port = int(remoteServer["port"]) if remoteServer["port"] else 8082
+				port = int(remoteServer["port"]) if remoteServer["port"] else 8083
 				if(remoteServer['host'] == remoteConnect.address[0] and port == remoteConnect.address[1]):
 					requestRemove = False
 					break
@@ -128,7 +113,7 @@ class localToRemoteConnectManger():
 			localToRemoteConnectManger.manager = localToRemoteConnectManger(server)
 	@staticmethod
 	def getConnectHost(host, port):
-		port = port if port else 8082
+		port = port if port else 8083
 		for connet in localToRemoteConnectManger.manager.remoteConnectList:
 			if connet.address[0] == host and connet.address[1] == port:
 				return connet

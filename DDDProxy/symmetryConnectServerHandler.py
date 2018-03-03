@@ -10,7 +10,8 @@ from DDDProxy.baseServer import sockConnect, socketBufferMaxLenght
 import json
 from DDDProxy import log
 import time
-from crypto.Cipher import AES
+from Crypto.Cipher import AES
+
 
 class symmetryConnect(sockConnect):
 	"""
@@ -125,12 +126,14 @@ class symmetryConnectServerHandler(sockConnect):
 		sockConnect.__init__(self, server, *args, **kwargs)
 		self.symmetryConnectList = {}
 		self._symmetryConnectMessageBuffer = ""
+		self._symmetryConnectMessageCryptBuffer = ""
 		self.symmetryConnectIdLoop = 0
 		self.slowConnectStatus = False
 		self._connectIsLive = True
 		self._forcePing = 0
 		self.info["pingSpeed"] = 0
-		self.aes = AES.new(auth)
+		key32 = [ b' ' if i >= len(auth) else bytes(auth[i]) for i in range(32) ]
+		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 
 	def onConnected(self):
 		sockConnect.onConnected(self)
@@ -188,6 +191,7 @@ class symmetryConnectServerHandler(sockConnect):
 			self.server.addDelay(30, self.sendPingSpeedResponse)
 
 	def sendPingSpeedResponse(self):
+		return
 		if self._connectIsLive and self._forcePing < 10 and self.info["pingSpeed"] != 0:
 # 			log.log(2, self, "is live")
 			self.server.addDelay(5, self.sendPingSpeedResponse)
@@ -219,34 +223,45 @@ class symmetryConnectServerHandler(sockConnect):
 
 	_headSize = struct.calcsize("ih")
 	
-	def optChunk(self,symmetryConnectId, opt):
+	def optChunk(self, symmetryConnectId, opt):
 		data = ""
-		for d in self.dataChunk(symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId, 
-							{"symmetryConnectId":symmetryConnectId, "opt":opt}):
+		for d in self.dataChunk(symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId,
+							json.dumps({"symmetryConnectId":symmetryConnectId, "opt":opt})):
 			data += d
 		return data
 
-	def dataChunk(self,symmetryConnectId, data):
+	def dataChunk(self, symmetryConnectId, data):
 		chunkLength = 1024 * 32
 		while len(data) > 0:
 			dataSend = data[:chunkLength]
 			data = data[chunkLength:]
-			dataSend = self.des.encrypt(dataSend)
-			yield struct.pack("i", symmetryConnectId) + struct.pack("h", len(dataSend)) + dataSend + "\n"
-	
+			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", len(dataSend)) + dataSend
+			encryptData = ""
+			while len(dataSend) > 0:
+				chunk = dataSend[:16]
+				while len(chunk) < 16:
+					chunk += b'\x00'
+				encryptData += self.aes.encrypt(chunk)
+				dataSend = dataSend[16:]
+			yield encryptData
+
 	def onRecv(self, data):
 		sockConnect.onRecv(self, data)
-		self._symmetryConnectMessageBuffer += data
+		self._symmetryConnectMessageCryptBuffer += data
+		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
+			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
+			self._symmetryConnectMessageCryptBuffer = self._symmetryConnectMessageCryptBuffer[16:]
+		
 		self._connectIsLive = True
-		_headSize = symmetryConnectServerHandler._headSize
 		while True:
-			bufferLen = len(self._symmetryConnectMessageBuffer)
-			if bufferLen >= _headSize:
-				symmetryConnectId, dataSize = struct.unpack("ih", self._symmetryConnectMessageBuffer[:_headSize])
-				endIndex = dataSize + _headSize
-				if bufferLen > endIndex:
-					dataMessage = self._symmetryConnectMessageBuffer[_headSize:endIndex]
-					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[endIndex + 1:]
+			bufferSize = len(self._symmetryConnectMessageBuffer)
+			if bufferSize >= symmetryConnectServerHandler._headSize:
+				symmetryConnectId, dataSize = struct.unpack("ih", self._symmetryConnectMessageBuffer[:symmetryConnectServerHandler._headSize])
+				encryptChuckSize = dataSize + symmetryConnectServerHandler._headSize
+				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
+				if bufferSize >= encryptChuckSize:
+					dataMessage = self._symmetryConnectMessageBuffer[symmetryConnectServerHandler._headSize:symmetryConnectServerHandler._headSize+dataSize]
+					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
 					self._onRecvData(symmetryConnectId, dataMessage)
 					continue
 			break

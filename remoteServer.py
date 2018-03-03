@@ -25,6 +25,6 @@ if __name__ == "__main__":
 	
 	
 	server = baseServer()
-	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8082" if startUpArgs.port == "-1" else startUpArgs.port))
+	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8083" if startUpArgs.port == "-1" else startUpArgs.port))
 	server.start()
 	
