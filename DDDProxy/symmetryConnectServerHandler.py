@@ -159,13 +159,14 @@ class encryptDataChuck():
 		while True:
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
-				chunkId,symmetryConnectId, dataSize = struct.unpack("iii", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
-				if dataSize <= 0 or dataSize > encryptDataChuck.chunkLength:
+				chunkId,symmetryConnectId, dataSizeInt = struct.unpack("iii", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
+				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
 					yield None,None
-				encryptChuckSize = dataSize + encryptDataChuck._headSize
+					break
+				encryptChuckSize = dataSizeInt + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
-					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSize]
+					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSizeInt]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
 					log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, "len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize)
 					if symmetryConnectId < -2:
