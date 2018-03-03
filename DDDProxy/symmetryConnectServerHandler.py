@@ -132,11 +132,11 @@ class encryptDataChuck():
 			data += d
 		return data
 	chunkId = 0
+	chunkLength = 1024 * 32
 	def dataChunk(self, symmetryConnectId, data):
-		chunkLength = 1024 * 32
 		while len(data) > 0:
-			dataSend = data[:chunkLength]
-			data = data[chunkLength:]
+			dataSend = data[:encryptDataChuck.chunkLength]
+			data = data[encryptDataChuck.chunkLength:]
 			dataSendLength = len(dataSend)
 			encryptDataChuck.chunkId += 1
 			dataSend = struct.pack("i", encryptDataChuck.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("i", dataSendLength) + dataSend
@@ -160,8 +160,8 @@ class encryptDataChuck():
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
 				chunkId,symmetryConnectId, dataSize = struct.unpack("iii", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
-				if dataSize <= 0:
-					dataSize = 0
+				if dataSize <= 0 or dataSize > encryptDataChuck.chunkLength:
+					yield None,None
 				encryptChuckSize = dataSize + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
@@ -288,7 +288,10 @@ class symmetryConnectServerHandler(sockConnect):
 		
 		self._connectIsLive = True
 		for symmetryConnectId, dataMessage in self.dataChuck.dataChunkParse(data):
-			self._onRecvData(symmetryConnectId, dataMessage)
+			if not symmetryConnectId:
+				self.close()
+			else:
+				self._onRecvData(symmetryConnectId, dataMessage)
 	
 	def _onRecvData(self, symmetryConnectId, data):
 		if symmetryConnectId < 0:
