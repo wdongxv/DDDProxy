@@ -275,7 +275,13 @@ class sockConnect(object):
 		if type(data) is str:
 			data = data.encode()
 		httpMessage = ""
-		httpStatus = http.client.responses[code]
+		try:
+			httpStatus = http.HTTPStatus(code).phrase
+		except:
+			try:
+				httpStatus = http.client.responses[code]
+			except:
+				httpStatus = "unknow"
 		httpMessage += "HTTP/1.1 " + str(code) + " " + httpStatus + "\r\n"
 		httpMessage += "Server: DDDProxy/%s\r\n"%(version)
 		httpMessage += "Date: " + httpdate() + "\r\n"
