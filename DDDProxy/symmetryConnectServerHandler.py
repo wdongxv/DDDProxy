@@ -166,9 +166,7 @@ class encryptDataChuck():
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSize]
-					if self._symmetryConnectMessageBuffer[encryptChuckSize+1] != 0:
-						log.log(2,"self._symmetryConnectMessageBuffer[encryptChuckSize+1:] != b\\x00:")
-					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize+1:]
+					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
 					log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, "len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize)
 					if symmetryConnectId < -2:
 						log.log(2,"if symmetryConnectId < -2:")
