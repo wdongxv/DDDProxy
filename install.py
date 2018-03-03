@@ -1,34 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from optparse import OptionParser
 import sys
 import os
-from __builtin__ import file
 import getpass
 import string
 import random
 import platform
 
-# echo "Install ..."
-# current="$(dirname ${0})";
-# cd $current
-# root?Dir=$(dirname $(pwd))
 
-# 
-# plist=$(cat "$(pwd)/com.wangdongxu.ddproxy.plist")
-# plist=${plist/path-to-DDDProxy/$rootDir}
-# 
-# 
-# echo "Install $plistPath ..."
-# echo $plist > $plistPath
-# 
-# echo "Starting ..."
-#  $plistPath
-# sleep 1
-# url="8080"
-# echo "open $url"
-# open $url
 
-# echo "Started !"
 def pwGen(length):
 	chars = string.ascii_letters + string.digits
 	return ''.join([random.choice(chars) for _ in range(length)])
@@ -44,15 +24,15 @@ if __name__ == "__main__":
 	mainPath = os.path.abspath(mainPath)
 	startUpArgs = parser.parse_args()[0]
 	
-	print "install", server , "on", platformName
+	print("install", server , "on", platformName)
 	
 	
 	def setInitFile(tempFilePath, filePath, authFormat):
-		f = file(tempFilePath, "r")
+		f = open(tempFilePath, "r")
 		InitFileContent = "" + f.read()
 		f.close()
 
-		port = raw_input("Enter Bind Port(empty for default):")
+		port = input("Enter Bind Port(empty for default):")
 		if not port:
 			port = "-1"
 		InitFileContent = InitFileContent.replace("{{python}}", sys.executable)
@@ -66,21 +46,21 @@ if __name__ == "__main__":
 				serverPassword = getpass.getpass("Enter passphrase(empty for random):")
 				if not serverPassword:
 					serverPassword = pwGen(20)
-					print "Server password:", serverPassword
+					print("Server password:", serverPassword)
 					break
 				if serverPassword != getpass.getpass("Enter same passphrase again:"):
-					print "Passphrases do not match. try again"
+					print("Passphrases do not match. try again")
 				else:
 					break
 			InitFileContent = InitFileContent.replace("{{auth}}", authFormat % (serverPassword))
 		else:
 			InitFileContent = InitFileContent.replace("{{auth}}", "")
 		if os.path.exists(filePath):
-			overwrite = raw_input(filePath + " already exists.\nOverwrite (y/n)?")
+			overwrite = input(filePath + " already exists.\nOverwrite (y/n)?")
 			if overwrite != "y":
 				exit(1)
-		print "Write file ", filePath
-		f = file(filePath, "w+")
+		print("Write file ", filePath)
+		f = open(filePath, "w+")
 		f.write(InitFileContent)
 		f.close()
 		return port
@@ -95,17 +75,17 @@ if __name__ == "__main__":
 		plistPath = launchAgentsDir + "/" + plistName
 		port = setInitFile(mainPath + "/.install/mac.plist" , plistPath, "<string>--auth</string><string>%s</string>")
 		
-		print "try unload server ..."
+		print("try unload server ...")
 		os.system("launchctl unload \"%s\"" % (plistPath))
-		print "try start server ..."
+		print("try start server ...")
 		os.system("launchctl load \"%s\"" % (plistPath))
 		
 		if server == "localServer":
-			openMPage = raw_input("Open management page (y/n)?")
+			openMPage = input("Open management page (y/n)?")
 			if openMPage == "y":
 				os.system("open http://127.0.0.1:%s" % ("8080" if port == "-1" else port))
 		
-		print "done!"
+		print("done!")
 	elif platformName == "linux":
 		release, version, _ = platform.dist()
 		release = release.lower()
@@ -121,9 +101,9 @@ if __name__ == "__main__":
 			setInitFile(mainPath + "/.install/ubuntu", "/etc/init.d/" + serverFile, "--auth %s")
 			os.system("chmod +x /etc/init.d/"+serverFile)
 			os.system("update-rc.d %s defaults"%(serverFile))
-			print "run this command line for start:"
-			print ""
-			print "sudo /etc/init.d/%s restart"%(serverFile)
-			print ""
+			print("run this command line for start:")
+			print ("")
+			print ("sudo /etc/init.d/%s restart"%(serverFile))
+			print ("")
 	else:
-		print ""
+		print("")
