@@ -137,9 +137,10 @@ class symmetryConnectServerHandler(sockConnect):
 		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.initOk = False
-
+		
 	def onConnected(self):
 		sockConnect.onConnected(self)
+		self.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"init"}).encode())
 		self.sendPingSpeedResponse()
 		log.log(2, self, "onConnected")
 
@@ -280,7 +281,9 @@ class symmetryConnectServerHandler(sockConnect):
 				log.log(3, self, "symmetryConnectId", symmetryConnectId)
 				self.close()
 				if self.initOk:
-					raise 
+					raise
+				else:
+					log.log(3, self, "if not self.initOk, not raise")
 			if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 				self.onServerToServerMessage(serverMessage)
 			elif symmetryConnectId == symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId:
@@ -288,6 +291,7 @@ class symmetryConnectServerHandler(sockConnect):
 				if connect:
 					connect.onSymmetryConnectOpt(serverMessage["opt"])
 			else:
+				log.log(3, self, "symmetryConnectId not match")
 				self.close()
 		elif not self.initOk:
 			log.log(3,self, "elif not self.initOk:")
