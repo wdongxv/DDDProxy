@@ -27,8 +27,8 @@ class localConnectHandler(symmetryConnect):
 	def onRecv(self, data):
 		self.preConnectRecvCache += data
 		if not self.proxyMode:
-			if data[0] == b'\x05' or data[0] == b'\x04':  # socks5
-				if data[1] == b'\x02' or data[1] == b'\x01':
+			if data[0] == 5 or data[0] == 4:  # socks5
+				if data[1] == 2 or data[1] == 1:
 					self.setToProxyMode()
 					self.socksMode = True
 				else:
@@ -69,26 +69,26 @@ class localConnectHandler(symmetryConnect):
 				port = 0
 				version = "Socks5"
 				setConnectHost = False
-				if(_d[0] == b"\x05"):
-					if _d[3] == b'\x01':
-						self.connectHost = "%d.%d.%d.%d" % (ord(_d[4]), ord(_d[5]), ord(_d[6]), ord(_d[7]))
-						port = ord(_d[8]) * 0x100 + ord(_d[9])
+				if(_d[0] == 5):
+					if _d[3] ==1:
+						self.connectHost = "%d.%d.%d.%d" % (_d[4], _d[5], _d[6], _d[7])
+						port = _d[8] * 0x100 + _d[9]
 						setConnectHost = True
-					elif _d[3] == b"\x03":
-						hostendindex = 5 + ord(_d[4])
-						self.connectHost = _d[5:hostendindex]
-						port = ord(_d[hostendindex]) * 0x100 + ord(_d[hostendindex + 1])
+					elif _d[3] ==3:
+						hostendindex = 5 + _d[4]
+						self.connectHost = _d[5:hostendindex].decode()
+						port = _d[hostendindex] * 0x100 + _d[hostendindex + 1]
 						setConnectHost = True
-				elif _d[0] == b"\x04":
-					if _d[1] == b'\x01' or _d[1] == b'\x02':
-						self.connectHost = "%d.%d.%d.%d" % (ord(_d[4]), ord(_d[5]), ord(_d[6]), ord(_d[7]))
+				elif _d[0] == 4:
+					if _d[1] == 1 or _d[1] == 2:
+						self.connectHost = "%d.%d.%d.%d" % (_d[4], _d[5], _d[6], _d[7])
 						version = "Socks4"
-						if self.connectHost.startswith("0.0.0.") and ord(_d[7]) != 0:  # socks4a
-							splits = _d[8:].split("\x00")
-							self.connectHost = splits[-2]
+						if self.connectHost.startswith("0.0.0.") and _d[7] != 0:  # socks4a
+							splits = _d[8:].split(b"\x00")
+							self.connectHost = splits[-2].decode()
 							version = "Socks4a"
 						setConnectHost = True
-						port = ord(_d[2]) * 0x100 + ord(_d[3])
+						port = _d[2] * 0x100 + _d[3]
 				else:
 					log(3,_d[0],"not support")
 					self.close()
@@ -100,7 +100,7 @@ class localConnectHandler(symmetryConnect):
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
-				self.preConnectRecvCache = ""			
+				self.preConnectRecvCache = b""			
 	def setToProxyMode(self, host=None, port=None):
 		if self.proxyMode:
 			return True
@@ -133,7 +133,7 @@ class localConnectHandler(symmetryConnect):
 	def onHTTP(self, header, method, path, query, post):
 # 		log.log(1,self,header,method,path,query,post)
 		if method == "POST":
-			postJson = json.loads(post)
+			postJson = json.loads(post.decode())
 			opt = postJson["opt"]
 			respons = {}
 

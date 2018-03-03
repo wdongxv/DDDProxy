@@ -19,8 +19,10 @@ def log(level, *args, **kwargs):
 	data += "	".join("%s=%s" % (str(k), str(v)) for k, v in kwargs.items())
 	if level == 3:
 		data += "	" + str(sys.exc_info())
-		data += "	" + str(traceback.format_exc())
-	
+		try:
+			data += "	" + str(traceback.format_exc())
+		except:
+			pass
 	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
 	sys.stderr.write(["DEBUG", "INFO", "WARNING", "ERROR"][level] +":	" + data + "\n")
 

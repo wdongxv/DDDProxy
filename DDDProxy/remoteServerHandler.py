@@ -51,11 +51,11 @@ class realServerConnect(symmetryConnect):
 			self.send(data)
 			return
 		
-		if len(data) and data[0] == b'\x05':  # socks5
+		if len(data) and data[0] == 5:  # socks5
 # 			print "local >> ", len(data), binascii.b2a_hex(data)
-			if (data[1] == b'\x02' or data[1] == b'\x01') and len(data) <= 4:
+			if (data[1] == 2 or data[1] == 1) and len(data) <= 4:
 				self.sendDataToSymmetryConnect(b"\x05\x00")
-			elif data[1] == b'\x01':
+			elif data[1] == 1:
 				def connectOk(ok):
 					if ok:
 						send = b"\x05\x00\x00\x01"
@@ -67,14 +67,14 @@ class realServerConnect(symmetryConnect):
 					self.sendDataToSymmetryConnect(send)
 					self.proxyMode = True
 				host = "<None>"
-				if data[3] == b'\x01':
-					host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
-					port = ord(data[8]) * 0x100 + ord(data[9])
+				if data[3] ==1:
+					host = "%d.%d.%d.%d" % (data[4],data[5],data[6],data[7])
+					port = data[8] * 0x100 + data[9]
 					return self.connect((host, port), cb=connectOk)
-				elif data[3] == "\x03":
-					hostendindex = 5 + ord(data[4])
-					host = data[5:hostendindex]
-					port = ord(data[hostendindex]) * 0x100 + ord(data[hostendindex + 1])
+				elif data[3] == 3:
+					hostendindex = 5 + data[4]
+					host = data[5:hostendindex].decode()
+					port = data[hostendindex] * 0x100 + data[hostendindex + 1]
 					return self.connect((host, port), cb=connectOk)
 				else:
 					reply = b"\x05\x07\x00\x01\x00\x00\x00\x00\x00\x00"
@@ -83,7 +83,7 @@ class realServerConnect(symmetryConnect):
 				self.sendDataToSymmetryConnect(reply)
 			else:
 				self.close()
-		elif len(data) and  data[0] == b'\x04':  # socks4/socks4a
+		elif len(data) and  data[0] == 4:  # socks4/socks4a
 			def connectOk(ok):
 				if ok:
 					send = b"\x00\x5A" + data[2:8]
@@ -93,14 +93,14 @@ class realServerConnect(symmetryConnect):
 				self.sendDataToSymmetryConnect(send)
 				self.proxyMode = True
 # 			print "local >> ", len(data), binascii.b2a_hex(data)
-			if data[1] == b'\x01' or data[1] == b'\x02':
-				host = "%d.%d.%d.%d" % (ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
+			if data[1] == 1 or data[1] == 2:
+				host = "%d.%d.%d.%d" % (data[4], data[5],data[6],data[7])
 				version = "Socks4"
-				if host.startswith("0.0.0.") and ord(data[7]) != 0:  # socks4a
-					splits = data[8:].split("\x00")
+				if host.startswith("0.0.0.") and data[7] != 0:  # socks4a
+					splits = data[8:].decode().split("\x00")
 					host = splits[-2]
 					version = "Socks4a"
-				port = ord(data[2]) * 0x100 + ord(data[3])
+				port = data[2] * 0x100 + data[3]
 				self.connectName = "	<	%s	%s:%s(%s)" % (self.filenoStr(), version, host, self.addressIp)
 				return self.connect((host, port), cb=connectOk)
 			else:
@@ -116,9 +116,9 @@ class realServerConnect(symmetryConnect):
 					path = "https://" + path
 					def _connectOk(ok):
 						if ok:
-							self.sendDataToSymmetryConnect("HTTP/1.1 200 OK\r\n\r\n")
+							self.sendDataToSymmetryConnect(b"HTTP/1.1 200 OK\r\n\r\n")
 						else:
-							self.sendDataToSymmetryConnect("HTTP/1.1 502 Bad Gateway\r\n\r\n")
+							self.sendDataToSymmetryConnect(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
 					connectOk = _connectOk
 					self.proxyMode = True
 				addr, port = parserUrlAddrPort(path)

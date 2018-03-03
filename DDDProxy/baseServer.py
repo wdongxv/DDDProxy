@@ -5,7 +5,6 @@ Created on 2015年9月3日
 @author: dxw
 '''
 from datetime import datetime
-from http import HTTPStatus
 import json
 import random
 import socket
@@ -22,6 +21,10 @@ from .version import version
 from functools import cmp_to_key
 
 
+import sys
+import http
+if sys.version[0] != '3':
+	raise "not python 3"
 socket.setdefaulttimeout(5)
 socketBufferMaxLenght = 1024 * 4
 
@@ -146,7 +149,7 @@ class sockConnect(object):
 			try:
 				iplist = socket.gethostbyname_ex(address[0])[2]
 				iplist.sort()
-				addr = (random.choice(iplist), address[1])
+				addr = (random.choice(iplist), int(address[1]))
 				threadName = "connect %s:%s" % (address[0], address[1])
 				log.log(1, threadName)
 				if setThreadName:
@@ -249,6 +252,7 @@ class sockConnect(object):
 			with open(name,"rt",encoding=encoding) as f:
 				content = f.read()
 		except:
+			log.log(3)
 			pass
 		return content
 
@@ -271,8 +275,8 @@ class sockConnect(object):
 		if type(data) is str:
 			data = data.encode()
 		httpMessage = ""
-		httpStatus = HTTPStatus(code)
-		httpMessage += "HTTP/1.1 " + str(code) + " " + httpStatus.phrase + "\r\n"
+		httpStatus = http.client.responses[code]
+		httpMessage += "HTTP/1.1 " + str(code) + " " + httpStatus + "\r\n"
 		httpMessage += "Server: DDDProxy/%s\r\n"%(version)
 		httpMessage += "Date: " + httpdate() + "\r\n"
 		httpMessage += "Content-Length: " + str(len(data)) + "\r\n"

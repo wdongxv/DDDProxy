@@ -102,7 +102,7 @@ class symmetryConnect(sockConnect):
 				sendOpt = self.symmetryConnectManager.optChunk(self.symmetryConnectId, data)
 				break
 			else:
-				raise "type error"
+				raise BaseException("type error:"+str(type(data)))
 		if self._pauseRecv and len(self._symmetryConnectSendPendingCache) < 100:
 			flags = sockConnect.socketIOEventFlagsRead
 			if self.getSendPending():
@@ -276,7 +276,7 @@ class symmetryConnectServerHandler(sockConnect):
 	def _onRecvData(self, symmetryConnectId, data):
 		if symmetryConnectId < 0:
 			try:
-				serverMessage = json.loads(data)
+				serverMessage = json.loads(data.decode())
 			except:
 				log.log(3)
 				return

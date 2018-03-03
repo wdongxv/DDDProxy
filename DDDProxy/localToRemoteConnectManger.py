@@ -53,7 +53,7 @@ class localToRemoteConnectManger():
 		"""
 		self.server = server;
 		self.remoteConnectList = []
-		self.server.addDelay(1, self.handlerRemoteConnects)
+		#self.server.addDelay(1, self.handlerRemoteConnects)
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
@@ -77,7 +77,9 @@ class localToRemoteConnectManger():
 		remoteServer = random.choice(remoteServerList)
 		remoteConnect = remoteServerConnecter(self.server, remoteServer["auth"])
 		port = int(remoteServer["port"]) if remoteServer["port"] else 8083
-		remoteConnect.connect((remoteServer["host"], port))
+		def connectOk(*args):
+			remoteConnect.sendData(symmetryConnectServerHandler.serverToServerJsonMessageConnectId, json.dumps({"opt":"init"}).encode())
+		remoteConnect.connect((remoteServer["host"], port),cb=connectOk)
 		self.remoteConnectList.append(remoteConnect);
 		return remoteConnect
 	def handlerRemoteConnects(self):
