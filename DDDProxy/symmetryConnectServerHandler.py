@@ -250,6 +250,7 @@ class symmetryConnectServerHandler(sockConnect):
 					chunk += b'\x00'
 				encryptData += self.aes.encrypt(chunk)
 				dataSend = dataSend[16:]
+			log.log(1, "dataChunk", "symmetryConnectId:", symmetryConnectId, "len(dataSend):", len(dataSend), "encryptData:", len(encryptData))
 			yield encryptData
 
 	def onRecv(self, data):
@@ -269,6 +270,7 @@ class symmetryConnectServerHandler(sockConnect):
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[symmetryConnectServerHandler._headSize:symmetryConnectServerHandler._headSize + dataSize]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
+					log.log(1, "dataChunk", "symmetryConnectId:", symmetryConnectId, "len(dataSend):", len(dataMessage), "encryptData:", len(encryptChuckSize))
 					self._onRecvData(symmetryConnectId, dataMessage)
 					continue
 			break
@@ -294,7 +296,7 @@ class symmetryConnectServerHandler(sockConnect):
 				log.log(3, self, "symmetryConnectId not match")
 				self.close()
 		elif not self.initOk:
-			log.log(3,self, "elif not self.initOk:")
+			log.log(3, self, "elif not self.initOk:")
 			self.close()
 		else:
 			connect = self.getSymmetryConnect(symmetryConnectId)
