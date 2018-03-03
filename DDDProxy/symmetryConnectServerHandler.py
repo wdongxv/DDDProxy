@@ -122,7 +122,8 @@ class encryptDataChuck():
 		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.logPrefix = logPrefix
-	_headSize = struct.calcsize("iih")
+		self.data = open("/tmp/ddproxy."+logPrefix+".data", mode='r')
+	_headSize = struct.calcsize("iii")
 	
 	def optChunk(self, symmetryConnectId, opt):
 		data = b""
@@ -138,7 +139,7 @@ class encryptDataChuck():
 			data = data[chunkLength:]
 			dataSendLength = len(dataSend)
 			encryptDataChuck.chunkId += 1
-			dataSend = struct.pack("i", encryptDataChuck.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("h", dataSendLength) + dataSend
+			dataSend = struct.pack("i", encryptDataChuck.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("i", dataSendLength) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				chunk = dataSend[:16]
@@ -150,6 +151,7 @@ class encryptDataChuck():
 			yield encryptData
 	
 	def dataChunkParse(self,data):
+		
 		self._symmetryConnectMessageCryptBuffer += data
 		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
 			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
@@ -157,14 +159,16 @@ class encryptDataChuck():
 		while True:
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
-				chunkId,symmetryConnectId, dataSize = struct.unpack("iih", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
+				chunkId,symmetryConnectId, dataSize = struct.unpack("iii", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
 				if dataSize <= 0:
 					dataSize = 0
 				encryptChuckSize = dataSize + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSize]
-					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
+					if self._symmetryConnectMessageBuffer[encryptChuckSize+1] != 0:
+						log.log(2,"self._symmetryConnectMessageBuffer[encryptChuckSize+1:] != b\\x00:")
+					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize+1:]
 					log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, "len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize)
 					if symmetryConnectId < -2:
 						log.log(2,"if symmetryConnectId < -2:")
