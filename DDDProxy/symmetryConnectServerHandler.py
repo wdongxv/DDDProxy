@@ -72,9 +72,9 @@ class symmetryConnect(sockConnect):
 		if not self._requestRemove:
 			self._symmetryConnectSendPendingCache.append(data)
 			addData = True
-			if len(self._symmetryConnectSendPendingCache) > 100 and not self._pauseRecv:
-				self._pauseRecv = True
-				self.setIOEventFlags(0)
+# 			if len(self._symmetryConnectSendPendingCache) > 100 and not self._pauseRecv:
+# 				self._pauseRecv = True
+# 				self.setIOEventFlags(0)
 		if addData:
 			self.requestSymmetryConnectManagerWrite()
 		else:
@@ -142,14 +142,14 @@ class encryptDataChuck():
 			dataSend = struct.pack("i", encryptDataChuck.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("i", dataSendLength) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
-				chunk = dataSend[:16]
-				while len(chunk) < 16:
-					chunk += b'\x00'
-				encryptData += self.aes.encrypt(chunk)
+				encryptData += self.encryptData(dataSend[:16])
 				dataSend = dataSend[16:]
 # 			log.log(1,"Crea","dataChunk:%d"%encryptDataChuck.chunkId, "symmetryConnectId:%d"%symmetryConnectId, "len(dataSend):%d"%dataSendLength, "encryptData:%d"%len(encryptData))
 			yield encryptData
-	
+	def encryptData(self,chunk):
+		while len(chunk) < 16:
+			chunk += b'\x00'
+		return self.aes.encrypt(chunk)
 	def dataChunkParse(self,data):
 		
 		self._symmetryConnectMessageCryptBuffer += data
@@ -159,8 +159,10 @@ class encryptDataChuck():
 		while True:
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
-				chunkId,symmetryConnectId, dataSizeInt = struct.unpack("iii", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
+				headData = self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize]
+				chunkId,symmetryConnectId, dataSizeInt = struct.unpack("iii",headData )
 				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
+					log(2,headData,self.encryptData(headData))
 					raise BaseException("bad dataSizeInt")
 				encryptChuckSize = dataSizeInt + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
