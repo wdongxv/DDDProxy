@@ -276,7 +276,7 @@ class symmetryConnectServerHandler(sockConnect):
 			except:
 				log.log(3, "symmetryConnectId", symmetryConnectId)
 				self.close()
-				return
+				raise 
 			if symmetryConnectId == symmetryConnectServerHandler.serverToServerJsonMessageConnectId:
 				self.onServerToServerMessage(serverMessage)
 			elif symmetryConnectId == symmetryConnectServerHandler.serverToSymmetryConnectJsonMessageConnectId:
