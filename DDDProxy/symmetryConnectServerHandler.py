@@ -243,7 +243,7 @@ class symmetryConnectServerHandler(sockConnect):
 			dataSend = data[:chunkLength]
 			data = data[chunkLength:]
 			dataSendLength = len(dataSend)
-			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h",) + dataSend
+			dataSend = struct.pack("i", symmetryConnectId) + struct.pack("h", dataSendLength) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				chunk = dataSend[:16]
