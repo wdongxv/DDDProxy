@@ -11,7 +11,8 @@ import json
 from DDDProxy import log
 import time
 from Crypto.Cipher import AES
-
+import binascii
+import hashlib
 
 class symmetryConnect(sockConnect):
 	"""
@@ -123,8 +124,8 @@ class encryptDataChuck():
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.logPrefix = logPrefix
 # 		self.data = open("/tmp/ddproxy."+logPrefix+".data", mode='wa')
-	_structFormat = "iiiq"
-	_headSize = struct.calcsize(_structFormat)
+	_structFormat = "iii"
+	_headSize = struct.calcsize(_structFormat) + 4
 	
 	def optChunk(self, symmetryConnectId, opt):
 		data = b""
@@ -140,7 +141,7 @@ class encryptDataChuck():
 			data = data[encryptDataChuck.chunkLength:]
 			dataSendLength = len(dataSend)
 			encryptDataChuck.chunkId += 1
-			dataSend = struct.pack(encryptDataChuck._structFormat, encryptDataChuck.chunkId, symmetryConnectId, dataSendLength,hash(dataSend)) + dataSend
+			dataSend = struct.pack(encryptDataChuck._structFormat, encryptDataChuck.chunkId, symmetryConnectId, dataSendLength) + hashlib.md5(dataSend).digest()[:4] + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				encryptData += self.encryptData(dataSend[:16])
@@ -160,8 +161,9 @@ class encryptDataChuck():
 		while True:
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
-				headData = self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize]
-				chunkId,symmetryConnectId, dataSizeInt,hashBytes = struct.unpack(encryptDataChuck._structFormat,headData )
+				headData = self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize-4]
+				chunkId,symmetryConnectId, dataSizeInt = struct.unpack(encryptDataChuck._structFormat,headData )
+				md5Bytes = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize-4:encryptDataChuck._headSize]
 				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
 					log.log(2,headData,self.encryptData(headData))
 					raise BaseException("bad dataSizeInt")
@@ -170,8 +172,8 @@ class encryptDataChuck():
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSizeInt]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
-					log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, 
-						"len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize,hashBytes == hash(dataMessage))
+					log.log(1, self.logPrefix,chunkId, symmetryConnectId, 
+						len(dataMessage), encryptChuckSize,md5Bytes == hashlib.md5(dataMessage).digest()[:4])
 					
 					if symmetryConnectId < -2:
 						log.log(2,"if symmetryConnectId < -2:")

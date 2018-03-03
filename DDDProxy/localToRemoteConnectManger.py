@@ -53,7 +53,7 @@ class localToRemoteConnectManger():
 		"""
 		self.server = server;
 		self.remoteConnectList = []
-		self.server.addDelay(10, self.handlerRemoteConnects)
+		self.server.addDelay(1, self.handlerRemoteConnects)
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
@@ -101,7 +101,7 @@ class localToRemoteConnectManger():
 		for _ in range(maxConnectByOnServer):
 			if maxConnectByOnServer > len(self.remoteConnectList):
 				self.addRemoteConnect()
-		self.server.addDelay(60, self.handlerRemoteConnects)
+		self.server.addDelay(20, self.handlerRemoteConnects)
 		
 	def onConnectClose(self, connect):
 		if connect in self.remoteConnectList:
