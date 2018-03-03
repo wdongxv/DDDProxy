@@ -61,7 +61,7 @@ class httpMessageParser():
 			if index < 0 :
 				return False
 			
-			line = self.messageCache[:index].decode('ascii')
+			line = self.messageCache[:index].decode()
 			self.messageCache = self.messageCache[index + 2:]
 			if self.protocol:
 				if index == 0:
