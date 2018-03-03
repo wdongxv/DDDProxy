@@ -158,6 +158,8 @@ class encryptDataChuck():
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
 				chunkId,symmetryConnectId, dataSize = struct.unpack("iih", self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize])
+				if dataSize <= 0:
+					dataSize = 0
 				encryptChuckSize = dataSize + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
@@ -327,3 +329,5 @@ class symmetryConnectServerHandler(sockConnect):
 	def makeSymmetryConnectId(self):
 		self.symmetryConnectIdLoop += 1
 		return self.symmetryConnectIdLoop
+
+
