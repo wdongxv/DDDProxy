@@ -123,7 +123,8 @@ class encryptDataChuck():
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.logPrefix = logPrefix
 # 		self.data = open("/tmp/ddproxy."+logPrefix+".data", mode='wa')
-	_headSize = struct.calcsize("iii")
+	_structFormat = "iiiq"
+	_headSize = struct.calcsize(_structFormat)
 	
 	def optChunk(self, symmetryConnectId, opt):
 		data = b""
@@ -139,7 +140,7 @@ class encryptDataChuck():
 			data = data[encryptDataChuck.chunkLength:]
 			dataSendLength = len(dataSend)
 			encryptDataChuck.chunkId += 1
-			dataSend = struct.pack("i", encryptDataChuck.chunkId)+struct.pack("i", symmetryConnectId) + struct.pack("i", dataSendLength) + dataSend
+			dataSend = struct.pack(encryptDataChuck._structFormat, encryptDataChuck.chunkId, symmetryConnectId, dataSendLength,hash(dataSend)) + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				encryptData += self.encryptData(dataSend[:16])
@@ -160,7 +161,7 @@ class encryptDataChuck():
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
 				headData = self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize]
-				chunkId,symmetryConnectId, dataSizeInt = struct.unpack("iii",headData )
+				chunkId,symmetryConnectId, dataSizeInt,hashBytes = struct.unpack(encryptDataChuck._structFormat,headData )
 				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
 					log.log(2,headData,self.encryptData(headData))
 					raise BaseException("bad dataSizeInt")
@@ -169,7 +170,9 @@ class encryptDataChuck():
 				if bufferSize >= encryptChuckSize:
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSizeInt]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
-					log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, "len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize)
+					log.log(1, self.logPrefix,"dataChunk:%d"%chunkId, "symmetryConnectId:%d"% symmetryConnectId, 
+						"len(dataSend):%d"% len(dataMessage), "encryptData:%d"% encryptChuckSize,hashBytes == hash(dataMessage))
+					
 					if symmetryConnectId < -2:
 						log.log(2,"if symmetryConnectId < -2:")
 					yield symmetryConnectId,dataMessage
@@ -337,4 +340,12 @@ class symmetryConnectServerHandler(sockConnect):
 		self.symmetryConnectIdLoop += 1
 		return self.symmetryConnectIdLoop
 
-
+if __name__ == "__main__":
+	log.debuglevel = 1
+	d = encryptDataChuck("ddd")
+	testByte = b""
+	for i in range(3):
+		testByte += bytes([b"abcdefghijklmnopqrstuvwxyz"[i%26]])
+		for data in d.dataChunk(i, testByte):
+			for pid,pdata in d.dataChunkParse(data):
+				print(i,pid,pdata==testByte,pdata,testByte)
