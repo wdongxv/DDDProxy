@@ -144,7 +144,6 @@ class encryptDataChuck():
 			dataSend = data[:encryptDataChuck.chunkLength]
 			data = data[encryptDataChuck.chunkLength:]
 			dataSendLength = len(dataSend)
-			encryptDataChuck.chunkId += 1
 			dataSend = struct.pack(encryptDataChuck._structFormat,  symmetryConnectId, dataSendLength) + hashlib.md5(dataSend).digest()[:4] + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
@@ -265,7 +264,6 @@ class symmetryConnectServerHandler(sockConnect):
 			self.initOk = True
 
 	def sendPingSpeedResponse(self):
-		return
 		if self._connectIsLive and self._forcePing < 10 and self.info["pingSpeed"] != 0:
 			self.server.addDelay(5, self.sendPingSpeedResponse)
 			self._forcePing += 1
