@@ -168,9 +168,9 @@ class encryptDataChuck():
 				headData = self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize - 4]
 				symmetryConnectId, dataSizeInt = struct.unpack(encryptDataChuck._structFormat, headData)
 				md5Bytes = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize - 4:encryptDataChuck._headSize]
-				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
-					log.log(2, headData, self.encryptData(headData))
-					raise BaseException("bad dataSizeInt")
+# 				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
+# 					log.log(2, headData, self.encryptData(headData))
+# 					raise BaseException("bad dataSizeInt")
 				encryptChuckSize = dataSizeInt + encryptDataChuck._headSize
 				encryptChuckSize += (16 - (encryptChuckSize % 16)) % 16
 				if bufferSize >= encryptChuckSize:
