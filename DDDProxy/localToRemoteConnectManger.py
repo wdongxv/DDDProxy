@@ -4,25 +4,18 @@ Created on 2015年9月6日
 
 @author: dxw
 '''
-import json
-import math
-import os
 import random
-import socket
-import threading
 import time
 
-from .baseServer import sockConnect
 from .configFile import configFile
 from . import log
 from .settingConfig import settingConfig
-from .symmetryConnectServerHandler import symmetryConnect
 from .symmetryConnectServerHandler import symmetryConnectServerHandler
 
 maxConnectByOnServer = 2
 remoteConnectMaxTime = 0
 	
-class remoteServerConnecter(symmetryConnectServerHandler):
+class localToRemoteConnecter(symmetryConnectServerHandler):
 	def __init__(self, server, authCode, *args, **kwargs):
 		symmetryConnectServerHandler.__init__(self, server,authCode, *args, **kwargs)
 	def addLocalRealConnect(self, connect):
@@ -36,13 +29,6 @@ class remoteServerConnecter(symmetryConnectServerHandler):
 		symmetryConnectServerHandler.requestIdleClose(self)
 	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
-	def deleteRemoteCert(self, remoteServerHost, remoteServerPort):
-		remoteServerConnecter._createCertLock.acquire()
-		certPath = self.SSLLocalCertPath(remoteServerHost, remoteServerPort)
-		if os.path.exists(certPath):
-			os.unlink(certPath)
-		remoteServerConnecter._createCertLock.release()
-	_createCertLock = threading.RLock()
 
 
 
@@ -75,7 +61,7 @@ class localToRemoteConnectManger():
 			return None
 		
 		remoteServer = random.choice(remoteServerList)
-		remoteConnect = remoteServerConnecter(self.server, remoteServer["auth"])
+		remoteConnect = localToRemoteConnecter(self.server, remoteServer["auth"])
 		port = int(remoteServer["port"]) if remoteServer["port"] else 8083
 		remoteConnect.connect((remoteServer["host"], port))
 		self.remoteConnectList.append(remoteConnect);
