@@ -26,7 +26,7 @@ import http
 if sys.version[0] != '3':
 	raise "not python 3"
 socket.setdefaulttimeout(5)
-socketBufferMaxLenght = 1024 * 4
+socketBufferMaxLenght = 1024
 
 
 class sockConnect(object):
