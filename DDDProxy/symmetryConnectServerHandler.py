@@ -126,10 +126,8 @@ class encryptDataChuck():
 		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.logPrefix = logPrefix
-		self.dataLog = open("/tmp/dddproxy." + logPrefix + ".log", mode='a+')
-		self.md5Match = True
 
-	_structFormat = "iii"
+	_structFormat = "ii"
 	_headSize = struct.calcsize(_structFormat) + 4
 	
 	def optChunk(self, symmetryConnectId, opt):
@@ -139,7 +137,6 @@ class encryptDataChuck():
 			data += d
 		return data
 
-	chunkId = 0
 	chunkLength = 1024 * 32
 
 	def dataChunk(self, symmetryConnectId, data):
@@ -148,7 +145,7 @@ class encryptDataChuck():
 			data = data[encryptDataChuck.chunkLength:]
 			dataSendLength = len(dataSend)
 			encryptDataChuck.chunkId += 1
-			dataSend = struct.pack(encryptDataChuck._structFormat, encryptDataChuck.chunkId, symmetryConnectId, dataSendLength) + hashlib.md5(dataSend).digest()[:4] + dataSend
+			dataSend = struct.pack(encryptDataChuck._structFormat,  symmetryConnectId, dataSendLength) + hashlib.md5(dataSend).digest()[:4] + dataSend
 			encryptData = b""
 			while len(dataSend) > 0:
 				encryptData += self.encryptData(dataSend[:16])
@@ -166,16 +163,11 @@ class encryptDataChuck():
 		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
 			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
 			self._symmetryConnectMessageCryptBuffer = self._symmetryConnectMessageCryptBuffer[16:]
-		self.dataLog.write(binascii.hexlify(data).decode()+"\n")
-		self.dataLog.flush()
-		if not self.md5Match:
-			self._symmetryConnectMessageBuffer = b""
-			return 
 		while True:
 			bufferSize = len(self._symmetryConnectMessageBuffer)
 			if bufferSize >= encryptDataChuck._headSize:
 				headData = self._symmetryConnectMessageBuffer[:encryptDataChuck._headSize - 4]
-				chunkId, symmetryConnectId, dataSizeInt = struct.unpack(encryptDataChuck._structFormat, headData)
+				symmetryConnectId, dataSizeInt = struct.unpack(encryptDataChuck._structFormat, headData)
 				md5Bytes = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize - 4:encryptDataChuck._headSize]
 				if dataSizeInt <= 0 or dataSizeInt > encryptDataChuck.chunkLength:
 					log.log(2, headData, self.encryptData(headData))
@@ -186,12 +178,9 @@ class encryptDataChuck():
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSizeInt]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
 					self.md5Match = md5Bytes == hashlib.md5(dataMessage).digest()[:4]
-					data = 	" ".join(str(i) for i in ["dataChunk:%d" % chunkId, symmetryConnectId, self.md5Match, len(dataMessage)])
-					self.dataLog.write(data + "\n")
-					self.dataLog.flush()
 					if not self.md5Match:
-						log.log(2, "if not self.md5Match:", "dataChunk:%d" % chunkId, symmetryConnectId, self.md5Match)
-						self.dataLog.write("if not self.md5Match: \n")
+						log.log(2, "if not self.md5Match:", self.md5Match, symmetryConnectId)
+						yield None,None
 						break
 					yield symmetryConnectId, dataMessage
 					continue
@@ -214,18 +203,12 @@ class symmetryConnectServerHandler(sockConnect):
 		self.initOk = False
 		className = str(self.__class__.__name__)
 		self.dataChuck = encryptDataChuck(auth, className + ".Recv")
-		self.dataChuckTest = encryptDataChuck(auth, className + ".Send")
 
 	def onConnected(self):
 		sockConnect.onConnected(self)
 		self.sendServerMessage({"opt":"init"})
 		self.sendPingSpeedResponse()
 		log.log(2, self, "onConnected")
-
-	def onSend(self, data):
-		for _ in self.dataChuckTest.dataChunkParse(data):
-			_ = b"" 
-		sockConnect.onSend(self, data)
 
 	def getSendData(self, length):
 		while sockConnect.getSendPending(self) <= socketBufferMaxLenght * 2:
