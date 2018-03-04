@@ -126,7 +126,7 @@ class encryptDataChuck():
 		key32 = [ ' ' if i >= len(auth) else auth[i] for i in range(32) ]
 		self.aes = AES.new(''.join(key32), AES.MODE_ECB)
 		self.logPrefix = logPrefix
-		self.dataLog = open("/tmp/dddproxy." + logPrefix + ".log", mode='w+')
+		self.dataLog = open("/tmp/dddproxy." + logPrefix + ".log", mode='a+')
 		self.md5Match = True
 
 	_structFormat = "iii"
@@ -166,9 +166,9 @@ class encryptDataChuck():
 		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
 			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
 			self._symmetryConnectMessageCryptBuffer = self._symmetryConnectMessageCryptBuffer[16:]
+		self.dataLog.write(binascii.hexlify(data+b"\n").decode())
+		self.dataLog.flush()
 		if not self.md5Match:
-			self.dataLog.write(binascii.hexlify(self._symmetryConnectMessageBuffer).decode())
-			self.dataLog.flush()
 			self._symmetryConnectMessageBuffer = b""
 			return 
 		while True:
@@ -186,7 +186,7 @@ class encryptDataChuck():
 					dataMessage = self._symmetryConnectMessageBuffer[encryptDataChuck._headSize:encryptDataChuck._headSize + dataSizeInt]
 					self._symmetryConnectMessageBuffer = self._symmetryConnectMessageBuffer[encryptChuckSize:]
 					self.md5Match = md5Bytes == hashlib.md5(dataMessage).digest()[:4]
-					data = 	"	".join(str(i) for i in ["dataChunk:%d" % chunkId, symmetryConnectId, self.md5Match, len(dataMessage), binascii.hexlify(dataMessage)])
+					data = 	" ".join(str(i) for i in ["dataChunk:%d" % chunkId, symmetryConnectId, self.md5Match, len(dataMessage)])
 					self.dataLog.write(data + "\n")
 					self.dataLog.flush()
 					if not self.md5Match:
@@ -282,13 +282,12 @@ class symmetryConnectServerHandler(sockConnect):
 			self.initOk = True
 
 	def sendPingSpeedResponse(self):
+		return
 		if self._connectIsLive and self._forcePing < 10 and self.info["pingSpeed"] != 0:
-# 			log.log(2, self, "is live")
 			self.server.addDelay(5, self.sendPingSpeedResponse)
 			self._forcePing += 1
 		else:
 			self._forcePing = 0
-# 			log.log(2, self, "unknow live status , ping...")
 			self.sendServerMessage({
 				"opt":"pingSpeed",
 				"time":time.time()
