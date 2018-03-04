@@ -166,7 +166,7 @@ class encryptDataChuck():
 		while len(self._symmetryConnectMessageCryptBuffer) >= 16:
 			self._symmetryConnectMessageBuffer += self.aes.decrypt(self._symmetryConnectMessageCryptBuffer[:16])
 			self._symmetryConnectMessageCryptBuffer = self._symmetryConnectMessageCryptBuffer[16:]
-		self.dataLog.write(binascii.hexlify(data+b"\n").decode())
+		self.dataLog.write(binascii.hexlify(data).decode()+"\n")
 		self.dataLog.flush()
 		if not self.md5Match:
 			self._symmetryConnectMessageBuffer = b""
