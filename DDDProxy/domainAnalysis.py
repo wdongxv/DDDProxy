@@ -70,13 +70,13 @@ class domainAnalysis():
 		self.domainAnalysisCache = analysisSiteList()
 		self.domainAnalysis = autoDataObject()
 		try:
-			fp = file(domainAnalysisConfig,"r")
+			fp = open(domainAnalysisConfig,"r")
 			data = json.load(fp,object_hook = autoDataObject)
 			for k,v in data.items():
 				self.domainAnalysis[int(k)] = v
 			fp.close()
 		except:
-			pass
+			log.log(3)
 	def incrementData(self,addr, dataType, host, length):
 		"""
 		@param dataType: domainAnalysisType
