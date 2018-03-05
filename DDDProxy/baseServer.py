@@ -20,7 +20,7 @@ import httplib
 
 
 socket.setdefaulttimeout(5)
-socketBufferMaxLenght = 1024 * 4
+socketBufferMaxLenght = 1024
 
 
 class sockConnect(object):
