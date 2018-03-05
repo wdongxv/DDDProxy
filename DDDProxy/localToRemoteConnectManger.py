@@ -68,26 +68,25 @@ class localToRemoteConnectManger():
 		return remoteConnect
 	def handlerRemoteConnects(self):
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
-		if remoteServerList == None:
-			return None
-		removeConnectList = []
-		for remoteConnect in self.remoteConnectList:
-			requestRemove = True
-			for remoteServer in remoteServerList:
-				port = int(remoteServer["port"]) if remoteServer["port"] else 8083
-				if(remoteServer['host'] == remoteConnect.address[0] and port == remoteConnect.address[1]):
-					requestRemove = False
-					break
-			if (not remoteConnect.connectStatus()) or (remoteConnect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time()) or requestRemove or remoteConnect.slowConnectStatus:
-				removeConnectList.append(remoteConnect)
-		for remoteConnect in removeConnectList:
-			self.remoteConnectList.remove(remoteConnect)
-			remoteConnect.requestIdleClose();
-		
-		for _ in range(maxConnectByOnServer):
-			if maxConnectByOnServer > len(self.remoteConnectList):
-				self.addRemoteConnect()
-		self.server.addDelay(20, self.handlerRemoteConnects)
+		if remoteServerList != None:
+			removeConnectList = []
+			for remoteConnect in self.remoteConnectList:
+				requestRemove = True
+				for remoteServer in remoteServerList:
+					port = int(remoteServer["port"]) if remoteServer["port"] else 8083
+					if(remoteServer['host'] == remoteConnect.address[0] and port == remoteConnect.address[1]):
+						requestRemove = False
+						break
+				if (not remoteConnect.connectStatus()) or (remoteConnect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time()) or requestRemove or remoteConnect.slowConnectStatus:
+					removeConnectList.append(remoteConnect)
+			for remoteConnect in removeConnectList:
+				self.remoteConnectList.remove(remoteConnect)
+				remoteConnect.requestIdleClose();
+			
+			for _ in range(maxConnectByOnServer):
+				if maxConnectByOnServer > len(self.remoteConnectList):
+					self.addRemoteConnect()
+		self.server.addDelay(30, self.handlerRemoteConnects)
 		
 	def onConnectClose(self, connect):
 		if connect in self.remoteConnectList:
