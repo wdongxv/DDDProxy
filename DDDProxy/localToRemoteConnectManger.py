@@ -23,10 +23,6 @@ class localToRemoteConnecter(symmetryConnectServerHandler):
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 		localToRemoteConnectManger.manager.onConnectClose(self)
-	def requestIdleClose(self):
-		if self in localToRemoteConnectManger.manager.remoteConnectList:
-			return
-		symmetryConnectServerHandler.requestIdleClose(self)
 	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 

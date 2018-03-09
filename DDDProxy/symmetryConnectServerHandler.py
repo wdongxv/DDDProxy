@@ -223,8 +223,6 @@ class symmetryConnectServerHandler(sockConnect):
 						raise Exception(data, "is generator??")
 				elif v.requestRemove():
 					deleteList.append(symmetryConnectId)
-					if len(self.symmetryConnectList) == 0:
-						self.server.addDelay(30, self.requestIdleClose)
 			for 	symmetryConnectId in deleteList:
 				del self.symmetryConnectList[symmetryConnectId]
 			if not found:
@@ -238,6 +236,9 @@ class symmetryConnectServerHandler(sockConnect):
 	def requestIdleClose(self):
 		if len(self.symmetryConnectList) == 0:
 			self.close()
+		else:
+			self.server.cancelCallback(self.requestIdleClose)
+			self.server.addDelay(30, self.requestIdleClose)
 
 	def requestSlowClose(self):
 		log.log(2, self, "very slow , close")
@@ -280,7 +281,8 @@ class symmetryConnectServerHandler(sockConnect):
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
 		self.info["slowConnectStatus"] = True
-
+		self.requestIdleClose()
+		
 	def onClose(self):
 		self.server.cancelCallback(self.sendPingSpeedResponse)
 		self.server.cancelCallback(self.setStatusSlow)
