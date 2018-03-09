@@ -37,8 +37,10 @@ class httpMessageParser():
 		return "keep-alive" if (connection and connection.lower() == "keep-alive") else "close"
 	def headerOk(self):
 		return self.status == "end" or self.status == "bodyReadding" 
+	def isOk(self):
+		return self.status == "end" 
 	def headerError(self):
-		return self.status == "error" 
+		return self.status == "error"
 	def readingBody(self):
 		m = self.messageCache
 		self.readingBodyLength += len(m)
@@ -60,8 +62,12 @@ class httpMessageParser():
 			index = self.messageCache.find(b"\r\n")
 			if index < 0 :
 				return False
-			
-			line = self.messageCache[:index].decode()
+			try:
+				line = self.messageCache[:index].decode()
+			except:
+				self.clear()
+				self.status = "error"
+				return False
 			self.messageCache = self.messageCache[index + 2:]
 			if self.protocol:
 				if index == 0:
@@ -82,6 +88,7 @@ class httpMessageParser():
 					if re.match("HTTP/\d.\d", protocol):
 						self.protocol = (method, path, protocol)
 				except:
+					self.clear()
 					self.status = "error"
 		return False
 
