@@ -12,7 +12,7 @@ from DDDProxy.baseServer import sockConnect
 
 gfwListFetchUrl = [
 		# [url,retryTimes]
-		["https://raw.githubusercontent.com/calfzhou/autoproxy-gfwlist/master/gfwlist.txt", 0]
+		["https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt", 0]
 		]
 
 
@@ -29,24 +29,32 @@ def _getGFWHost(server, setThreadName):
 	try:
 		response = urllib.request.urlopen(fecthUrl[0], timeout=30)
 		gfwlist = base64.decodestring(response.read()).decode()
-		line = ""
 		hostList = []
 		hostMatch = re.compile("^[\w\.-]+(\.)([a-zA-Z]{2,5})$");
-		for line in gfwlist.split("\n"):
+		pathMatch = re.compile("^[\w\.-]+(\.)(.+)$");
+		for originLine in gfwlist.split("\n"):
+			line = originLine
 			if line.startswith("."):
 				line = line[1:]
-			elif line.startswith("||"):
+			if line.startswith("||"):
 				line = line[2:]
 			elif line.startswith("|"):
 				try:
 					uri = urllib.parse.urlparse(line[1:])
 					line = uri.netloc
 				except:
-					pass
-			elif line.find("/") > 0:
+					print("error", line)
+					continue
+			elif hostMatch.match(line):
+				pass
+			elif pathMatch.match(line) and line.find("/") > 0:
 				line = line.split("/")[0]
-			if hostMatch.match(line) and not line in hostList:
+			else:
+				print("error", originLine, ">>", line)
+				continue
+			if not line in hostList:
 				hostList.append(line)
+				
 	except:
 		log.log(3)
 		fecthUrl[1] += 1
