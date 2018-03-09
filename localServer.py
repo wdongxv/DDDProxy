@@ -7,7 +7,7 @@ Created on 2015年1月11日
 '''
 from optparse import OptionParser
 
-from DDDProxy import baseServer,  log
+from DDDProxy import baseServer,  log, gfwList
 from DDDProxy.domainAnalysis import domainAnalysis
 from DDDProxy.localProxyServerHandler import localConnectHandler
 from DDDProxy import localToRemoteConnectManger
@@ -32,10 +32,12 @@ if __name__ == "__main__":
 	
 	server = baseServer.baseServer()
 
+	port=int("8080" if startUpArgs.port == "-1" else startUpArgs.port)
 	domainAnalysis.startAnalysis(server)
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server)
+	gfwList.autoGFWList(server, port)
 		
-	server.addListen(handler=localConnectHandler,port=int("8080" if startUpArgs.port == "-1" else startUpArgs.port))
+	server.addListen(handler=localConnectHandler,port=port)
 	server.start()
 	
 	
