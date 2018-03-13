@@ -37,7 +37,7 @@ class realServerConnect(symmetryConnect):
 		
 		def connectOk(ok):
 			if not ok:
-				self.server.addCallback(self.close)			
+				self.server.addCallback(self.onClose)			
 			if cb:
 				cb(ok)
 			
