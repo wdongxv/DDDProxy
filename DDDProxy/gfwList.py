@@ -50,7 +50,6 @@ def _getGFWHost(server, setThreadName):
 			elif pathMatch.match(line) and line.find("/") > 0:
 				line = line.split("/")[0]
 			else:
-				print("error", originLine, ">>", line)
 				continue
 			if not line in hostList:
 				hostList.append(line)

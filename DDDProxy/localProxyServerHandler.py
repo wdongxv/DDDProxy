@@ -116,6 +116,7 @@ class localConnectHandler(symmetryConnect):
 			self.connectName = connect.filenoStr() + "	<	" + self.connectName
 			return True
 		else:
+			self.proxyMode = False
 			self.close()
 		return False
 	def onSymmetryConnectData(self, data):
