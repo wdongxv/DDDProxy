@@ -73,7 +73,9 @@ class localToRemoteConnectManger():
 					if(remoteServer['host'] == remoteConnect.address[0] and port == remoteConnect.address[1]):
 						requestRemove = False
 						break
-				if (not remoteConnect.connectStatus()) or (remoteConnect.info["startTime"] + max(remoteConnectMaxTime, 600) < time.time()) or requestRemove or remoteConnect.slowConnectStatus:
+				if requestRemove:
+					self.info["status"] = "remove"
+				if (not remoteConnect.connectStatus()) or requestRemove or remoteConnect.slowConnectStatus:
 					removeConnectList.append(remoteConnect)
 			for remoteConnect in removeConnectList:
 				self.remoteConnectList.remove(remoteConnect)

@@ -199,7 +199,7 @@ class symmetryConnectServerHandler(sockConnect):
 		self._connectIsLive = True
 		self._forcePing = 0
 		self.info["pingSpeed"] = 0
-		self.info["slowConnectStatus"] = False
+		self.info["status"] = ""
 		self.initOk = False
 		className = str(self.__class__.__name__)
 		self.dataChuck = encryptDataChuck(auth, className + ".Recv")
@@ -281,8 +281,8 @@ class symmetryConnectServerHandler(sockConnect):
 		
 	def setStatusSlow(self):
 		self.slowConnectStatus = True
-		self.info["slowConnectStatus"] = True
 		self.requestIdleClose()
+		self.info["status"] = "slow"
 		
 	def onClose(self):
 		self.server.cancelCallback(self.sendPingSpeedResponse)
