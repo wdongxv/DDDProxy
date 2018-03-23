@@ -14,7 +14,7 @@ DAEMON={{python}}
 DAEMON_OPTS="{{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}}"
 start(){
 	echo -n "Starting {{server-name}}: ";
-	start-stop-daemon --start --background --pidfile $PID --exec "$DAEMON $DAEMON_OPTS" \
+	start-stop-daemon --start --background --pidfile $PID --exec "$DAEMON $DAEMON_OPTS" 2>/dev/null\
 		|| return 2
 }
 stop(){
