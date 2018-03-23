@@ -74,7 +74,7 @@ class localToRemoteConnectManger():
 						requestRemove = False
 						break
 				if requestRemove:
-					self.info["status"] = "remove"
+					remoteConnect.info["status"] = "remove"
 				if (not remoteConnect.connectStatus()) or requestRemove or remoteConnect.slowConnectStatus:
 					removeConnectList.append(remoteConnect)
 			for remoteConnect in removeConnectList:
