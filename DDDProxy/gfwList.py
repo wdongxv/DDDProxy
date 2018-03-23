@@ -9,6 +9,7 @@ from DDDProxy import domainConfig
 import urllib
 from . import log
 from DDDProxy.baseServer import sockConnect
+from urllib.request import ProxyHandler
 
 gfwListFetchUrl = [
 		# [url,retryTimes]
@@ -71,7 +72,7 @@ def _autoGetGFWListThread(server):
 
 	
 def autoGFWList(server, proxyPort):
-	proxy = urllib.request.ProxyHandler({"http":"127.0.0.1:%d" % (proxyPort),
+	proxy = ProxyHandler({"http":"127.0.0.1:%d" % (proxyPort),
 					"https":"127.0.0.1:%d" % (proxyPort)})
 	opener = urllib.request.build_opener(proxy)
 	urllib.request.install_opener(opener)

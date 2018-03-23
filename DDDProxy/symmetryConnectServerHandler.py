@@ -199,6 +199,7 @@ class symmetryConnectServerHandler(sockConnect):
 		self._connectIsLive = True
 		self._forcePing = 0
 		self.info["pingSpeed"] = 0
+		self.info["slowConnectStatus"] = False
 		self.initOk = False
 		className = str(self.__class__.__name__)
 		self.dataChuck = encryptDataChuck(auth, className + ".Recv")
