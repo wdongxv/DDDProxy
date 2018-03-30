@@ -186,7 +186,7 @@ class localConnectHandler(symmetryConnect):
 				if host:
 					host = getDomainName(host)
 				else:
-					host = url if getDomainName(url) else ""
+					host = url 
 				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
 			self.reseponse(respons, connection=self.httpMessageParse.connection())
 		elif path == "/pac":
