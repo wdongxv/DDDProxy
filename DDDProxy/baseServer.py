@@ -205,10 +205,9 @@ class sockConnect(object):
 		except ssl.SSLError as e:
 			if e.errno == 2:
 				return
-			log.log(3, self)
-		except:
-			log.log(3, self)
-		
+			log.log(2, self, str(e))
+		except Exception as e:
+			log.log(2, self, str(e))
 		if data:
 			if isinstance(self._sock, ssl.SSLSocket):
 				while 1:
