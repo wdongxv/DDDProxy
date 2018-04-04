@@ -232,7 +232,7 @@ class sockConnect(object):
 				return
 			except:
 				log.log(3)
-		log.log(1, self, "<<< request close")
+# 		log.log(1, self, "<<< request close")
 		self.shutdown()
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
