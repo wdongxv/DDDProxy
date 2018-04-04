@@ -133,7 +133,7 @@ class realServerConnect(symmetryConnect):
 							if m:
 								def _connectOk(ok):
 									if not ok:
-										return self.sendDataToSymmetryConnect("HTTP/1.1 502 Bad Gateway\r\n\r\n")
+										return self.sendDataToSymmetryConnect(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
 									dataCache = "%s %s %s\r\n" % (method, m.group(1), self.messageParse.httpVersion())
 									dataCache += self.messageParse.HeaderString() + "\r\n"
 									dataCache = dataCache.encode()

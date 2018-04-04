@@ -24,12 +24,12 @@ class httpMessageParser():
 		for line in self.headers:
 			message += "%s: %s\r\n" % (line[0], line[1])
 		return message
-	def getHeader(self, key):
+	def getHeader(self, key,defaultValue=None):
 		k = key.lower()
 		for h in self.headers:
 			if h[0].lower() == k:
 				return int(h[1]) if key in ["content-length"] else h[1]
-		return None
+		return defaultValue
 	def getBody(self):
 		return self.messageCache
 	def connection(self):
@@ -49,7 +49,7 @@ class httpMessageParser():
 	def appendData(self, data):
 		if self.status == "bodyReadding":
 			self.messageCache += data
-			length = self.getHeader("content-length")
+			length = self.getHeader("content-length",0)
 			if  length <= len(self.messageCache) + self.readingBodyLength:
 				self.status = "end"
 				return True

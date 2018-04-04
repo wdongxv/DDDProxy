@@ -33,7 +33,7 @@ class localConnectHandler(symmetryConnect):
 					self.socksMode = True
 				else:
 					log(1,"local >> ", len(data), binascii.b2a_hex(data))
-					pass
+					self.close()
 			else:
 				httpmessagedone = self.httpMessageParse.appendData(data)
 				if self.httpMessageParse.headerOk() and httpmessagedone:
@@ -61,6 +61,7 @@ class localConnectHandler(symmetryConnect):
 							port = jsonBody["port"]
 						if self.setToProxyMode(host=host, port=port):
 							self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
+							log(1, self, " = httpProxyMode")
 							analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 		
 		if self.proxyMode:
@@ -95,7 +96,7 @@ class localConnectHandler(symmetryConnect):
 				if setConnectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + "	" + version + ":" + self.connectHost + ":%d" % (port) 
-				
+				log(1, self, " = socksMode")
 			if self.preConnectRecvCache:
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
@@ -186,7 +187,7 @@ class localConnectHandler(symmetryConnect):
 				if host:
 					host = getDomainName(host)
 				else:
-					host = url if getDomainName(url) else ""
+					host = url 
 				respons["status"] = "ok" if domainConfig.config.addDomain(host) else "error"
 			self.reseponse(respons, connection=self.httpMessageParse.connection())
 		elif path == "/pac":
