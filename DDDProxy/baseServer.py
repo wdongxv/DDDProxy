@@ -161,7 +161,7 @@ class sockConnect(object):
 				if not sock:
 					ok = False
 			except Exception as e:
-				log.log(3, address)
+				log.log(2, address, str(e))
 				ok = False
 			if ok:
 				self.server.addCallback(self._setConnect, sock, address)
