@@ -8,7 +8,6 @@ from datetime import datetime
 import json
 import random
 import socket
-import ssl
 import time
 
 import select
@@ -202,21 +201,10 @@ class sockConnect(object):
 		
 		try:
 			data = self._sock.recv(socketBufferMaxLenght)
-		except ssl.SSLError as e:
-			if e.errno == 2:
-				return
-			log.log(3, self)
 		except:
 			log.log(3, self)
 		
 		if data:
-			if isinstance(self._sock, ssl.SSLSocket):
-				while 1:
-					data_left = self._sock.pending()
-					if data_left:
-						data += self._sock.recv(data_left)
-					else:
-						break
 			self.info["recv"] += len(data)
 			self.onRecv(data)
 		else:
