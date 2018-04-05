@@ -72,6 +72,7 @@ def _autoGetGFWListThread(server):
 
 	
 def autoGFWList(server, proxyPort):
+	domainConfig.config.openDomain("raw.githubusercontent.com")
 	proxy = ProxyHandler({"http":"127.0.0.1:%d" % (proxyPort),
 					"https":"127.0.0.1:%d" % (proxyPort)})
 	opener = urllib.request.build_opener(proxy)

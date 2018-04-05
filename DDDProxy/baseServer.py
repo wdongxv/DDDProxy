@@ -58,7 +58,6 @@ class sockConnect(object):
 		self.addressIp = ""
 		sockConnect._filenoLoop += 1
 		self._fileno = sockConnect._filenoLoop
-		self.connectName = ""
 		self._sendPendingCache = b""
 		self._requsetClose = False
 		self._connecting = False
@@ -298,8 +297,6 @@ class sockConnect(object):
 	def addressStr(self):
 		return "%s%s:%s"%(self.address[0],("("+self.addressIp +")") if self.addressIp != "" else "",self.address[1])
 	def __str__(self, *args, **kwargs):
-		if self.connectName:
-			return self.connectName
 		return  self.filenoStr() + self.addressStr()
 	def filenoStr(self):
 		return "[" + str(self.fileno()) + "]"
@@ -333,10 +330,9 @@ class _baseServer():
 			i -= 1
 	def addListen(self, handler, port, host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
-		log.log(1, "run in ", host, ":", port)
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
-		log.log(2,"start server on: " , host + ":" , str(port))
+		log.log(2,"start server on: " , host + ":" + str(port))
 		sock.bind((host, port))
 		sock.listen(socketBufferMaxLenght)
 		self.addSockListen(sock, handler)

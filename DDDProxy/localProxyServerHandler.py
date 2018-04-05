@@ -19,105 +19,112 @@ from .log import log
 class localConnectHandler(symmetryConnect):
 	def __init__(self, *args, **kwargs):
 		symmetryConnect.__init__(self, *args, **kwargs)
-		self.proxyMode = False
+		self.proxyStatusMode = False
+
 		self.connectHost = ""
+		self.connectPort = 0
+		self.connectMethod = ""
+		self.connectHttpPath = None
+		
 		self.preConnectRecvCache = b""
-		self.httpMessageParse = httpMessageParser()
-		self.socksMode = False
+		self.httpMessageParse = None
+	def __str__(self, *args, **kwargs):
+		if self.connectHost or self.connectHttpPath:
+			name = ""
+			if self.symmetryConnectManager:
+				name += self.symmetryConnectManager.filenoStr() + "	<	"
+			name +=  self.filenoStr() + "	" + self.connectMethod + " "
+			if self.connectHttpPath:
+				name += self.connectHttpPath
+			else:
+				name += self.connectHost + ":%d" % (self.connectPort) 
+			return name
+		return symmetryConnect.__str__(self, *args, **kwargs)
+
 	def onRecv(self, data):
 		self.preConnectRecvCache += data
-		if not self.proxyMode:
-			if data[0] == 5 or data[0] == 4:  # socks5
-				if data[1] == 2 or data[1] == 1:
-					self.setToProxyMode()
-					self.socksMode = True
+		if not self.proxyStatusMode:
+			_d = self.preConnectRecvCache
+			if  (_d[0] == 5 or _d[0] == 4 ): # socks x
+				if len(_d) > 4 and (_d[1] == 2 or _d[1] == 1): 
+					port = 0
+					version = "Socks5"
+					if(_d[0] == 5):
+						if _d[3] ==1:
+							self.connectHost = "%d.%d.%d.%d" % (_d[4], _d[5], _d[6], _d[7])
+							port = _d[8] * 0x100 + _d[9]
+						elif _d[3] ==3:
+							hostendindex = 5 + _d[4]
+							self.connectHost = _d[5:hostendindex].decode()
+							port = _d[hostendindex] * 0x100 + _d[hostendindex + 1]
+					elif _d[0] == 4:
+						if _d[1] == 1 or _d[1] == 2:
+							self.connectHost = "%d.%d.%d.%d" % (_d[4], _d[5], _d[6], _d[7])
+							version = "Socks4"
+							if self.connectHost.startswith("0.0.0.") and _d[7] != 0:  # socks4a
+								splits = _d[8:].split(b"\x00")
+								self.connectHost = splits[-2].decode()
+								version = "Socks4a"
+							port = _d[2] * 0x100 + _d[3]
+					if self.connectHost:
+						analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
+						self.proxyStatusMode = True
+						self.installRemoteConnect()
+					self.connectMethod = version
+					self.connectPort = port
+					log(1, self, " = socksMode")
 				else:
-					log(1,"local >> ", len(data), binascii.b2a_hex(data))
+					log(2,"unknow ", len(data), binascii.b2a_hex(data))
 					self.close()
 			else:
+				if not self.httpMessageParse:
+					self.httpMessageParse = httpMessageParser()
 				httpmessagedone = self.httpMessageParse.appendData(data)
 				if self.httpMessageParse.headerOk() and httpmessagedone:
-					method = self.httpMessageParse.method()
+					self.connectMethod = self.httpMessageParse.method()
 					path = self.httpMessageParse.path()
-					self.connectName = self.filenoStr() + "	" + method + "	" + path
-					if not path.startswith("http://") and method in ["GET", "POST"]:
+					if path.startswith("/"):
+						self.connectHttpPath = path
 						path = path.split("?")
 						self.onHTTP(self.httpMessageParse.headers,
-								method,
+								self.connectMethod,
 								path[0],
 								path[1] if len(path) > 1 else "",
-								self.httpMessageParse.getBody() if method == "POST" else "")
-						self.proxyMode = False
+								self.httpMessageParse.getBody() if self.connectMethod == "POST" else "")
 					else:
-						host = None
-						port = None
+						remoteHost = None
 						if path.find("status.dddproxy.com") > 0:
 							jsonMessage = self.httpMessageParse.getBody()
 							try:
 								jsonBody = json.loads(jsonMessage)
 							except:
 								jsonBody = {"host":"","port":""}
-							host = jsonBody["host"]
-							port = jsonBody["port"]
-						if self.setToProxyMode(host=host, port=port):
-							self.connectHost = parserUrlAddrPort("https://" + path if method == "CONNECT" else path)[0]
-							log(1, self, " = httpProxyMode")
+							remoteHost = (jsonBody["host"],jsonBody["port"])
+						self.connectHost,self.connectPort = parserUrlAddrPort("https://" + path if self.connectMethod == "CONNECT" else path)
+						if self.connectMethod != "CONNECT":
+							self.connectHttpPath = path
+						self.proxyStatusMode = True
+						if self.installRemoteConnect(remoteHost=remoteHost):
 							analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 		
-		if self.proxyMode:
-			if not self.connectHost and self.socksMode and len(self.preConnectRecvCache) > 4:
-				_d = self.preConnectRecvCache
-				port = 0
-				version = "Socks5"
-				setConnectHost = False
-				if(_d[0] == 5):
-					if _d[3] ==1:
-						self.connectHost = "%d.%d.%d.%d" % (_d[4], _d[5], _d[6], _d[7])
-						port = _d[8] * 0x100 + _d[9]
-						setConnectHost = True
-					elif _d[3] ==3:
-						hostendindex = 5 + _d[4]
-						self.connectHost = _d[5:hostendindex].decode()
-						port = _d[hostendindex] * 0x100 + _d[hostendindex + 1]
-						setConnectHost = True
-				elif _d[0] == 4:
-					if _d[1] == 1 or _d[1] == 2:
-						self.connectHost = "%d.%d.%d.%d" % (_d[4], _d[5], _d[6], _d[7])
-						version = "Socks4"
-						if self.connectHost.startswith("0.0.0.") and _d[7] != 0:  # socks4a
-							splits = _d[8:].split(b"\x00")
-							self.connectHost = splits[-2].decode()
-							version = "Socks4a"
-						setConnectHost = True
-						port = _d[2] * 0x100 + _d[3]
-				else:
-					log(3,_d[0],"not support")
-					self.close()
-				if setConnectHost:
-					analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
-				self.connectName = self.symmetryConnectManager.filenoStr() + "	<	" + self.filenoStr() + "	" + version + ":" + self.connectHost + ":%d" % (port) 
-				log(1, self, " = socksMode")
+		if self.proxyStatusMode:
 			if self.preConnectRecvCache:
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
 				self.preConnectRecvCache = b""			
-	def setToProxyMode(self, host=None, port=None):
-		if self.proxyMode:
-			return True
-		self.proxyMode = True
-		connect = localToRemoteConnectManger.getConnect()
-		if host:
-			try:
-				connect = localToRemoteConnectManger.getConnectHost(host, port)
-			except:
-				pass
-		if connect:
-			connect.addLocalRealConnect(self)
-			self.connectName = connect.filenoStr() + "	<	" + self.connectName
+	def installRemoteConnect(self, remoteHost=None):
+		if self.symmetryConnectManager:
+			return True;
+		if remoteHost:
+			remote = localToRemoteConnectManger.getConnectByHost(remoteHost[0],remoteHost[1])
+		else:
+			remote = localToRemoteConnectManger.getConnect(self.connectHost)
+		if remote:
+			remote.addLocalRealConnect(self)
+			self.symmetryConnectManager = remote
 			return True
 		else:
-			self.proxyMode = False
 			self.close()
 		return False
 	def onSymmetryConnectData(self, data):
@@ -125,7 +132,7 @@ class localConnectHandler(symmetryConnect):
 	def onSend(self, data):
 		if self.connectHost:
 			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
-		if not self.proxyMode and not self.getSendPending():
+		if not self.proxyStatusMode and not self.getSendPending():
 			if self.httpMessageParse.connection() != "keep-alive":
 				self.close()
 			else:
@@ -149,10 +156,7 @@ class localConnectHandler(symmetryConnect):
 			elif opt == "setServerList":
 				settingConfig.setting(settingConfig.remoteServerList, postJson["data"])
 				respons["status"] = "ok"
-# 			elif opt == "testRemoteProxy":
-# 				respons["status"] = ""
 			elif opt == "domainList":
-				
 				if "action" in postJson:
 					action = postJson["action"]
 					domain = postJson["domain"]

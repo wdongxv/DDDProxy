@@ -11,31 +11,37 @@ from .configFile import configFile
 from . import log
 from .settingConfig import settingConfig
 from .symmetryConnectServerHandler import symmetryConnectServerHandler
+from .fakeSymmetryConnectServerHandler import fakeSymmetryConnectServerHandler
+from . import domainConfig
+from .hostParser import getDomainName
 
-maxConnectByOnServer = 2
-remoteConnectMaxTime = 0
-	
 class localToRemoteConnecter(symmetryConnectServerHandler):
+
 	def __init__(self, server, authCode, *args, **kwargs):
-		symmetryConnectServerHandler.__init__(self, server,authCode, *args, **kwargs)
+		symmetryConnectServerHandler.__init__(self, server, authCode, *args, **kwargs)
+
 	def addLocalRealConnect(self, connect):
 		self.addSymmetryConnect(connect, self.makeSymmetryConnectId())
+
 	def onClose(self):
 		symmetryConnectServerHandler.onClose(self)
 		localToRemoteConnectManger.manager.onConnectClose(self)
+
 	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 
 
-
 class localToRemoteConnectManger():
-	def __init__(self, server):
+
+	def __init__(self, server, maxConnectByOnServer=2):
 		"""
 		@param server: _baseServer
 		"""
 		self.server = server;
 		self.remoteConnectList = []
-		self.server.addDelay(1, self.handlerRemoteConnects)
+# 		self.server.addDelay(1, self.handlerRemoteConnects)
+		self.maxConnectByOnServer = maxConnectByOnServer
+		self.fakeProxyServer = fakeSymmetryConnectServerHandler(self.server)
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
@@ -53,7 +59,7 @@ class localToRemoteConnectManger():
 	def addRemoteConnect(self):
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
 		if remoteServerList == None:
-			log.log(3,"remoteServerList not set !!!")
+			log.log(3, "remoteServerList not set !!!")
 			return None
 		
 		remoteServer = random.choice(remoteServerList)
@@ -62,6 +68,7 @@ class localToRemoteConnectManger():
 		remoteConnect.connect((remoteServer["host"], port))
 		self.remoteConnectList.append(remoteConnect);
 		return remoteConnect
+
 	def handlerRemoteConnects(self):
 		remoteServerList = settingConfig.setting(settingConfig.remoteServerList)
 		if remoteServerList != None:
@@ -81,8 +88,8 @@ class localToRemoteConnectManger():
 				self.remoteConnectList.remove(remoteConnect)
 				remoteConnect.requestIdleClose();
 			
-			for _ in range(maxConnectByOnServer):
-				if maxConnectByOnServer > len(self.remoteConnectList):
+			for _ in range(self.maxConnectByOnServer):
+				if self.maxConnectByOnServer > len(self.remoteConnectList):
 					self.addRemoteConnect()
 		self.server.addDelay(30, self.handlerRemoteConnects)
 		
@@ -91,22 +98,32 @@ class localToRemoteConnectManger():
 			self.remoteConnectList.remove(connect)
 
 	manager = None
+
 	@staticmethod
-	def install(server):
+	def install(server, maxConnectByOnServer=2):
 		if not localToRemoteConnectManger.manager:
-			localToRemoteConnectManger.manager = localToRemoteConnectManger(server)
+			localToRemoteConnectManger.manager = localToRemoteConnectManger(server, maxConnectByOnServer)
+
 	@staticmethod
-	def getConnectHost(host, port):
+	def getConnectByHost(host, port=None):
 		port = port if port else 8083
 		for connet in localToRemoteConnectManger.manager.remoteConnectList:
 			if connet.address[0] == host and connet.address[1] == port:
 				return connet
 		return None
-		
+	
 	@staticmethod
-	def getConnect():
+	def getConnect(domain=None):
 		"""
 		@return: remoteServerConnectLocalHander
 		"""
+		
+		if domain:
+			status = domainConfig.config.domainSettingStatus(domain)
+			topDomain = getDomainName(domain)
+			status = domainConfig.config.domainSettingStatus(topDomain) if ( topDomain != None and status == None ) else status
+			if status != "proxy":
+				return localToRemoteConnectManger.manager.fakeProxyServer
+			
 		return localToRemoteConnectManger.manager.get()
 	

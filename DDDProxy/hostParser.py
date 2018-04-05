@@ -10,6 +10,7 @@ def parserUrlAddrPort(path):
 	if hostname.find(':') > 0:
 		try:
 			addr, port = hostname.split(':')
+			port = int(port)
 		except:
 			log(3)
 			addr = hostname

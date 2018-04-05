@@ -98,5 +98,10 @@ class domainConfig(configFile):
 			if _domain and not _domain == domain:
 				self.domainConnectTimes(_domain, times)
 
-
+	def domainSettingStatus(self,domain):
+		if domain in self.getDomainList(0):
+			return "noProxy"
+		elif domain in self.getDomainList(1):
+			return "proxy"
+		return None
 config = domainConfig()

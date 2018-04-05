@@ -20,8 +20,6 @@ class realServerConnect(symmetryConnect):
 		symmetryConnect.__init__(self, server)
 		self.messageParse = httpMessageParser()
 		self.proxyMode = False
-	def onSend(self, data):
-		symmetryConnect.onSend(self, data)		
 	def onHTTP(self, method):
 		try:
 			if method == "POST":
@@ -79,7 +77,7 @@ class realServerConnect(symmetryConnect):
 				else:
 					reply = b"\x05\x07\x00\x01\x00\x00\x00\x00\x00\x00"
 
-				self.connectName = "	<	%s	Socks5:%s(%s)" % (self.filenoStr(), host, self.addressIp)
+# 				self.connectName = "	<	%s	Socks5:%s(%s)" % (self.filenoStr(), host, self.addressIp)
 				self.sendDataToSymmetryConnect(reply)
 			else:
 				self.close()
@@ -101,7 +99,7 @@ class realServerConnect(symmetryConnect):
 					host = splits[-2]
 					version = "Socks4a"
 				port = data[2] * 0x100 + data[3]
-				self.connectName = "	<	%s	%s:%s(%s)" % (self.filenoStr(), version, host, self.addressIp)
+# 				self.connectName = "	<	%s	%s:%s(%s)" % (self.filenoStr(), version, host, self.addressIp)
 				return self.connect((host, port), cb=connectOk)
 			else:
 				self.sendDataToSymmetryConnect(b'\x04\x91')
@@ -142,8 +140,8 @@ class realServerConnect(symmetryConnect):
 								connectOk = _connectOk
 							else:
 								self.close()
-								
-							self.connectName = "	<	" + self.filenoStr() + " " + self.messageParse.method() + " " + self.messageParse.path()					
+								return
+# 							self.connectName = "	<	" + self.filenoStr() + " " + self.messageParse.method() + " " + self.messageParse.path()					
 						self.connect((addr, port), cb=connectOk)
 					elif self.connectStatus() == 1:
 						self.send(self.messageParse.readingBody())
@@ -155,9 +153,11 @@ class realServerConnect(symmetryConnect):
 class remoteServerHandler(symmetryConnectServerHandler):
 	def __init__(self, server,  *args, **kwargs):
 		symmetryConnectServerHandler.__init__(self, server, remoteAuth, *args, **kwargs)
+	def __str__(self, *args, **kwargs):
+		return "[remote:" + str(self.fileno()) + "]	" + self.address[0]
+# 		return symmetryConnectServerHandler.__str__(self, *args, **kwargs)
 	def onConnected(self):
 		symmetryConnectServerHandler.onConnected(self)
-		self.connectName = "[remote:" + str(self.fileno()) + "]	" + self.address[0]
 	def getSymmetryConnect(self, symmetryConnectId):
 		symmetryConnect = symmetryConnectServerHandler.getSymmetryConnect(self, symmetryConnectId)
 		if not symmetryConnect:
