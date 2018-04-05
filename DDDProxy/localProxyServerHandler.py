@@ -19,7 +19,7 @@ from .log import log
 class localConnectHandler(symmetryConnect):
 	def __init__(self, *args, **kwargs):
 		symmetryConnect.__init__(self, *args, **kwargs)
-		self.proxyStatusMode = False
+		self.proxyStatusMode = None
 
 		self.connectHost = ""
 		self.connectPort = 0
@@ -43,10 +43,13 @@ class localConnectHandler(symmetryConnect):
 
 	def onRecv(self, data):
 		self.preConnectRecvCache += data
-		if not self.proxyStatusMode:
+		if self.proxyStatusMode != "proxy":
 			_d = self.preConnectRecvCache
 			if  (_d[0] == 5 or _d[0] == 4 ): # socks x
-				if len(_d) > 4 and (_d[1] == 2 or _d[1] == 1): 
+				if (_d[1] == 2 or _d[1] == 1): 
+					if len(_d) <= 4:
+						self.preConnectRecvCache = self.preConnectRecvCache[3:]
+						return self.send(b"\x05\x00")
 					port = 0
 					version = "Socks5"
 					if(_d[0] == 5):
@@ -68,7 +71,7 @@ class localConnectHandler(symmetryConnect):
 							port = _d[2] * 0x100 + _d[3]
 					if self.connectHost:
 						analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
-						self.proxyStatusMode = True
+						self.proxyStatusMode = "proxy"
 						self.installRemoteConnect()
 					self.connectMethod = version
 					self.connectPort = port
@@ -86,6 +89,7 @@ class localConnectHandler(symmetryConnect):
 					if path.startswith("/"):
 						self.connectHttpPath = path
 						path = path.split("?")
+						self.proxyStatusMode = "http"
 						self.onHTTP(self.httpMessageParse.headers,
 								self.connectMethod,
 								path[0],
@@ -103,11 +107,11 @@ class localConnectHandler(symmetryConnect):
 						self.connectHost,self.connectPort = parserUrlAddrPort("https://" + path if self.connectMethod == "CONNECT" else path)
 						if self.connectMethod != "CONNECT":
 							self.connectHttpPath = path
-						self.proxyStatusMode = True
+						self.proxyStatusMode = "proxy"
 						if self.installRemoteConnect(remoteHost=remoteHost):
 							analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
 		
-		if self.proxyStatusMode:
+		if self.proxyStatusMode == "proxy":
 			if self.preConnectRecvCache:
 				if self.connectHost:
 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
@@ -132,7 +136,7 @@ class localConnectHandler(symmetryConnect):
 	def onSend(self, data):
 		if self.connectHost:
 			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
-		if not self.proxyStatusMode and not self.getSendPending():
+		if self.proxyStatusMode == "http" and not self.getSendPending():
 			if self.httpMessageParse.connection() != "keep-alive":
 				self.close()
 			else:
