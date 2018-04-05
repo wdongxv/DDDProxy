@@ -31,7 +31,7 @@ if __name__ == "__main__":
 	domainAnalysis.startAnalysis(server)
 	
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server, max(1, int(startUpArgs.RemoteConnectLimit)))
-# 	gfwList.autoGFWList(server, port)
+	gfwList.autoGFWList(server, port)
 	
 	server.addListen(handler=localConnectHandler, port=port)
 	server.start()

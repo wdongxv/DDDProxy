@@ -39,7 +39,7 @@ class localToRemoteConnectManger():
 		"""
 		self.server = server;
 		self.remoteConnectList = []
-# 		self.server.addDelay(1, self.handlerRemoteConnects)
+		self.server.addDelay(1, self.handlerRemoteConnects)
 		self.maxConnectByOnServer = maxConnectByOnServer
 		self.fakeProxyServer = fakeSymmetryConnectServerHandler(self.server)
 	def get(self):
