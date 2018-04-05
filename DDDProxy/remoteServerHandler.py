@@ -33,15 +33,15 @@ class realServerConnect(symmetryConnect):
 		self.sendDataToSymmetryConnect(self.makeReseponse("1", code=405))
 	def connect(self, address,  cb=None):
 		
-		def connectOk(ok):
-			if not ok:
-				self.server.addCallback(self.onClose)			
+		def connectOk(error,connect):
+			if error:
+				connect.server.addCallback(connect.onClose)			
 			if cb:
-				cb(ok)
+				cb(error,connect)
 			
 		addr = address[0]
-		if addr in ["127.0.0.1", "localhost"] or re.match("192\.168.+", addr):
-			return connectOk(False)
+		if addr in ["127.0.0.1", "localhost"]:
+			return connectOk("block",self)
 		symmetryConnect.connect(self, address,  cb=connectOk)
 		
 	def onSymmetryConnectData(self, data):
@@ -54,8 +54,8 @@ class realServerConnect(symmetryConnect):
 			if (data[1] == 2 or data[1] == 1) and len(data) <= 4:
 				self.sendDataToSymmetryConnect(b"\x05\x00")
 			elif data[1] == 1:
-				def connectOk(ok):
-					if ok:
+				def connectOk(error,connect):
+					if not error:
 						send = b"\x05\x00\x00\x01"
 						local = self._sock.getsockname()  
 						send += socket.inet_aton(local[0]) + struct.pack(">H", local[1])  
@@ -82,8 +82,8 @@ class realServerConnect(symmetryConnect):
 			else:
 				self.close()
 		elif len(data) and  data[0] == 4:  # socks4/socks4a
-			def connectOk(ok):
-				if ok:
+			def connectOk(error,connect):
+				if not error:
 					send = b"\x00\x5A" + data[2:8]
 				else:
 					send = b"\x00\x5B"
@@ -112,8 +112,8 @@ class realServerConnect(symmetryConnect):
 				connectOk = None
 				if method == "CONNECT":
 					path = "https://" + path
-					def _connectOk(ok):
-						if ok:
+					def _connectOk(error,connect):
+						if not error:
 							self.sendDataToSymmetryConnect(b"HTTP/1.1 200 OK\r\n\r\n")
 						else:
 							self.sendDataToSymmetryConnect(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
@@ -129,8 +129,8 @@ class realServerConnect(symmetryConnect):
 						if method != "CONNECT":
 							m = re.search("^(?:(?:http)://[^/]+)(.*)$", path)
 							if m:
-								def _connectOk(ok):
-									if not ok:
+								def _connectOk(error,connect):
+									if error:
 										return self.sendDataToSymmetryConnect(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
 									dataCache = "%s %s %s\r\n" % (method, m.group(1), self.messageParse.httpVersion())
 									dataCache += self.messageParse.HeaderString() + "\r\n"

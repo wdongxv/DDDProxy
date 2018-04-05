@@ -141,9 +141,9 @@ class sockConnect(object):
 		self.addressIp = ""
 		def _doConnectSock(setThreadName=None):
 			self._connecting = True
-			ok = True
 			addr = None
 			sock = None
+			error = None
 			try:
 				iplist = socket.gethostbyname_ex(address[0])[2]
 				iplist.sort()
@@ -157,17 +157,17 @@ class sockConnect(object):
 			
 				sock = self._initSocket(addr)
 				if not sock:
-					ok = False
+					error = "not sock"
 			except Exception as e:
-				log.log(2, address, str(e))
-				ok = False
-			if ok:
+				error = str(e)
+				log.log(2,"connecting", address, error)
+			if not error:
 				self.server.addCallback(self._setConnect, sock, address)
 			else:
 				self._connecting = False
 				self.server.addCallback(self.onClose)
 			if cb:
-				self.server.addCallback(cb, self if ok else None)
+				self.server.addCallback(cb, error, self)
 		sockConnect._connectPool.apply_async(_doConnectSock)
 	def send(self, data):
 		if self._requsetClose:
