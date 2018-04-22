@@ -10,7 +10,7 @@ import random
 import socket
 import ssl
 import time
-
+import os
 import select
 
 from . import log
@@ -27,6 +27,7 @@ if sys.version[0] != '3':
 socket.setdefaulttimeout(5)
 socketBufferMaxLenght = 1024
 
+os.system("ulimit -n 1024")
 
 class sockConnect(object):
 	"""

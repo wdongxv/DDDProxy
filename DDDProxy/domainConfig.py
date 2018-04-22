@@ -74,6 +74,8 @@ class domainConfig(configFile):
 			return False
 		self.save()
 		return True
+	def domainIsExist(self,domain):
+		return domain in self.setting
 	def getGFWDomainList(self):
 		if GFWListKeyName in self.setting:
 			_GFWList = self.setting[GFWListKeyName]
