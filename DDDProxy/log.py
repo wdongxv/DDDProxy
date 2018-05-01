@@ -21,7 +21,6 @@ def install(level=2,filename="/tmp/dddproxy.log"):
 	_loglevel = level
 	file_handler = logging.FileHandler(filename)
 	_logger.addHandler(file_handler)  
-
 	
 def log(level, *args, **kwargs):
 	global _loglevel
