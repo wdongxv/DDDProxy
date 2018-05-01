@@ -8,9 +8,10 @@ import sys
 import traceback
 import time
 import logging
+from logging import DEBUG, INFO, WARNING, ERROR
 
 debuglevel = 3
-
+# file_handler = logging.FileHandler("test.log")
 def log(level, *args, **kwargs):
 	if level < debuglevel:
 		return
@@ -24,8 +25,7 @@ def log(level, *args, **kwargs):
 		except:
 			pass
 	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
-	sys.stderr.write(["DEBUG", "INFO", "WARNING", "ERROR"][level] +":	" + data + "\n")
-
+	logging.log([DEBUG, INFO, WARNING, ERROR][level] +":	" + data + "\n")
 def cmp(a,b):
 	return (a>b)-(a<b)
 
@@ -34,6 +34,3 @@ if __name__ == "__main__":
 	log(2, "123")
 	log(1, "123")
 	log(0, "123")
-	
-	
-	
