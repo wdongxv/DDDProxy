@@ -9,16 +9,15 @@
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-PID=/var/run/{{server-name}}.pid
 DAEMON={{python}}
 DAEMON_OPTS="{{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}} --logFile /tmp/{{server-name}}.log"
 start(){
 	echo -n "Starting {{server-name}}: ";
-	start-stop-daemon --start --background --make-pidfile --pidfile $PID --exec $DAEMON -- $DAEMON_OPTS 2>/dev/null\
+	start-stop-daemon --start --background --make-pidfile --pidfile /var/run/{{server-name}}.pid --exec $DAEMON -- $DAEMON_OPTS 2>/dev/null\
 		|| return 2
 }
 stop(){
-	start-stop-daemon --stop --pidfile $PID
+	start-stop-daemon --stop --pidfile /var/run/{{server-name}}.pid
 	RETVAL="$?"
 	sleep 1
 	return "$RETVAL"
