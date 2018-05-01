@@ -1,12 +1,15 @@
 from .remoteServerHandler import realServerConnect
 from DDDProxy import domainConfig
 from .hostParser import getDomainName
+import re
 class fakeRealServerConnect(realServerConnect):
 	def connect(self, address, cb=None):
 		def connectOk(error,connect):
 			if error:
 				if error == "timed out" or error == "[Errno 54] Connection reset by peer" or error == "[Errno 61] Connection refused":
-					domainConfig.config.openDomain(connect.address[0])
+					domain = connect.address[0]
+					if not domainConfig.config.domainIsExist(domain) and not domain in ["127.0.0.1", "localhost"] and not re.match("192\.168.+", domain) and not re.match("10\.0.+", domain):
+						domainConfig.config.openDomain(domain)
 			if cb:
 				cb(error,connect) 
 		return realServerConnect.connect(self, address, cb=connectOk)

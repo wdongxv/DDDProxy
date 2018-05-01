@@ -9,6 +9,7 @@ import time
 from .hostParser import getDomainName
 from functools import cmp_to_key
 from .log import cmp
+import re
 
 GFWListKeyName = "GFW List"
 class domainConfig(configFile):
@@ -74,6 +75,8 @@ class domainConfig(configFile):
 			return False
 		self.save()
 		return True
+	def domainIsExist(self,domain):
+		return domain in self.setting
 	def getGFWDomainList(self):
 		if GFWListKeyName in self.setting:
 			_GFWList = self.setting[GFWListKeyName]
@@ -103,5 +106,7 @@ class domainConfig(configFile):
 			return "noProxy"
 		elif domain in self.getDomainList(1):
 			return "proxy"
+		elif re.match("^(\d{1,3}\.){3}\d{1,3}$",domain):
+			return "proxy" 
 		return None
 config = domainConfig()
