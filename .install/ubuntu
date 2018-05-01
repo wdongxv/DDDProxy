@@ -18,7 +18,7 @@ start(){
 		|| return 2
 }
 stop(){
-	start-stop-daemon --stop --background --pidfile $PID
+	start-stop-daemon --stop --pidfile $PID
 	RETVAL="$?"
 	sleep 1
 	return "$RETVAL"
