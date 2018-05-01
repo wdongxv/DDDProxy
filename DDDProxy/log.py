@@ -11,6 +11,8 @@ import logging
 from logging import DEBUG, INFO, WARNING, ERROR
 
 debuglevel = 3
+
+
 # file_handler = logging.FileHandler("test.log")
 def log(level, *args, **kwargs):
 	if level < debuglevel:
@@ -25,9 +27,12 @@ def log(level, *args, **kwargs):
 		except:
 			pass
 	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
-	logging.log([DEBUG, INFO, WARNING, ERROR][level] +":	" + data + "\n")
-def cmp(a,b):
-	return (a>b)-(a<b)
+	logging.log([DEBUG, INFO, WARNING, ERROR][level] , data)
+
+
+def cmp(a, b):
+	return (a > b) - (a < b)
+
 
 if __name__ == "__main__":
 	log(3, "123")
