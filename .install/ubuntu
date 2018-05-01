@@ -9,7 +9,7 @@
 . /lib/init/vars.sh
 . /lib/lsb/init-functions
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-PID="/var/run/{{server-name}}.pid";
+PID=/var/run/{{server-name}}.pid
 DAEMON={{python}}
 DAEMON_OPTS="{{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}} --logFile /tmp/{{server-name}}.log"
 start(){
