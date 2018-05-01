@@ -3,7 +3,7 @@ Description={{server-name}}
 After=network.target
 
 [Service]
-ExecStart={{python}} {{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}}
+ExecStart={{python}} {{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}} --logFile /tmp/{{server-name}}.log
 
 [Install]
 WantedBy=multi-user.target

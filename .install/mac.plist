@@ -12,6 +12,7 @@
         <string>{{entry-point}}</string>
         <string>-p</string><string>{{port-setting}}</string>
         {{auth}}
+	<string>--logFile</string><string>/tmp/{{server-name}}.log</string>
     </array>
     <key>WorkingDirectory</key><string>{{path-to-DDDProxy}}</string>
 	<key>StandardErrorPath</key><string>/tmp/{{server-name}}.err.log</string>

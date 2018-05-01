@@ -20,11 +20,11 @@ if __name__ == "__main__":
 	parser.add_option("-l", "--loglevel", help="log level" , default=2)
 	parser.add_option("-c", "--RemoteConnectLimit", help="one remote address connect limit" , default=5)
 	parser.add_option("-u", "--update", help="auto update on start" , default=True)
+	parser.add_option("-f", "--logFile", help="log file path" , default="/tmp/dddproxy.local.log")
 	
 	startUpArgs = parser.parse_args()[0]
 	
-	log.debuglevel = int(startUpArgs.loglevel)
-	
+	log.install(int(startUpArgs.loglevel), startUpArgs.logFile)
 	server = baseServer.baseServer()
 
 	port = int("8080" if startUpArgs.port == "-1" else startUpArgs.port)

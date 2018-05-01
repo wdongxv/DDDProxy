@@ -10,12 +10,22 @@ import time
 import logging
 from logging import DEBUG, INFO, WARNING, ERROR
 
-debuglevel = 3
+_loglevel = 2
+
+_logger = logging.getLogger()  
+_logger.addHandler(logging.StreamHandler(sys.stderr) )  
 
 
-# file_handler = logging.FileHandler("test.log")
+def install(level=2,filename="/tmp/dddproxy.log"):
+	global _loglevel
+	_loglevel = level
+	file_handler = logging.FileHandler(filename)
+	_logger.addHandler(file_handler)  
+
+	
 def log(level, *args, **kwargs):
-	if level < debuglevel:
+	global _loglevel
+	if level < _loglevel:
 		return
 	
 	data = "	".join(str(i) for i in args)
@@ -26,15 +36,16 @@ def log(level, *args, **kwargs):
 			data += "	" + str(traceback.format_exc())
 		except:
 			pass
-	data = time.strftime("%y-%B-%d %H:%M:%S:	") + data
-	logging.log([DEBUG, INFO, WARNING, ERROR][level] , data)
-
+	data = ["DEBUG", "INFO", "WARNING", "ERROR"][level] +"	"+ time.strftime("%y-%B-%d %H:%M:%S	") + data
+	_logger.log([DEBUG, INFO, WARNING, ERROR][level] , data)
+	
 
 def cmp(a, b):
 	return (a > b) - (a < b)
 
 
 if __name__ == "__main__":
+	install()
 	log(3, "123")
 	log(2, "123")
 	log(1, "123")

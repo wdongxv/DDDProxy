@@ -15,14 +15,14 @@ if __name__ == "__main__":
 	parser.add_option("-a", "--auth",help="server password *")
 	parser.add_option("-p", "--port",help="bind port" , default="-1")
 	parser.add_option("-l", "--loglevel",help="log level" , default=2)
+	parser.add_option("-f", "--logFile", help="log file path" , default="/tmp/dddproxy.remote.log")
 	startUpArgs = parser.parse_args()[0]
 	remoteServerHandler.remoteAuth =  startUpArgs.auth
 	if not remoteServerHandler.remoteAuth:
 		print(parser.get_usage())
 		exit()
 		
-	log.debuglevel = int(startUpArgs.loglevel)
-	
+	log.install(int(startUpArgs.loglevel), startUpArgs.logFile)
 	
 	server = baseServer()
 	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8083" if startUpArgs.port == "-1" else startUpArgs.port))

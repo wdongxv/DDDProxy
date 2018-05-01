@@ -11,7 +11,7 @@
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 PID="/var/run/{{server-name}}.pid";
 DAEMON={{python}}
-DAEMON_OPTS="{{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}}"
+DAEMON_OPTS="{{path-to-DDDProxy}}/{{entry-point}} -p {{port-setting}} {{auth}} --logFile /tmp/{{server-name}}.log"
 start(){
 	echo -n "Starting {{server-name}}: ";
 	start-stop-daemon --start --background --pidfile $PID --exec $DAEMON -- $DAEMON_OPTS 2>/dev/null\
