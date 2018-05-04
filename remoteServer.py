@@ -7,7 +7,6 @@ Created on 2015年1月11日
 '''
 from DDDProxy.baseServer import baseServer
 from DDDProxy import remoteServerHandler, log
-import socket
 from optparse import OptionParser
 if __name__ == "__main__":
 	
@@ -26,5 +25,7 @@ if __name__ == "__main__":
 	
 	server = baseServer()
 	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8083" if startUpArgs.port == "-1" else startUpArgs.port))
-	server.start()
-	
+	try:
+		server.start()
+	except:
+		log.log(3)
