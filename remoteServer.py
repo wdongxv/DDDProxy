@@ -20,12 +20,12 @@ if __name__ == "__main__":
 	if not remoteServerHandler.remoteAuth:
 		print(parser.get_usage())
 		exit()
-		
+	
 	log.install(int(startUpArgs.loglevel), startUpArgs.logFile)
 	
-	server = baseServer()
-	server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8083" if startUpArgs.port == "-1" else startUpArgs.port))
 	try:
+		server = baseServer()
+		server.addListen(handler=remoteServerHandler.remoteServerHandler,port=int("8083" if startUpArgs.port == "-1" else startUpArgs.port))
 		server.start()
 	except:
 		log.log(3)
