@@ -106,7 +106,7 @@ class domainConfig(configFile):
 			return "noProxy"
 		elif domain in self.getDomainList(1):
 			return "proxy"
-		elif re.match("^(\d{1,3}\.){3}\d{1,3}$",domain):
+		elif re.match("^(\d{1,3}\.){3}\d{1,3}$",domain) and not re.match("^(192\.168|10\.0)\.\d{1,3}\.\d{1,3}$",domain):
 			return "proxy" 
 		return None
 config = domainConfig()

@@ -50,9 +50,8 @@ class analysisSiteList(object):
 	def pop(self):
 		minSite = None
 		minTime = 0;
-		current = time.time() - 10
 		for s in self.siteList:
-			if (minSite is None or minTime>s.lastTime) and s.lastTime < current:
+			if minSite is None or minTime>s.lastTime:
 				minSite = s
 				minTime = s.lastTime
 		if minSite:
