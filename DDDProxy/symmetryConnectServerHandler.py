@@ -76,9 +76,9 @@ class symmetryConnect(sockConnect):
 				raise Exception("type error:" + str(type(data)))
 			self._symmetryConnectSendPendingCache.append(data)
 			addData = True
-# 			if len(self._symmetryConnectSendPendingCache) > 100 and not self._pauseRecv:
-# 				self._pauseRecv = True
-# 				self.setIOEventFlags(0)
+			if len(self._symmetryConnectSendPendingCache) > 100 and not self._pauseRecv:
+				self._pauseRecv = True
+				self.setIOEventFlags(0)
 		if addData:
 			self.requestSymmetryConnectManagerWrite()
 		else:
