@@ -146,7 +146,10 @@ class localConnectHandler(symmetryConnect):
 	def onHTTP(self, header, method, path, query, post):
 # 		log.log(1,self,header,method,path,query,post)
 		if method == "POST":
-			postJson = json.loads(post.decode())
+			try:
+				postJson = json.loads(post.decode())
+			except:
+				return self.reseponse({"err":"bad request"}, code=404, connection=self.httpMessageParse.connection())
 			opt = postJson["opt"]
 			respons = {}
 
