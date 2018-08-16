@@ -27,8 +27,6 @@ if sys.version[0] != '3':
 socket.setdefaulttimeout(5)
 socketBufferMaxLenght = 1024
 
-os.system("ulimit -n 1024")
-
 class sockConnect(object):
 	"""
 	@type sock: _socketobject
@@ -196,7 +194,7 @@ class sockConnect(object):
 # 		self.close()
 # 	for server
 	def lastAlive(self):
-		return max(self.info["lastRecvTime"], self.info["lastSendTime"])
+		return self.info["lastRecvTime"]
 	def _onReadyRecv(self):
 		data = None
 		
@@ -241,7 +239,6 @@ class sockConnect(object):
 		elif event == sockConnect.socketEventExcept:
 			self.shutdown()
 			log.log(2, self, "<<< socketEventExcept, close")
-
 			
 # 	for http
 	def getFileContent(self, name,encoding="utf-8"):

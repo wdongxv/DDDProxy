@@ -33,5 +33,6 @@ def getDomainName(host):
 			if len(hostGroup) > 2:
 				return "%s%s" % (hostGroup[1], hostGroup[2])
 	except:
-		log(3, host)
+		pass
+# 		log(3, host)
 	return None

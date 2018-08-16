@@ -26,7 +26,7 @@ class symmetryConnect(sockConnect):
 		sockConnect.__init__(self, server)
 		self.symmetryConnectId = 0
 		self._symmetryConnectSendPendingCache = []
-		self._requestRemove = False
+		self.requestRemove = False
 		self.symmetryConnectManager = None
 		self._pauseRecv = False
 #--------
@@ -36,18 +36,18 @@ class symmetryConnect(sockConnect):
 		self.sendDataToSymmetryConnect(data)
 		
 	def close(self):
-		self._requestRemove = True
+		self.requestRemove = True
 		sockConnect.close(self)
 	
 	def onClose(self):
-		if not self._requestRemove:
+		if not self.requestRemove:
 			self.sendOptToSymmetryConnect(symmetryConnect.optCloseSymmetryConnect)
-		self._requestRemove = True
+		self.requestRemove = True
 		sockConnect.onClose(self)
 	
 #--------
 	def onSymmetryConnectServerClose(self):
-		self._requestRemove = True
+		self.requestRemove = True
 		self.close()
 
 	def onSymmetryConnectData(self, data):
@@ -61,7 +61,7 @@ class symmetryConnect(sockConnect):
 		
 	def sendOptToSymmetryConnect(self, opt):
 		addData = False
-		if not self._requestRemove:
+		if not self.requestRemove:
 			self._symmetryConnectSendPendingCache.append(opt)
 			addData = True
 		if addData:
@@ -71,7 +71,7 @@ class symmetryConnect(sockConnect):
 
 	def sendDataToSymmetryConnect(self, data):
 		addData = False
-		if not self._requestRemove:
+		if not self.requestRemove:
 			if type(data) != bytes and type(data) != int:
 				raise Exception("type error:" + str(type(data)))
 			self._symmetryConnectSendPendingCache.append(data)
@@ -115,9 +115,6 @@ class symmetryConnect(sockConnect):
 			self.setIOEventFlags(flags)
 			self._pauseRecv = False
 		return sendData + sendOpt
-
-	def requestRemove(self):
-		return self._requestRemove
 
 
 class encryptDataChuck():
@@ -224,7 +221,7 @@ class symmetryConnectServerHandler(sockConnect):
 						self.send(data)
 					except:
 						raise Exception(data, "is generator??")
-				elif v.requestRemove():
+				elif v.requestRemove:
 					deleteList.append(symmetryConnectId)
 			for 	symmetryConnectId in deleteList:
 				del self.symmetryConnectList[symmetryConnectId]

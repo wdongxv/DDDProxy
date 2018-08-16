@@ -80,7 +80,7 @@ class domainConfig(configFile):
 	def getGFWDomainList(self):
 		if GFWListKeyName in self.setting:
 			_GFWList = self.setting[GFWListKeyName]
-			if _GFWList["open"] == 1:
+			if _GFWList["open"] == 1 and "domainList" in _GFWList:
 				return _GFWList["domainList"]
 		return []
 	def resetGFWListDomain(self):

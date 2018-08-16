@@ -1,5 +1,5 @@
 from .remoteServerHandler import realServerConnect
-from DDDProxy import domainConfig
+from DDDProxy import domainConfig, hostParser
 from .hostParser import getDomainName
 import re
 class fakeRealServerConnect(realServerConnect):
@@ -8,6 +8,9 @@ class fakeRealServerConnect(realServerConnect):
 			if error:
 				if error == "timed out" or error == "[Errno 54] Connection reset by peer" or error == "[Errno 61] Connection refused":
 					domain = connect.address[0]
+					shortDomain = hostParser.getDomainName(domain);
+					if shortDomain:
+						domain = shortDomain
 					if not domainConfig.config.domainIsExist(domain) and not domain in ["127.0.0.1", "localhost"] and not re.match("192\.168.+", domain) and not re.match("10\.0.+", domain):
 						domainConfig.config.openDomain(domain)
 			if cb:
@@ -19,7 +22,7 @@ class fakeSymmetryConnectServerHandler:
 	def __init__(self, server):
 		self.server = server
 		self.connectList = {}
-
+		self.doSendCalling = False
 	def addLocalRealConnect(self, localConnect):
 		r = fakeRealServerConnect(self.server)
 		r.symmetryConnectManager = self
@@ -36,25 +39,21 @@ class fakeSymmetryConnectServerHandler:
 		return False
 
 	def send(self, _):
-		self.server.addCallback(self.doSend)
-
+		if not self.doSendCalling:
+			self.server.addCallback(self.doSend)
+			self.doSendCalling = True
 	def doSend(self):
 		deleteList = []
-		sended = False
 		for l, r in self.connectList.items():
-			if self.sendData(l, r):
-				sended = True
-			elif self.sendData(r, l):
-				sended = True
-			elif l.requestRemove() or r.requestRemove():
+			self.sendData(l, r)
+			self.sendData(r, l)
+			if l.requestRemove or r.requestRemove:
 				deleteList.append(l)
-		for 	l in deleteList:
+		for l in deleteList:
 			r = self.connectList[l]
 			r.close()
 			l.close()
 			del self.connectList[l]
-		if sended:
-			self.server.addCallback(self.doSend)
-
+		self.doSendCalling = False
 	def filenoStr(self):
 		return "local"
