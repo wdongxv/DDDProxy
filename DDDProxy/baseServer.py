@@ -49,7 +49,7 @@ class sockConnect(object):
 					"startTime":int(time.time()),
 					"send":0,
 					"recv":0,
-					"lastSendTime":int(time.time()),
+# 					"lastSendTime":int(time.time()),
 					"lastRecvTime":int(time.time()),
 					}
 		self._sock = None
@@ -70,17 +70,14 @@ class sockConnect(object):
 		self.info["lastRecvTime"] = int(time.time())
 		pass
 	def onSend(self, data):
-		self.info["lastSendTime"] = int(time.time())
+# 		self.info["lastSendTime"] = int(time.time())
 		pass
 	def onClose(self):
 		pass
 	def setIOEventFlags(self, flags):
-		if not self._sock:
-			return
-
-		if flags == sockConnect.socketIOEventFlagsWrite:
-			pass
-		if self._ioEventFlags != flags:
+# 		if flags == sockConnect.socketIOEventFlagsWrite:
+# 			pass
+		if self._ioEventFlags != flags and self._sock:
 			self._ioEventFlags = flags
 			self.server.onIOEventFlagsChanged(self)
 	def unsetIOEventFlags(self, flags):

@@ -215,6 +215,6 @@ $(document).ready(function(){
 			
 		});
 	};
-	setInterval(todayAnalysis,5000);
+//	setInterval(todayAnalysis,5000);
 	todayAnalysis();
 })

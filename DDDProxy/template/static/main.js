@@ -73,7 +73,8 @@ function dumpdataParse(data) {
 				+ (connect.pingSpeed ? ("[ping:" + (connect.pingSpeed * 1000).toFixed(1) + "ms]") : "")
 				+ (connect.status ? (" "+connect.status):"")
 				+ "</span>"
-				+ "<span class='lastUpdatetime'>"+IntToDataCount(data.currentTime - Math.max(connect.lastSendTime,connect.lastRecvTime), 60, timeUnits) + "</span>" 
+				//Math.max(connect.lastSendTime,connect.lastRecvTime)
+				+ "<span class='lastUpdatetime'>"+IntToDataCount(data.currentTime -connect.startTime , 60, timeUnits) + "</span>" 
 				+ "</div>";
 		}
 
@@ -92,6 +93,6 @@ function getRemoteStatus(host, port, cb) {
 	proxyapi("status", {
 		"host" : host,
 		"port" : port,
-	}, cb, "http://" + host + port + "." + "status.dddproxy.com/");
+	}, cb, "http://" + host +"-"+ port + "." + "status.dddproxy.com/");
 
 }

@@ -29,11 +29,11 @@ class analysisSiteList(object):
 	def __init__(self):
 		self.siteList = []
 	def get(self,fromIp,domain,timeMark):
-		try:
-			url = parserUrlAddrPort(domain)[0]
-			domain = url if url else domain
-		except:
-			pass
+# 		try:
+# 			url = parserUrlAddrPort(domain)[0]
+# 			domain = url if url else domain
+# 		except:
+# 			pass
 		for s in self.siteList:
 			if domain == s.domain and fromIp == s.fromIp and timeMark == s.timeMark:
 				return s
@@ -127,8 +127,6 @@ class domainAnalysis():
 		@param server: baseServer
 		"""
 		server.addDelay(5, analysis.analysisThread,server)
-# 		mainThreadPool.callInThread(analysis.analysisThread)
-# 		thread.start_new_thread(analysis.analysisThread, tuple())
 	def analysisThread(self,server):
 		try:
 			domainData = self.domainAnalysisCache.pop()
@@ -146,7 +144,7 @@ class domainAnalysis():
 				data["incoming"] += domainData.incoming
 				data["outgoing"] += domainData.outgoing
 				
-				dataExpireTime = time.time()-86400*7 #删除7天之前的数据
+				dataExpireTime = time.time()-86400*3 #删除2天之前的数据
 				for (k,_) in self.domainAnalysis.items():
 					if(k < dataExpireTime):
 						del self.domainAnalysis[k]
