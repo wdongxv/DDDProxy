@@ -50,6 +50,7 @@ class analysisSiteList(object):
 	def pop(self):
 		minSite = None
 		minTime = 0;
+		log.log(2,"self.siteList:",len(self.siteList))
 		for s in self.siteList:
 			if minSite is None or minTime>s.lastTime:
 				minSite = s
@@ -57,6 +58,8 @@ class analysisSiteList(object):
 		if minSite:
 			self.siteList.remove(minSite)
 		return minSite;
+	def cacheLen(self):
+		return len(self.siteList)
 domainAnalysisConfig = configFile.makeConfigFilePathName("domainAnalysisConfig.json")
 class domainAnalysisType:
 	connect = "connect"
@@ -68,6 +71,7 @@ class domainAnalysis():
 	def __init__(self):
 		self.domainAnalysisCache = analysisSiteList()
 		self.domainAnalysis = autoDataObject()
+		self.saveTimes = 0;
 		try:
 			fp = open(domainAnalysisConfig,"r")
 			data = json.load(fp,object_hook = autoDataObject)
@@ -130,6 +134,7 @@ class domainAnalysis():
 	def analysisThread(self,server):
 		try:
 			domainData = self.domainAnalysisCache.pop()
+			
 			if domainData:
 				if domainData.connect:
 					domainConfig.config.domainConnectTimes(domainData.domain,domainData.connect)
@@ -143,18 +148,20 @@ class domainAnalysis():
 				data["connect"] += domainData.connect
 				data["incoming"] += domainData.incoming
 				data["outgoing"] += domainData.outgoing
-				
-				dataExpireTime = time.time()-86400*3 #删除2天之前的数据
-				for (k,_) in self.domainAnalysis.items():
-					if(k < dataExpireTime):
-						del self.domainAnalysis[k]
-						break
-				
-				domainAnalysisJson = json.dumps(self.domainAnalysis)
-				open(domainAnalysisConfig, "wt").write(domainAnalysisJson)
+				now = time.time()
+				if self.saveTimes + 60 < now:
+					self.saveTimes = now
+					dataExpireTime = now-86400*3 #删除2天之前的数据
+					for (k,_) in self.domainAnalysis.items():
+						if(k < dataExpireTime):
+							del self.domainAnalysis[k]
+							break
+					log.log(2,"self.domainAnalysis:",len(self.domainAnalysis))
+					domainAnalysisJson = json.dumps(self.domainAnalysis)
+					open(domainAnalysisConfig, "wt").write(domainAnalysisJson)
 
 		except:
 			log.log(3,"analysis error!")
-		server.addDelay(10, analysis.analysisThread,server)
+		server.addDelay(5 if self.domainAnalysisCache.cacheLen() < 10 else 1, analysis.analysisThread,server)
 		
 analysis = domainAnalysis()

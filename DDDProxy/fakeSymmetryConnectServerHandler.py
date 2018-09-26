@@ -28,7 +28,8 @@ class fakeSymmetryConnectServerHandler:
 		r.symmetryConnectManager = self
 		self.connectList[localConnect] = r
 	
-	def sendData(self, c1, c2):
+	@staticmethod
+	def sendData( c1, c2):
 		if  c1.symmetryConnectSendPending():
 			data = c1._symmetryConnectSendPendingCache.pop(0)
 			if type(data) == bytes:
@@ -45,8 +46,8 @@ class fakeSymmetryConnectServerHandler:
 	def doSend(self):
 		deleteList = []
 		for l, r in self.connectList.items():
-			self.sendData(l, r)
-			self.sendData(r, l)
+			fakeSymmetryConnectServerHandler.sendData(l, r)
+			fakeSymmetryConnectServerHandler.sendData(r, l)
 			if l.requestRemove or r.requestRemove:
 				deleteList.append(l)
 		for l in deleteList:

@@ -19,7 +19,6 @@ from .log import cmp
 from .version import version
 from functools import cmp_to_key
 
-
 import sys
 import http
 if sys.version[0] != '3':
@@ -27,13 +26,13 @@ if sys.version[0] != '3':
 socket.setdefaulttimeout(5)
 socketBufferMaxLenght = 1024
 
+
 class sockConnect(object):
 	"""
 	@type sock: _socketobject
 	"""
 	
 	_filenoLoop = 0
-
 	
 	socketEventCanRecv = 1
 	socketEventCanSend = 2
@@ -61,29 +60,37 @@ class sockConnect(object):
 		self._requsetClose = False
 		self._connecting = False
 		self._ioEventFlags = sockConnect.socketIOEventFlagsNone
+
 	def fileno(self):
 		return self._fileno
+
 	def onConnected(self):
 		self.addIOEventFlags(sockConnect.socketIOEventFlagsRead)
 		
 	def onRecv(self, data):
 		self.info["lastRecvTime"] = int(time.time())
 		pass
+
 	def onSend(self, data):
 # 		self.info["lastSendTime"] = int(time.time())
 		pass
+
 	def onClose(self):
 		pass
-	def setIOEventFlags(self, flags):
+
+	def setIOEventFlags(self, flags, changeFlags=-1):
 # 		if flags == sockConnect.socketIOEventFlagsWrite:
 # 			pass
 		if self._ioEventFlags != flags and self._sock:
 			self._ioEventFlags = flags
-			self.server.onIOEventFlagsChanged(self)
+			self.server.onIOEventFlagsChanged(self, changeFlags)
+
 	def unsetIOEventFlags(self, flags):
-		self.setIOEventFlags(self._ioEventFlags & (0xffff ^ flags))
+		self.setIOEventFlags(self._ioEventFlags & (0xffff ^ flags), flags)
+
 	def addIOEventFlags(self, flags):
-		self.setIOEventFlags(self._ioEventFlags | flags)
+		self.setIOEventFlags(self._ioEventFlags | flags, flags)
+
 	def connectStatus(self):
 		"""
 		0:none
@@ -96,7 +103,6 @@ class sockConnect(object):
 				return 2
 		return 0
 # 	connect to host
-
 		
 	_connectPool = ThreadPool(maxThread=100)
 	
@@ -125,16 +131,18 @@ class sockConnect(object):
 		return data
 
 # 	client operating
-	def _initSocket(self,addr):
+	def _initSocket(self, addr):
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.connect(addr)
 		return sock
+
 	def connect(self, address, cb=None):
 		if self.connectStatus():
 			raise Exception(self, "connect status is", self.connectStatus())
 		self._connecting = True
 		self.address = address
 		self.addressIp = ""
+
 		def _doConnectSock(setThreadName=None):
 			self._connecting = True
 			addr = None
@@ -156,7 +164,7 @@ class sockConnect(object):
 					error = "not sock"
 			except Exception as e:
 				error = str(e)
-				log.log(2,"connecting", address, error)
+				log.log(2, "connecting", address, error)
 			if not error:
 				self.server.addCallback(self._setConnect, sock, address)
 			else:
@@ -164,7 +172,9 @@ class sockConnect(object):
 				self.server.addCallback(self.onClose)
 			if cb:
 				self.server.addCallback(cb, error, self)
+
 		sockConnect._connectPool.apply_async(_doConnectSock)
+
 	def send(self, data):
 		if self._requsetClose:
 			return
@@ -180,18 +190,22 @@ class sockConnect(object):
 	def shutdown(self):
 		if self.server.removeSocketConnect(self):
 			sock = self._sock 
+
 			def close():
 				try:
 					sock.close()
 				except:
 					pass
 				self.server.addCallback(self.onClose)
+
 			self._sock = None
 			self.server.addDelay(1, close)
+
 # 		self.close()
 # 	for server
 	def lastAlive(self):
 		return self.info["lastRecvTime"]
+
 	def _onReadyRecv(self):
 		data = None
 		
@@ -216,6 +230,7 @@ class sockConnect(object):
 		else:
 			log.log(1, self, "<<< data is pool,close")
 			self.shutdown()
+
 	def _onReadySend(self):
 		data = self.getSendData(socketBufferMaxLenght)
 		if data:
@@ -228,6 +243,7 @@ class sockConnect(object):
 				log.log(3)
 # 		log.log(1, self, "<<< request close")
 		self.shutdown()
+
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
 			self._onReadyRecv()
@@ -238,10 +254,10 @@ class sockConnect(object):
 			log.log(2, self, "<<< socketEventExcept, close")
 			
 # 	for http
-	def getFileContent(self, name,encoding="utf-8"):
+	def getFileContent(self, name, encoding="utf-8"):
 		content = None
 		try:
-			with open(name,"rt",encoding=encoding) as f:
+			with open(name, "rt", encoding=encoding) as f:
 				content = f.read()
 		except:
 			log.log(3)
@@ -249,6 +265,7 @@ class sockConnect(object):
 		return content
 
 	def makeReseponse(self, data, ContentType="text/html", code=200, connection="close", header={}):	
+
 		def httpdate():
 			dt = datetime.now();
 			weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][dt.weekday()]
@@ -256,6 +273,7 @@ class sockConnect(object):
 					"Oct", "Nov", "Dec"][dt.month - 1]
 			return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (weekday, dt.day, month,
 		        dt.year, dt.hour, dt.minute, dt.second)
+
 		if type(data) is dict or type(data) is list:
 			try:
 				data = json.dumps(data)
@@ -275,7 +293,7 @@ class sockConnect(object):
 			except:
 				httpStatus = "unknow"
 		httpMessage += "HTTP/1.1 " + str(code) + " " + httpStatus + "\r\n"
-		httpMessage += "Server: DDDProxy/%s\r\n"%(version)
+		httpMessage += "Server: DDDProxy/%s\r\n" % (version)
 		httpMessage += "Date: " + httpdate() + "\r\n"
 		httpMessage += "Content-Length: " + str(len(data)) + "\r\n"
 		httpMessage += "Content-Type: " + ContentType + "\r\n"
@@ -284,29 +302,39 @@ class sockConnect(object):
 			httpMessage += k + ": " + v + "\r\n"
 		httpMessage += "\r\n"
 		return httpMessage.encode() + data
+
 	def reseponse(self, data, ContentType="text/html", code=200, connection="close", header={}):
 		self.send(self.makeReseponse(data, ContentType, code, connection, header))
 		if connection == "close":
 			self.close()
+
 # other 
 	def addressStr(self):
-		return "%s%s:%s"%(self.address[0],("("+self.addressIp +")") if self.addressIp != "" else "",self.address[1])
+		return "%s%s:%s" % (self.address[0], ("(" + self.addressIp + ")") if self.addressIp != "" else "", self.address[1])
+
 	def __str__(self, *args, **kwargs):
 		return  self.filenoStr() + self.addressStr()
+
 	def filenoStr(self):
 		return "[" + str(self.fileno()) + "]"
 
+
 class sockServerConnect(sockConnect):
+
 	def __init__(self, handler, server):
 		self.handler = handler
 		sockConnect.__init__(self, server)
+
 	def onSocketEvent(self, event):
 		if event == sockConnect.socketEventCanRecv:
 			sock, address = self._sock.accept()
 			connect = self.handler(server=self.server)
 			connect._setConnect(sock, address)
 			log.log(1, connect, "*	connect")
+
+
 class _baseServer():
+
 	def __init__(self):
 		self._socketConnectList = {}
 		self.callbackList = []
@@ -314,8 +342,10 @@ class _baseServer():
 
 	def addCallback(self, cb, *args, **kwargs):
 		self.callbackList.append((cb, 0, args, kwargs))
+
 	def addDelay(self, delay, cb, *args, **kwargs):
 		self.callbackList.append((cb, delay + time.time(), args, kwargs))
+
 	def cancelCallback(self, cb):
 		i = len(self.callbackList) - 1
 		while i >= 0:
@@ -323,14 +353,16 @@ class _baseServer():
 			if c == cb:
 				del self.callbackList[i]
 			i -= 1
+
 	def addListen(self, handler, port, host=""):
 # 		self.server = bind_sockets(port=self.port, address=self.host) 
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
-		log.log(2,"start server on: " , host + ":" + str(port))
+		log.log(2, "start server on: " , host + ":" + str(port))
 		sock.bind((host, port))
 		sock.listen(socketBufferMaxLenght)
 		self.addSockListen(sock, handler)
+
 	def addSockListen(self, sock, handler):
 		"""
 		@param sock: _socketobject
@@ -346,6 +378,7 @@ class _baseServer():
 			self._socketConnectList[connect._sock.fileno()] = connect
 			return True
 		return False
+
 	def removeSocketConnect(self, connect):
 		for k, v in self._socketConnectList.items():
 			if v == connect:
@@ -353,10 +386,13 @@ class _baseServer():
 				del self._socketConnectList[k]
 				return True
 		return False
-	def onIOEventFlagsChanged(self, connect):
+
+	def onIOEventFlagsChanged(self, connect,changeFlags=-1):
 		pass
+
 	def start(self):
 		raise "error"
+
 	def _handlerCallback(self):
 		currentTime = time.time()
 		cblist = []
@@ -379,6 +415,7 @@ class _baseServer():
 				continue
 			if connect.lastAlive() < currentTime - 1800:
 				self.addDelay(1, connect.shutdown)
+
 # 	for  sock event
 	def onSocketEvent(self, sockfileno, event):
 		
@@ -389,6 +426,7 @@ class _baseServer():
 			log.log(2, "sock not in self._socketConnectList:", sockfileno);
 			return False
 		return True
+
 # other
 	def dumpConnects(self):
 		connects = {}
@@ -399,13 +437,17 @@ class _baseServer():
 			info = {"name":str(handler)}
 			info.update(handler.info)
 			connects[connect].append(info)
-		def sort(x,y):
+
+		def sort(x, y):
 			return cmp(y["send"] + y["recv"], x["send"] + x["recv"])
-		for k,v in connects.items():
-			connects[k] = sorted(v,key=cmp_to_key(sort))
+
+		for k, v in connects.items():
+			connects[k] = sorted(v, key=cmp_to_key(sort))
 		return {"connect":connects, "threads":sockConnect._connectPool.dump(), "currentTime":int(time.time())}
 
+
 class selectBaseServer(_baseServer):
+
 	def __init__(self):
 		_baseServer.__init__(self)
 		self.rlist = []
@@ -429,39 +471,48 @@ class selectBaseServer(_baseServer):
 			for sock in s_exceptional:
 				self.onSocketEvent(sock.fileno(), sockConnect.socketEventExcept)
 			self._handlerCallback()
+
 	def addSockConnect(self, connect):
 		res = _baseServer.addSockConnect(self, connect)
 		if res:
 			self.allList.append(connect._sock)
 		return res
+
 	def removeSocketConnect(self, connect):
 		res = _baseServer.removeSocketConnect(self, connect)
 		if res:
 			self.allList.remove(connect._sock)
 		return res
-	def onIOEventFlagsChanged(self, connect):
-		if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead:
-			if not connect._sock in self.rlist:
-				self.rlist.append(connect._sock)
-		elif connect._sock in self.rlist:
-			self.rlist.remove(connect._sock)
+
+	def onIOEventFlagsChanged(self, connect,changeFlags=-1):
+		if changeFlags==-1 or  changeFlags==2:
+			if connect._ioEventFlags & 2:  # sockConnect.socketIOEventFlagsWrite:
+				if not connect._sock in self.wlist:
+					self.wlist.append(connect._sock)
+			elif connect._sock in self.wlist:
+				self.wlist.remove(connect._sock)
+		
+		if changeFlags==-1 or  changeFlags==1:
+			if connect._ioEventFlags & 1:  # sockConnect.socketIOEventFlagsRead:
+				if not connect._sock in self.rlist:
+					self.rlist.append(connect._sock)
+			elif connect._sock in self.rlist:
+				self.rlist.remove(connect._sock)
 			
-		if connect._ioEventFlags & sockConnect.socketIOEventFlagsWrite:
-			if not connect._sock in self.wlist:
-				self.wlist.append(connect._sock)
-		elif connect._sock in self.wlist:
-			self.wlist.remove(connect._sock)
 
 class kqueueBaseServer(_baseServer):
+
 	def __init__(self):
 		_baseServer.__init__(self)
 		self.kq = select.kqueue()
+
 	def addSockConnect(self, connect):
 		res = _baseServer.addSockConnect(self, connect)
 		if res:
 			connect._ioEventFlags_keventSet = 0
 		return res
-	def onIOEventFlagsChanged(self, connect):
+
+	def onIOEventFlagsChanged(self, connect,changeFlags=-1):
 		fileno = connect._sock.fileno()
 		changed = connect._ioEventFlags_keventSet ^ connect._ioEventFlags
 		if changed & sockConnect.socketIOEventFlagsRead:
@@ -502,16 +553,21 @@ class kqueueBaseServer(_baseServer):
 					except:
 						pass
 			self._handlerCallback()
+
+
 class epollBaseServer(_baseServer):
+
 	def __init__(self):
 		_baseServer.__init__(self)
 		self.epollor = select.epoll()
+
 	def addSockConnect(self, connect):
 		res = _baseServer.addSockConnect(self, connect)
 		if res:
 			connect.registerEpoll = False
 		return res
-	def onIOEventFlagsChanged(self, connect):
+
+	def onIOEventFlagsChanged(self, connect,changeFlags=-1):
 		if connect._ioEventFlags != sockConnect.socketIOEventFlagsNone:
 			eventmask = select.EPOLLERR | select.EPOLLHUP
 			if connect._ioEventFlags & sockConnect.socketIOEventFlagsRead:
@@ -541,6 +597,7 @@ class epollBaseServer(_baseServer):
 					log.log(3, "unknow event", event) 
 
 			self._handlerCallback()
+
 
 baseServer = selectBaseServer
 # if "kqueue" in select.__dict__:

@@ -109,12 +109,12 @@ class localConnectHandler(symmetryConnect):
 							self.connectHttpPath = path
 						self.proxyStatusMode = "proxy"
 						if self.installRemoteConnect(remoteHost=remoteHost):
-							analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
-		
+# 							analysis.incrementData(self.address[0], domainAnalysisType.connect, self.connectHost, 1)
+							pass
 		if self.proxyStatusMode == "proxy":
 			if self.preConnectRecvCache:
-				if self.connectHost:
-					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
+# 				if self.connectHost:
+# 					analysis.incrementData(self.address[0], domainAnalysisType.incoming, self.connectHost, len(self.preConnectRecvCache))
 				self.sendDataToSymmetryConnect(self.preConnectRecvCache)
 				self.preConnectRecvCache = b""			
 	def installRemoteConnect(self, remoteHost=None):
@@ -134,8 +134,8 @@ class localConnectHandler(symmetryConnect):
 	def onSymmetryConnectData(self, data):
 		self.send(data)
 	def onSend(self, data):
-		if self.connectHost:
-			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
+# 		if self.connectHost:
+# 			analysis.incrementData(self.address[0], domainAnalysisType.outgoing, self.connectHost, len(data))
 		if self.proxyStatusMode == "http" and not self.getSendPending():
 			if self.httpMessageParse.connection() != "keep-alive":
 				self.close()
