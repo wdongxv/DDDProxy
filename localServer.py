@@ -7,11 +7,13 @@ Created on 2015年1月11日
 '''
 from optparse import OptionParser
 
-from DDDProxy import baseServer, log, gfwList
+from DDDProxy import baseServer, log, gfwList, remoteServerHandler
 from DDDProxy.domainAnalysis import domainAnalysis
 from DDDProxy.localProxyServerHandler import localConnectHandler
 from DDDProxy import localToRemoteConnectManger
-import random
+import multiprocessing
+import time
+import sys
 
 if __name__ == "__main__":
 	
@@ -33,6 +35,23 @@ if __name__ == "__main__":
 	localToRemoteConnectManger.localToRemoteConnectManger.install(server, max(1, int(startUpArgs.RemoteConnectLimit)))
 	gfwList.autoGFWList(server, port)
 	
+	
+	def startLocalProxy():
+		s = baseServer.baseServer()
+		s.addListen(handler=remoteServerHandler.remoteServerHandler,port=57238,host="127.0.0.1")
+		def checkMainLive():
+			if mainLastRuntime.value + 10 < time.time():
+				sys.exit()
+			s.addDelay(5, checkMainLive)
+		checkMainLive();
+		s.start()
+	mainLastRuntime = multiprocessing.Value("d")
+	multiprocessing.Process(target=startLocalProxy).start()
+	
+	def mainLive():
+		mainLastRuntime.value = time.time()
+		server.addDelay(5, mainLive)
+	mainLive();
 	server.addListen(handler=localConnectHandler, port=port)
 	server.start()
 	

@@ -11,7 +11,7 @@ from .configFile import configFile
 from . import log
 from .settingConfig import settingConfig
 from .symmetryConnectServerHandler import symmetryConnectServerHandler
-from .fakeSymmetryConnectServerHandler import fakeSymmetryConnectServerHandler
+# from .fakeSymmetryConnectServerHandler import fakeSymmetryConnectServerHandler
 from . import domainConfig
 from .hostParser import getDomainName
 
@@ -41,7 +41,14 @@ class localToRemoteConnectManger():
 		self.remoteConnectList = []
 		self.server.addDelay(1, self.handlerRemoteConnects)
 		self.maxConnectByOnServer = maxConnectByOnServer
-		self.fakeProxyServer = fakeSymmetryConnectServerHandler(self.server)
+	def getFakeProxyServer(self):
+		for connect in self.remoteConnectList:
+			if connect.address[0] == "127.0.0.1" and connect.address[1] == 57238:
+				return connect
+		fakeProxyServer = localToRemoteConnecter(self.server, "")
+		fakeProxyServer.connect(("127.0.0.1",57238))
+		self.remoteConnectList.append(fakeProxyServer);
+		return fakeProxyServer;
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
@@ -123,7 +130,7 @@ class localToRemoteConnectManger():
 			topDomain = getDomainName(domain)
 			status = domainConfig.config.domainSettingStatus(topDomain) if ( topDomain != None and status == None ) else status
 			if status != "proxy":
-				return localToRemoteConnectManger.manager.fakeProxyServer
+				return localToRemoteConnectManger.manager.getFakeProxyServer()
 			
 		return localToRemoteConnectManger.manager.get()
 	
