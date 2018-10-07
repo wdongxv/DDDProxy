@@ -41,14 +41,13 @@ class localToRemoteConnectManger():
 		self.remoteConnectList = []
 		self.server.addDelay(1, self.handlerRemoteConnects)
 		self.maxConnectByOnServer = maxConnectByOnServer
+		self.fakeProxyServer = None
 	def getFakeProxyServer(self):
-		for connect in self.remoteConnectList:
-			if connect.address[0] == "127.0.0.1" and connect.address[1] == 57238:
-				return connect
-		fakeProxyServer = localToRemoteConnecter(self.server, "")
-		fakeProxyServer.connect(("127.0.0.1",57238))
-		self.remoteConnectList.append(fakeProxyServer);
-		return fakeProxyServer;
+		if not self.fakeProxyServer:
+			self.fakeProxyServer = localToRemoteConnecter(self.server, "")
+			self.fakeProxyServer.connect(("127.0.0.1",57238))
+# 			self.remoteConnectList.append(self.fakeProxyServer);
+		return self.fakeProxyServer;
 	def get(self):
 		"""
 		@return: remoteServerConnectLocalHander
