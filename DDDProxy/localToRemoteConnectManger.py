@@ -30,7 +30,9 @@ class localToRemoteConnecter(symmetryConnectServerHandler):
 	def SSLLocalCertPath(self, remoteServerHost, remoteServerPort):
 		return configFile.makeConfigFilePathName("%s-%d.pem" % (remoteServerHost, remoteServerPort))
 
-
+class localToLocalConnecter(localToRemoteConnecter):
+	def filenoStr(self):
+		return "[local]"
 class localToRemoteConnectManger():
 
 	def __init__(self, server, maxConnectByOnServer=2):
@@ -48,7 +50,7 @@ class localToRemoteConnectManger():
 			self.fakeProxyServer = None
 		
 		if not self.fakeProxyServer:
-			self.fakeProxyServer = localToRemoteConnecter(self.server, "")
+			self.fakeProxyServer = localToLocalConnecter(self.server, "")
 			self.fakeProxyServer.connect(("127.0.0.1",57238))
 			
 # 			self.remoteConnectList.append(self.fakeProxyServer);
