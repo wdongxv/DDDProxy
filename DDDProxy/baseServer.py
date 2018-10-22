@@ -418,13 +418,13 @@ class _baseServer():
 
 # 	for  sock event
 	def onSocketEvent(self, sockfileno, event):
-		
-		if sockfileno in self._socketConnectList:
+		connect=None
+		try:
 			connect = self._socketConnectList[sockfileno]
-			connect.onSocketEvent(event)
-		else:
+		except:
 			log.log(2, "sock not in self._socketConnectList:", sockfileno);
 			return False
+		connect.onSocketEvent(event)
 		return True
 
 # other
@@ -485,6 +485,7 @@ class selectBaseServer(_baseServer):
 		return res
 
 	def onIOEventFlagsChanged(self, connect,changeFlags=-1):
+		
 		if changeFlags==-1 or  changeFlags==2:
 			if connect._ioEventFlags & 2:  # sockConnect.socketIOEventFlagsWrite:
 				if not connect._sock in self.wlist:
@@ -600,10 +601,10 @@ class epollBaseServer(_baseServer):
 
 
 baseServer = selectBaseServer
-# if "kqueue" in select.__dict__:
-# 	baseServer = kqueueBaseServer
-# if "epoll" in select.__dict__:
-# 	baseServer = epollBaseServer
+if "kqueue" in select.__dict__:
+	baseServer = kqueueBaseServer
+if "epoll" in select.__dict__:
+	baseServer = epollBaseServer
 
 if __name__ == "__main__":
 	server = baseServer(handler=sockConnect)
