@@ -15,6 +15,9 @@
 *	代理域名列表可备份到Google Drive
 
 <h3>安装向导</h3>
+
+pip3 install pycrypto
+
 在远程服务器运行: 
 <pre>python install.py remoteServer</pre>
 本地服务器运行: 
