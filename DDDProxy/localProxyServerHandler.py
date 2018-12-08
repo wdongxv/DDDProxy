@@ -205,7 +205,10 @@ class localConnectHandler(symmetryConnect):
 			content = self.getFileContent(dirname(__file__) + "/template/pac.js")
 			content = content.replace("{{domainWhiteListJson}}", json.dumps(domainConfig.config.getDomainList(0)))
 			content = content.replace("{{domainListJson}}", json.dumps(domainConfig.config.getDomainList(1)))
-			content = content.replace("{{proxy_ddr}}", self.httpMessageParse.getHeader("host"))
+			host = self.httpMessageParse.getHeader("host")
+			if host.find(":")==-1:
+				host = host+":80"
+			content = content.replace("{{proxy_ddr}}", host)
 			self.reseponse(content, connection=self.httpMessageParse.connection())
 			
 		else:
