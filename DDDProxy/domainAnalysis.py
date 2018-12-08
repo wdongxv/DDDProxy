@@ -50,7 +50,7 @@ class analysisSiteList(object):
 	def pop(self):
 		minSite = None
 		minTime = 0;
-		log.log(2,"self.siteList:",len(self.siteList))
+# 		log.log(2,"self.siteList:",len(self.siteList))
 		for s in self.siteList:
 			if minSite is None or minTime>s.lastTime:
 				minSite = s
@@ -156,7 +156,7 @@ class domainAnalysis():
 						if(k < dataExpireTime):
 							del self.domainAnalysis[k]
 							break
-					log.log(2,"self.domainAnalysis:",len(self.domainAnalysis))
+# 					log.log(2,"self.domainAnalysis:",len(self.domainAnalysis))
 					domainAnalysisJson = json.dumps(self.domainAnalysis)
 					open(domainAnalysisConfig, "wt").write(domainAnalysisJson)
 

@@ -19,7 +19,7 @@
     
     
     
-    <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 3.0</pydev_property>
+    <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python interpreter</pydev_property>
                 
     
     
@@ -29,7 +29,7 @@
     
     
     
-    <pydev_property name="org.python.pydev.PYTHON_ADDITIONAL_GRAMMAR_VALIDATION">2.7</pydev_property>
+    <pydev_property name="org.python.pydev.PYTHON_ADDITIONAL_GRAMMAR_VALIDATION">3.7</pydev_property>
                 
 
 
